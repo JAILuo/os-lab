@@ -17,5 +17,3 @@ disasm: $(IMAGE).elf
 
 elf:
 	@$(READELF) $(READELFFLAGS) $(IMAGE).elf > $(BUILD_DIR)/elf.txt
-
-
