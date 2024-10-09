@@ -5,6 +5,59 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct proc_node {
+    int pid;
+    int ppid;
+    char name[256];
+    struct proc_node *child;   // 指向第一个子进程
+    struct proc_node *next;    // 指向下一个兄弟进程
+} proc_node;
+
+proc_node *root = NULL;
+
+proc_node* create_proc_node(int pid, int ppid, const char *name) {
+    proc_node *node = malloc(sizeof(proc_node));
+    if (node) {
+        node->pid = pid;
+        node->ppid = ppid;
+        strncpy(node->name, name, sizeof(node->name));
+        node->child = NULL;
+        node->next = NULL;
+    }
+    return node;
+}
+
+proc_node *find_proc_node(proc_node *root, int pid) {
+    if (root == NULL) return NULL;
+    if (root->pid == pid) return root;
+
+    proc_node *child = root->child;
+    while (child) {
+        proc_node *result = find_proc_node(child, pid);
+        if (result) return result;
+        
+        child = child->next;
+    }
+    return find_proc_node(root->next, pid);
+}
+
+void add_proc_node(proc_node *root, proc_node *node) {
+    if (root == NULL) {
+         // 如果树是空的，新节点成为根节点
+        root = node;
+    } else if (root->pid == node->ppid) {
+        // 如果当前节点是父进程，将新节点添加为子节点
+        node->next = root->child;
+        root->child = node;
+    } else {
+        // 否则，递归地在兄弟节点中查找父进程
+        add_proc_node(root->next, node);
+    }
+}
+
 
 void read_proc(const char *proc_dir) {
     char path[256] = {0};
@@ -33,6 +86,13 @@ void read_proc(const char *proc_dir) {
         printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
                pid, name, process_stat, ppid);
 
+        proc_node *new_node = create_proc_node(pid, ppid, name);
+
+        if (root == NULL) {
+            root = new_node;
+        } else {
+            add_proc_node(root, new_node);
+        }
         //printf("Process path: %s:\nbuf: %s\n", path, buf);
     }
     close(fd);
@@ -60,6 +120,23 @@ void read_proc_dir() {
     closedir(dir);
 }
 
+void free_proc_tree(proc_node *node) {
+    if (node == NULL) return;
+    free_proc_tree(node->child);
+    free_proc_tree(node->next);
+    free(node);
+}
+
+void print_proc_tree(proc_node *node, int level) {
+    if (node == NULL) return;
+    for (int i = 0; i < level; i++) {
+        printf("  "); // 缩进表示层级
+    }
+    printf("%s (PID: %d, PPID: %d)\n", node->name, node->pid, node->ppid);
+    print_proc_tree(node->child, level + 1);  // 递归打印子节点
+    print_proc_tree(node->next, level);       // 打印兄弟节点
+}
+
 int main(int argc, char *argv[]) {
     for (int i = 0; i < argc; i++) {
         assert(argv[i]);
@@ -68,6 +145,8 @@ int main(int argc, char *argv[]) {
     assert(!argv[argc]);
 
     read_proc_dir();
+    print_proc_tree(root, 0);
+    free_proc_tree(root);
 
     return 0;
 }
