@@ -16,7 +16,7 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-proc_node *root = NULL;
+proc_node *root_node = NULL;
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *node = malloc(sizeof(proc_node));
@@ -98,10 +98,10 @@ void read_proc(const char *proc_dir) {
 
         proc_node *new_node = create_proc_node(pid, ppid, name);
 
-        if (root == NULL) {
-            root = new_node;
+        if (root_node== NULL) {
+            root_node = new_node;
         } else {
-            add_proc_node(root, new_node);
+            add_proc_node(root_node, new_node);
         }
         //printf("Process path: %s:\nbuf: %s\n", path, buf);
     }
@@ -155,8 +155,8 @@ int main(int argc, char *argv[]) {
     assert(!argv[argc]);
 
     read_proc_dir();
-    print_proc_tree(root, 0);
-    free_proc_tree(root);
+    print_proc_tree(root_node, 0);
+    free_proc_tree(root_node);
 
     return 0;
 }
