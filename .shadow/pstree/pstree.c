@@ -83,8 +83,8 @@ void read_proc(const char *proc_dir) {
         char process_stat;
         char name[256];
         sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
-        printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-               pid, name, process_stat, ppid);
+        //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+        //       pid, name, process_stat, ppid);
 
         proc_node *new_node = create_proc_node(pid, ppid, name);
 
