@@ -39,7 +39,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 void read_proc(const char *proc_dir) {
     char path[256] = {0};
     int fd = 0;
-    ssize_t bytes_read = 0;
     char buf[1024] = {0};
 
     snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
@@ -50,11 +49,8 @@ void read_proc(const char *proc_dir) {
         return;
     }
     
-    bytes_read = read(fd, buf, sizeof(buf));
-    assert(bytes_read != -1);
+    read(fd, buf, sizeof(buf));
 
-    assert(bytes_read <= 1024);
-    buf[bytes_read] = '\0';
     int pid, ppid;
     char process_stat;
     char name[256];
