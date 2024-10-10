@@ -42,21 +42,20 @@ void read_proc(const char *proc_dir) {
     char buf[1024] = {0};
 
     snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
-
     fd = open(path, O_RDONLY);
     if (fd == -1) {
         perror("Failed to open file");
         return;
     }
+    printf("path: %s\n", path);
     
     read(fd, buf, sizeof(buf));
 
     int pid, ppid;
-    char process_stat;
-    char name[256];
+    char process_stat, name[256];
     sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
-    printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-           pid, name, process_stat, ppid);
+    //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+    //       pid, name, process_stat, ppid);
 
     close(fd);
 }
