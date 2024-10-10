@@ -102,13 +102,16 @@ void read_proc(const char *proc_dir) {
 
         proc_node *new_node = create_proc_node(pid, ppid, name);
 
-        add_proc_node(root_node, new_node);
+        if (root_node == NULL) {
+            root_node = new_node;
+        } else {
+            add_proc_node(root_node, new_node);
+        }
         // printf("Process path: %s:\nbuf: %s\n", path, buf);
     }
     close(fd);
 }
 
-static 
 
 void read_proc_dir() {
     DIR *dir = NULL;  
