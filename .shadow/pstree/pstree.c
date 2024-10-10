@@ -49,10 +49,10 @@ proc_node *find_proc_node(proc_node *root, int pid) {
 }
 
 void add_proc_node(proc_node *root, proc_node *node) {
-    if (root == NULL) {
-        // 如果树是空的，新节点成为根节点
-        root = node;
-    } else {
+    // if (root == NULL) {
+    //     // 如果树是空的，新节点成为根节点
+    //     root = node;
+    // } else {
         // 查找父进程节点
         proc_node *current = root;
         while (current) {
@@ -70,7 +70,7 @@ void add_proc_node(proc_node *root, proc_node *node) {
             current = current->next;
         }
         current->next = node;
-    }
+    //}
 }
 
 void read_proc(const char *proc_dir) {
