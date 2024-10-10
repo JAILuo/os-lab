@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
+
 typedef struct proc_node {
     int pid;
     int ppid;
@@ -20,13 +22,15 @@ proc_node *root_node = NULL;
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *node = malloc(sizeof(proc_node));
-    if (node) {
-        node->pid = pid;
-        node->ppid = ppid;
-        strncpy(node->name, name, sizeof(node->name));
-        node->child = NULL;
-        node->next = NULL;
-    }
+    assert(node != NULL);
+
+    node->pid = pid;
+    node->ppid = ppid;
+    assert(sizeof(node->name) <= 256);
+    strncpy(node->name, name, sizeof(node->name));
+    node->child = NULL;
+    node->next = NULL;
+
     return node;
 }
 
@@ -98,15 +102,17 @@ void read_proc(const char *proc_dir) {
 
         proc_node *new_node = create_proc_node(pid, ppid, name);
 
-        if (root_node== NULL) {
+        if (root_node == NULL) {
             root_node = new_node;
         } else {
             add_proc_node(root_node, new_node);
         }
-        //printf("Process path: %s:\nbuf: %s\n", path, buf);
+        // printf("Process path: %s:\nbuf: %s\n", path, buf);
     }
     close(fd);
 }
+
+static 
 
 void read_proc_dir() {
     DIR *dir = NULL;  
@@ -119,12 +125,8 @@ void read_proc_dir() {
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR) {
-            // use number to judge process, ok?
-            if (entry->d_name[0] >= '0' && entry->d_name[0] <= '9') {
-                //printf("PID: %s\n", entry->d_name);
-                read_proc(entry->d_name);
-            }
+        if (entry->d_type == DT_DIR && IS_DIGIT(entry->d_name[0])) {
+            read_proc(entry->d_name);
         }
     }
     closedir(dir);
