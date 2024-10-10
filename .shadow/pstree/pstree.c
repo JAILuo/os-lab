@@ -53,6 +53,7 @@ void add_proc_node(proc_node **root, proc_node *node) {
         // 新节点的父节点是根节点
         node->next = (*root)->child;
         (*root)->child = node;
+        printf("node->pid: %d, ppid: %d\n", node->pid, node->ppid);
     } else {
         // 遍历兄弟节点，寻找父节点
         proc_node *current = *root;
