@@ -142,7 +142,7 @@ void free_proc_tree(proc_node *node) {
 void print_proc_tree(proc_node *node, int level) {
     if (node == NULL) return;
     for (int i = 0; i < level; i++) {
-        printf("  "); // 缩进表示层级
+        printf("    "); // 缩进表示层级
     }
     printf("%s (PID: %d, PPID: %d)\n", node->name, node->pid, node->ppid);
     print_proc_tree(node->child, level + 1);  // 递归打印子节点
