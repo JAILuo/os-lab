@@ -144,7 +144,6 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
     //       pid, name, process_state, ppid);
 
-    printf("dasdadadasd\n");
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
         //printf("parent->pid: %d\n", parent->pid);
