@@ -22,20 +22,20 @@ typedef struct proc_node {
 
 proc_node *root_node = NULL;
 
-proc_node* create_proc_node(int pid, int ppid, const char *name) {
-    proc_node *node = malloc(sizeof(proc_node));
-    assert(node != NULL);
-
-    node->pid = pid;
-    node->ppid = ppid;
-    assert(sizeof(node->name) <= 256);
-    strncpy(node->name, name, sizeof(node->name));
-    node->parent = NULL;
-    node->child = NULL;
-    node->next = NULL;
-
-    return node;
-}
+// proc_node* create_proc_node(int pid, int ppid, const char *name) {
+//     proc_node *node = malloc(sizeof(proc_node));
+//     assert(node != NULL);
+// 
+//     node->pid = pid;
+//     node->ppid = ppid;
+//     assert(sizeof(node->name) <= 256);
+//     strncpy(node->name, name, sizeof(node->name));
+//     node->parent = NULL;
+//     node->child = NULL;
+//     node->next = NULL;
+// 
+//     return node;
+// }
 
 void read_proc(const char *proc_dir) {
     char path[256] = {0};
