@@ -139,9 +139,9 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char name[256] = {0};
     char process_state;
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
-    
-    //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-    //       pid, name, process_state, ppid);
+
+    printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+           pid, name, process_state, ppid);
 
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
