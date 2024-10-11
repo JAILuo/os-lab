@@ -99,11 +99,8 @@ void add_proc_node(proc_node *proc) {
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
     proc_node *parent = find_node(proc->ppid, NULL);
-    //if (parent == NULL) {
-    //    printf("orphan, ignore\n");
-    //    return;
-    //}
     if (parent) {
+        printf("test.....\n");
         proc->parent = parent;
 
         // 2. then parent if proc has child
