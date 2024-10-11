@@ -9,7 +9,6 @@
 #include <string.h>
 #include <ctype.h>
 
-//#define NEW
 
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
@@ -76,19 +75,19 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
     // 2. Recursion
     // 2.1 search all child proc of the current node.
     proc_node *result = NULL;
-    proc_node *next_child = cur->child;
-    while (next_child) {
-        result = find_node(pid, next_child);
+    if (cur->child) {
+        result = find_node(pid, cur->child);
         if (result) return result;
-        next_child = next_child->child; // Correctly move to the next sibling
     }
+    
+    // Ohhhh
+    // In fact, the recursion here already continuously iterates the child nodes,
+    // so there is no need for while.
 
     // 2.2 search all sibling proc of the current node.
-    proc_node *next_sibling = cur->next;
-    while (next_sibling) {
-        result = find_node(pid, next_sibling);
+    if (cur->next) {
+        result = find_node(pid, cur->next);
         if (result) return result;
-        next_sibling = next_sibling->next; // Move to the next sibling
     }
 
     return NULL; // Not found
