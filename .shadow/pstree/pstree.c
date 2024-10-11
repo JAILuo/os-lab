@@ -54,7 +54,7 @@ void read_proc(const char *proc_dir) {
 
     //sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
     printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-           node->pid, node->name, node->process_stat, node->ppid);
+           node->pid, node->name, node->process_state, node->ppid);
 
     close(fd);
 }
