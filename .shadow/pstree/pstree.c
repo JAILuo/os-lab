@@ -66,6 +66,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 proc_node *find_node(pid_t pid, proc_node *cur) {
+    printf("test...........\n");
     if (cur == NULL) cur = &root_node;
     // 1. End of recursion 
     if (cur->pid == pid) return cur;
@@ -99,7 +100,6 @@ void add_proc_node(proc_node *proc) {
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
     proc_node *parent = find_node(proc->ppid, NULL);
-    printf("parent->pid: %d\n", parent->pid);
     if (parent == NULL) {
         printf("orphan\n");
     }
