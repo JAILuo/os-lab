@@ -48,9 +48,12 @@ void read_proc(const char *proc_dir) {
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
 
-    proc_node *node = malloc(sizeof(proc_node));
-    fscanf(fp, "%d (%255[^)]) %c %d", &node->pid, node->name, &node->process_state, &node->ppid);
 
+    int pid, ppid;
+    char name[256] = {0};
+    char process_state;
+    fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
+    
 
     //sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
     printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
