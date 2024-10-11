@@ -23,6 +23,27 @@ typedef struct proc_node {
 
 proc_node *root_node = NULL;
 
+void printParentProcesses(proc_node* proc) {
+    /* Print the vertical lines of parent processes */
+    if (proc->parent) printParentProcesses(proc->parent);
+    printf("%s%*s",
+           (proc == root_node? "" : (proc->next ? " | " : "   ")),
+           (int) strlen(proc->name), "");
+}
+void printProcess(proc_node* proc) {
+    printf("%s%s%s",
+    (proc == root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
+    proc->name,
+    proc->child ? "" : "\n");
+
+    // order same as find_process
+    if (proc->child) printProcess(proc->child);
+    if (proc->next) {
+        if (proc->next->parent) printParentProcesses(proc->next->parent);
+        printProcess(proc->next);
+    }
+}
+
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
@@ -113,8 +134,8 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char process_state;
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
     
-    printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-           pid, name, process_state, ppid);
+    //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+    //       pid, name, process_state, ppid);
 
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
