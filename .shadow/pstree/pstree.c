@@ -21,20 +21,24 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-proc_node *root_node = NULL;
+proc_node root_node = {
+    .pid = 1, .ppid = 0, 
+    .name = "systemd", .process_state = 'X',
+    .parent = NULL, .child = NULL, .next = NULL
+};
 
 void printParentProcesses(proc_node* proc) {
     /* Print the vertical lines of parent processes */
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
-           (proc == root_node? "" : (proc->next ? " | " : "   ")),
+           (proc == &root_node? "" : (proc->next ? " | " : "   ")),
            (int) strlen(proc->name), "");
 }
 
 void printProcess(proc_node* proc) {
-    printf("proc->pid: %d  name: %s\n", proc->pid, proc->name);
+    //printf("proc->pid: %d  name: %s\n", proc->pid, proc->name);
     printf("%s%s%s",
-    (proc == root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
+    (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
     proc->name,
     proc->child ? "" : "\n");
 
@@ -62,7 +66,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 proc_node *find_node(pid_t pid, proc_node *cur) {
-    if (cur == NULL) cur = root_node;
+    if (cur == NULL) cur = &root_node;
     // 1. End of recursion 
     if (cur->pid == pid) return cur;
 
@@ -189,7 +193,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    printProcess(root_node);
+    printProcess(&root_node);
 
     return 0;
 }
