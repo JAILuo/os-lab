@@ -64,6 +64,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 }
 
 void add_proc_node(proc_node *proc) {
+    // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
     if (self) return;
 
@@ -102,7 +103,7 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     } else {
         snprintf(path, sizeof(path), "/proc/%.16s/stat", proc_dir);
     }
-    printf("path: %s\n", path);
+    //printf("path: %s\n", path);
     
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
@@ -112,8 +113,8 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char process_state;
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
     
-    //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-           //pid, name, process_state, ppid);
+    printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+           pid, name, process_state, ppid);
 
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
