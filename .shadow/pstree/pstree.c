@@ -99,26 +99,28 @@ void add_proc_node(proc_node *proc) {
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
     proc_node *parent = find_node(proc->ppid, NULL);
-    if (parent == NULL) {
-        printf("orphan, ignore\n");
-        return;
-    }
+    //if (parent == NULL) {
+    //    printf("orphan, ignore\n");
+    //    return;
+    //}
+    if (parent) {
+        proc->parent = parent;
 
-    proc->parent = parent;
-
-    // 2. then parent if proc has child
-    proc_node *child = parent->child;
-    if (child == NULL) {
-        // without child
-        parent->child = proc;
-    } else {
-        // Parent has child, so the proc should have sibling(next)
-        // Find the last child in the list and add the new process there.
-        proc_node *last_child = child;
-        while (last_child->next) {
-            last_child = last_child->next;
+        // 2. then parent if proc has child
+        proc_node *child = parent->child;
+        if (child == NULL) {
+            parent->child = proc;
+        } else {
+            // Parent has child, so the proc should have sibling(next)
+            // Find the last child in the list and add the new process there.
+            // proc_node *last_child = child;
+            // while (last_child->next) {
+            //     last_child = last_child->next;
+            // }
+            // last_child->next = proc;
+                      proc->next = child;
+                      parent->child = proc;
         }
-        last_child->next = proc;
     }
 }
 
