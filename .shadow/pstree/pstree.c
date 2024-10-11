@@ -141,7 +141,7 @@ void read_proc_dir() {
             proc_node *parent = read_proc(entry->d_name, NULL);
             if (parent == NULL) continue;
             
-            char child_proc[128] = {0};
+            char child_proc[64] = {0};
             snprintf(child_proc, sizeof(child_proc), "/proc/%s/stat", entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
             if (child_proc_dir) {
