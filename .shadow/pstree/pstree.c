@@ -112,13 +112,13 @@ void add_proc_node(proc_node *proc) {
         } else {
             // Parent has child, so the proc should have sibling(next)
             // Find the last child in the list and add the new process there.
-            // proc_node *last_child = child;
-            // while (last_child->next) {
-            //     last_child = last_child->next;
-            // }
-            // last_child->next = proc;
-              proc->next = child;
-              parent->child = proc;
+            proc_node *last_child = child;
+            while (last_child->next) {
+                last_child = last_child->next;
+            }
+            last_child->next = proc;
+              //proc->next = child;
+              //parent->child = proc;
         }
     }
 }
