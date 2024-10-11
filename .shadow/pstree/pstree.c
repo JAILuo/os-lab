@@ -118,8 +118,8 @@ void add_proc_node(proc_node *proc) {
             //     last_child = last_child->next;
             // }
             // last_child->next = proc;
-                      proc->next = child;
-                      parent->child = proc;
+              proc->next = child;
+              parent->child = proc;
         }
     }
 }
