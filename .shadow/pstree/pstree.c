@@ -142,9 +142,8 @@ void read_proc_dir() {
             if (parent == NULL) continue;
             
             char child_proc[128] = {0};
-            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/stat", entry->d_name);
+            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
-                        printf(".........................\n");
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
                 while ((child_entry = readdir(child_proc_dir)) != NULL ) {
