@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
 typedef struct proc_node {
     int pid;
@@ -93,11 +94,15 @@ void add_proc_node(proc_node *proc) {
 }
 
 
-void read_proc(const char *proc_dir) {
+proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char path[256] = {0};
 
-    snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
-    //printf("path: %s\n", path);
+    if (parent) {
+        snprintf(path, sizeof(path), "/proc/%d/task/%s/stat", parent->pid, proc_dir);
+    } else {
+        snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
+    }
+    printf("path: %s\n", path);
     
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
@@ -110,14 +115,19 @@ void read_proc(const char *proc_dir) {
     printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
            pid, name, process_state, ppid);
 
-    //proc_node *node = create_proc_node(pid, ppid, name);
+    proc_node *node = create_proc_node(pid, ppid, name);
+    if (parent) {
+        node->ppid = parent->pid;
+        snprintf(node->name, sizeof(node->name), "%s", parent->name);
+    }
     //add_proc_node(node);
+
     fclose(fp);
+    return node;
 }
 
 void read_proc_dir() {
     DIR *dir = NULL;  
-    struct dirent *entry = NULL;
 
     dir = opendir("/proc");
     if (dir == NULL) {
@@ -125,10 +135,24 @@ void read_proc_dir() {
         return;
     }
 
-    
+    struct dirent *entry = NULL;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && isdigit(*(entry->d_name))) {
-            read_proc(entry->d_name);
+        if (CHECK_DIR(entry)) {
+            proc_node *parent = read_proc(entry->d_name, NULL);
+            if (parent == NULL) continue;
+            
+            char child_proc[256] = {0};
+            snprintf(child_proc, sizeof(child_proc), "/proc/%s/stat", entry->d_name);
+            DIR *child_proc_dir = opendir(child_proc);
+            if (child_proc_dir) {
+                struct dirent *child_entry = NULL;
+                while ((child_entry = readdir(child_proc_dir)) != NULL ) {
+                    if (CHECK_DIR(child_entry)) {
+                        read_proc(child_entry->d_name, parent);
+                    }
+                }
+            }
+
         }
     }
     closedir(dir);
