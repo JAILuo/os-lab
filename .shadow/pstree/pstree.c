@@ -9,7 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define NEW
+//#define NEW
 
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
