@@ -148,7 +148,6 @@ void read_proc_dir() {
                 struct dirent *child_entry = NULL;
                 while ((child_entry = readdir(child_proc_dir)) != NULL ) {
                     if (CHECK_DIR(child_entry)) {
-                        printf(".........................\n");
                         read_proc(child_entry->d_name, parent);
                     }
                 }
