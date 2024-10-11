@@ -113,6 +113,8 @@ void parse_option(int argc, char *argv[]) {
 
 
 // learn from github, I have truoble in printing the whole tree
+// learn from github, I have truoble in printing the whole tree
+// TODO
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
     fprintf(stderr, "%s%*s",
@@ -131,8 +133,8 @@ void printParentProcesses(proc_node* proc) {
  */
 void printProcess(proc_node* proc) {
     fprintf(stderr, "%s%s%s",
-           (proc == &root_node ? "" : (proc == proc->parent->child ? 
-                                      (proc->next ? "─┬─" : "───") : 
+           (proc == &root_node ? "" : (proc == proc->parent->child ?
+                                      (proc->next ? "─┬─" : "───") :
                                       (proc->next ? " ├─" : " └─")
                                      )),
            proc->name,
@@ -308,6 +310,8 @@ void read_proc_dir() {
                     if (CHECK_DIR(child_entry)) {
                         read_proc(child_entry->d_name, parent);
                     }
+                    if (CHECK_DIR(child_entry)) 
+                        read_proc(child_entry->d_name, parent);
                 }
             }
             closedir(child_proc_dir);
