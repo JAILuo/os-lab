@@ -9,7 +9,6 @@
 #include <string.h>
 #include <ctype.h>
 
-
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
 typedef struct proc_node {
@@ -22,7 +21,7 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-proc_node root_node = {
+static proc_node root_node = {
     .pid = 1, .ppid = 0, 
     .name = "systemd", .process_state = 'X',
     .parent = NULL, .child = NULL, .next = NULL
@@ -37,9 +36,8 @@ void printParentProcesses(proc_node* proc) {
 }
 
 void printProcess(proc_node* proc) {
-    //printf("proc->pid: %d  name: %s\n", proc->pid, proc->name);
     printf("%s%s%s",
-    (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
+    (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " |-"))),
     proc->name,
     proc->child ? "" : "\n");
 
@@ -79,7 +77,6 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
         result = find_node(pid, cur->child);
         if (result) return result;
     }
-    
     // Ohhhh
     // In fact, the recursion here already continuously iterates the child nodes,
     // so there is no need for while.
@@ -104,7 +101,6 @@ void add_proc_node(proc_node *proc) {
     proc_node *parent = find_node(proc->ppid, NULL);
     if (parent) {
         proc->parent = parent;
-
         // 2. then parent if proc has child
         proc_node *child = parent->child;
         if (child == NULL) {
@@ -117,8 +113,6 @@ void add_proc_node(proc_node *proc) {
                 last_child = last_child->next;
             }
             last_child->next = proc;
-              //proc->next = child;
-              //parent->child = proc;
         }
     }
 }
@@ -178,7 +172,8 @@ void read_proc_dir() {
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
                 while ((child_entry = readdir(child_proc_dir)) != NULL ) {
-                    if (CHECK_DIR(child_entry)) read_proc(child_entry->d_name, parent);
+                    if (CHECK_DIR(child_entry)) 
+                        read_proc(child_entry->d_name, parent);
                 }
             }
             closedir(child_proc_dir);
