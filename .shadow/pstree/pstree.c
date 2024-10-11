@@ -187,6 +187,8 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
+    printProcess(root_node);
+
     return 0;
 }
 
