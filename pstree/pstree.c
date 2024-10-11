@@ -9,7 +9,6 @@
 #include <string.h>
 #include <ctype.h>
 
-
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
 typedef struct proc_node {
@@ -22,14 +21,15 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-proc_node root_node = {
+static proc_node root_node = {
     .pid = 1, .ppid = 0, 
     .name = "systemd", .process_state = 'X',
     .parent = NULL, .child = NULL, .next = NULL
 };
 
+// learn from github, I have truoble in printing the whole tree
+// TODO
 void printParentProcesses(proc_node* proc) {
-    /* Print the vertical lines of parent processes */
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
            (proc == &root_node? "" : (proc->next ? " | " : "   ")),
@@ -37,11 +37,10 @@ void printParentProcesses(proc_node* proc) {
 }
 
 void printProcess(proc_node* proc) {
-    //printf("proc->pid: %d  name: %s\n", proc->pid, proc->name);
     printf("%s%s%s",
-    (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
-    proc->name,
-    proc->child ? "" : "\n");
+           (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " |-"))),
+           proc->name,
+           proc->child ? "" : "\n");
 
     // order same as find_process
     if (proc->child) printProcess(proc->child);
@@ -75,19 +74,18 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
     // 2. Recursion
     // 2.1 search all child proc of the current node.
     proc_node *result = NULL;
-    proc_node *next_child = cur->child;
-    while (next_child) {
-        result = find_node(pid, next_child);
+    if (cur->child) {
+        result = find_node(pid, cur->child);
         if (result) return result;
-        next_child = next_child->child; // Correctly move to the next sibling
     }
+    // Ohhhh
+    // In fact, the recursion here already continuously iterates the child nodes,
+    // so there is no need for while.
 
     // 2.2 search all sibling proc of the current node.
-    proc_node *next_sibling = cur->next;
-    while (next_sibling) {
-        result = find_node(pid, next_sibling);
+    if (cur->next) {
+        result = find_node(pid, cur->next);
         if (result) return result;
-        next_sibling = next_sibling->next; // Move to the next sibling
     }
 
     return NULL; // Not found
@@ -104,7 +102,6 @@ void add_proc_node(proc_node *proc) {
     proc_node *parent = find_node(proc->ppid, NULL);
     if (parent) {
         proc->parent = parent;
-
         // 2. then parent if proc has child
         proc_node *child = parent->child;
         if (child == NULL) {
@@ -112,13 +109,11 @@ void add_proc_node(proc_node *proc) {
         } else {
             // Parent has child, so the proc should have sibling(next)
             // Find the last child in the list and add the new process there.
-            // proc_node *last_child = child;
-            // while (last_child->next) {
-            //     last_child = last_child->next;
-            // }
-            // last_child->next = proc;
-              proc->next = child;
-              parent->child = proc;
+            proc_node *last_child = child;
+            while (last_child->next) {
+                last_child = last_child->next;
+            }
+            last_child->next = proc;
         }
     }
 }
@@ -178,7 +173,8 @@ void read_proc_dir() {
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
                 while ((child_entry = readdir(child_proc_dir)) != NULL ) {
-                    if (CHECK_DIR(child_entry)) read_proc(child_entry->d_name, parent);
+                    if (CHECK_DIR(child_entry)) 
+                        read_proc(child_entry->d_name, parent);
                 }
             }
             closedir(child_proc_dir);
