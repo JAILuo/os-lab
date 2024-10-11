@@ -30,7 +30,9 @@ void printParentProcesses(proc_node* proc) {
            (proc == root_node? "" : (proc->next ? " | " : "   ")),
            (int) strlen(proc->name), "");
 }
+
 void printProcess(proc_node* proc) {
+    printf("proc->pid: %d  name: %s\n", proc->pid, proc->name);
     printf("%s%s%s",
     (proc == root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " `-"))),
     proc->name,
