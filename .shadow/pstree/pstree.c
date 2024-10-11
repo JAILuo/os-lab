@@ -90,17 +90,18 @@ proc_node* find_node(pid_t pid, proc_node* cur) {
 #else
 proc_node *find_node(pid_t pid, proc_node *cur) {
     if (cur == NULL) cur = &root_node;
-    // 1. End of recursion 
+
+    // 1. End of recursion
     if (cur->pid == pid) return cur;
 
-    // 2. Recursion 
+    // 2. Recursion
     // 2.1 search all child proc of the current node.
     proc_node *result = NULL;
     proc_node *next_child = cur->child;
     while (next_child) {
         result = find_node(pid, next_child);
         if (result) return result;
-        next_child = next_child->next;
+        next_child = next_child->next; // Correctly move to the next sibling
     }
 
     // 2.2 search all sibling proc of the current node.
@@ -108,10 +109,35 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
     while (next_sibling) {
         result = find_node(pid, next_sibling);
         if (result) return result;
-        next_sibling = next_sibling->next;
+        next_sibling = next_sibling->next; // Move to the next sibling
     }
-    return NULL;
+
+    return NULL; // Not found
 }
+// proc_node *find_node(pid_t pid, proc_node *cur) {
+//     if (cur == NULL) cur = &root_node;
+//     // 1. End of recursion 
+//     if (cur->pid == pid) return cur;
+// 
+//     // 2. Recursion 
+//     // 2.1 search all child proc of the current node.
+//     proc_node *result = NULL;
+//     proc_node *next_child = cur->child;
+//     while (next_child) {
+//         result = find_node(pid, next_child);
+//         if (result) return result;
+//         next_child = next_child->next;
+//     }
+// 
+//     // 2.2 search all sibling proc of the current node.
+//     proc_node *next_sibling = cur->next;
+//     while (next_sibling) {
+//         result = find_node(pid, next_sibling);
+//         if (result) return result;
+//         next_sibling = next_sibling->next;
+//     }
+//     return NULL;
+// }
 #endif
 
 void add_proc_node(proc_node *proc) {
