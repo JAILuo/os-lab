@@ -98,9 +98,9 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char path[256] = {0};
 
     if (parent) {
-        snprintf(path, sizeof(path), "/proc/%d/task/%s/stat", parent->pid, proc_dir);
+        snprintf(path, sizeof(path), "/proc/%d/task/%.16s/stat", parent->pid, proc_dir);
     } else {
-        snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
+        snprintf(path, sizeof(path), "/proc/%.16s/stat", proc_dir);
     }
     printf("path: %s\n", path);
     
@@ -142,7 +142,7 @@ void read_proc_dir() {
             if (parent == NULL) continue;
             
             char child_proc[128] = {0};
-            snprintf(child_proc, sizeof(child_proc), "/proc/%s/stat", entry->d_name);
+            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/stat", entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
