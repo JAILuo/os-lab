@@ -9,6 +9,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#define NEW
+
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
 typedef struct proc_node {
@@ -65,6 +67,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     return node;
 }
 
+#ifdef NEW
 proc_node* find_node(pid_t pid, proc_node* cur) {
   /* start from root if not given */
   if (!cur) cur = &root_node;
@@ -84,31 +87,32 @@ proc_node* find_node(pid_t pid, proc_node* cur) {
   }
   return NULL; // not found
 }
+#else
+proc_node *find_node(pid_t pid, proc_node *cur) {
+    if (cur == NULL) cur = &root_node;
+    // 1. End of recursion 
+    if (cur->pid == pid) return cur;
 
-// proc_node *find_node(pid_t pid, proc_node *cur) {
-//     if (cur == NULL) cur = &root_node;
-//     // 1. End of recursion 
-//     if (cur->pid == pid) return cur;
-// 
-//     // 2. Recursion 
-//     // 2.1 search all child proc of the current node.
-//     proc_node *next_child = cur->child;
-//     while (next_child) {
-//         proc_node *result = find_node(pid, next_child);
-//         if (result) return result;
-//         next_child = next_child->child;
-//     }
-// 
-//     // 2.2 search all sibling proc of the current node.
-//     proc_node *next_sibling = cur->next;
-//     while (next_sibling) {
-//         proc_node *result = find_node(pid, next_sibling);
-//         if (result) return result;
-//         next_sibling = next_sibling->next;
-//     }
-// 
-//     return NULL;
-// }
+    // 2. Recursion 
+    // 2.1 search all child proc of the current node.
+    proc_node *result = NULL;
+    proc_node *next_child = cur->child;
+    while (next_child) {
+        result = find_node(pid, next_child);
+        if (result) return result;
+        next_child = next_child->next;
+    }
+
+    // 2.2 search all sibling proc of the current node.
+    proc_node *next_sibling = cur->next;
+    while (next_sibling) {
+        result = find_node(pid, next_sibling);
+        if (result) return result;
+        next_sibling = next_sibling->next;
+    }
+    return NULL;
+}
+#endif
 
 void add_proc_node(proc_node *proc) {
     // 0. remove duplication
