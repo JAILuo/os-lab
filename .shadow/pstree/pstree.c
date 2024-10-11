@@ -66,7 +66,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 proc_node *find_node(pid_t pid, proc_node *cur) {
-    printf("test...........\n");
     if (cur == NULL) cur = &root_node;
     // 1. End of recursion 
     if (cur->pid == pid) return cur;
