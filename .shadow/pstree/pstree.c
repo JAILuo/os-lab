@@ -65,31 +65,50 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     return node;
 }
 
-proc_node *find_node(pid_t pid, proc_node *cur) {
-    if (cur == NULL) cur = &root_node;
-    // 1. End of recursion 
-    if (cur->pid == pid) return cur;
+proc_node* findProcess(pid_t pid, proc_node* cur) {
+  /* start from root if not given */
+  if (!cur) cur = &root_node;
 
-    // 2. Recursion 
-    // 2.1 search all child proc of the current node.
-    proc_node *next_child = cur->child;
-    while (next_child) {
-        proc_node *result = find_node(pid, next_child);
-        if (result) return result;
-        next_child = next_child->child;
-    }
+  /* end of recursion (found) */
+  if (cur->pid == pid) return cur;
 
-    // 2.2 search all sibling proc of the current node.
-    proc_node *next_sibling = cur->next;
-    while (next_sibling) {
-        proc_node *result = find_node(pid, next_sibling);
-        if (result) return result;
-        next_sibling = next_sibling->next;
-    }
-
-    printf("last....\n");
-    return NULL;
+  /* start of next recursion (go deeper or parallel) */
+  proc_node *result = NULL;
+  if (cur->child) {
+    result = findProcess(pid, cur->child);
+    if (result) return result;
+  }
+  if (cur->next) {
+    result = findProcess(pid, cur->next);
+    if (result) return result;
+  }
+  return NULL; // not found
 }
+
+// proc_node *find_node(pid_t pid, proc_node *cur) {
+//     if (cur == NULL) cur = &root_node;
+//     // 1. End of recursion 
+//     if (cur->pid == pid) return cur;
+// 
+//     // 2. Recursion 
+//     // 2.1 search all child proc of the current node.
+//     proc_node *next_child = cur->child;
+//     while (next_child) {
+//         proc_node *result = find_node(pid, next_child);
+//         if (result) return result;
+//         next_child = next_child->child;
+//     }
+// 
+//     // 2.2 search all sibling proc of the current node.
+//     proc_node *next_sibling = cur->next;
+//     while (next_sibling) {
+//         proc_node *result = find_node(pid, next_sibling);
+//         if (result) return result;
+//         next_sibling = next_sibling->next;
+//     }
+// 
+//     return NULL;
+// }
 
 void add_proc_node(proc_node *proc) {
     // 0. remove duplication
