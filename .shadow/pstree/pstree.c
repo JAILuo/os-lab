@@ -145,6 +145,7 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
 
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
+        printf("parent->pid: %d\n", parent->pid);
         node->ppid = parent->pid;
         snprintf(node->name, sizeof(node->name), "%s", parent->name);
     }
