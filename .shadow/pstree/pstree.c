@@ -65,7 +65,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     return node;
 }
 
-proc_node* findProcess(pid_t pid, proc_node* cur) {
+proc_node* find_node(pid_t pid, proc_node* cur) {
   /* start from root if not given */
   if (!cur) cur = &root_node;
 
@@ -75,11 +75,11 @@ proc_node* findProcess(pid_t pid, proc_node* cur) {
   /* start of next recursion (go deeper or parallel) */
   proc_node *result = NULL;
   if (cur->child) {
-    result = findProcess(pid, cur->child);
+    result = find_node(pid, cur->child);
     if (result) return result;
   }
   if (cur->next) {
-    result = findProcess(pid, cur->next);
+    result = find_node(pid, cur->next);
     if (result) return result;
   }
   return NULL; // not found
