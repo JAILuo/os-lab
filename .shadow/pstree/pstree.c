@@ -14,6 +14,7 @@ typedef struct proc_node {
     int pid;
     int ppid;
     char name[256];
+    char process_state;
     struct proc_node *parent;
     struct proc_node *child;   // 指向第一个子进程
     struct proc_node *next;    // 指向下一个兄弟进程
@@ -42,20 +43,18 @@ void read_proc(const char *proc_dir) {
     char buf[1024] = {0};
 
     snprintf(path, sizeof(path), "/proc/%s/stat", proc_dir);
-    fd = open(path, O_RDONLY);
-    if (fd == -1) {
-        perror("Failed to open file");
-        return;
-    }
     printf("path: %s\n", path);
     
-    read(fd, buf, sizeof(buf));
+    FILE *fp = fopen(path, "r");
+    assert(fp != NULL);
 
-    int pid, ppid;
-    char process_stat, name[256];
-    sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
-    //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
-    //       pid, name, process_stat, ppid);
+    proc_node *node = malloc(sizeof(proc_node));
+    fscanf(fp, "%d (%255[^)]) %c %d", &node->pid, node->name, &node->process_state, &node->ppid);
+
+
+    //sscanf(buf, "%d (%255[^)]) %c %d", &pid, name, &process_stat, &ppid);
+    printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
+           node->pid, node->name, node->process_stat, node->ppid);
 
     close(fd);
 }
