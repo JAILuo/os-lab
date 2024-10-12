@@ -70,10 +70,11 @@ void printParentProcesses(proc_node* proc) {
 /**
  * Traverse the process tree.(preorder traversal)
  * if proc is root_node, print nothing,
- * else if proc is the first child, and if it has a sibling,     print ─┬─, else ───
- * else if proc is not the first child, and if it has a sibling, print  ├─ , e
+ * else if proc is the first child, and if it has a sibling,     print─┬─, else───
+ * else if proc is not the first child, and if it has a sibling, print ├─, else └─
+ * notice the space
  *
- * The font is directly copied from the pstree displayed in the terminal
+ * The font is directly copied from the pstree displayed in the terminal.
  */
 void printProcess(proc_node* proc) {
     printf("%s%s%s",
