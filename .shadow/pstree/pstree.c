@@ -90,8 +90,8 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     assert(sizeof(node->name) <= 256);
     if (op_show_pids) {
-        char name[16] = {0};
-        sprintf(name, "(%d)", pid);
+        char name[16] = "";
+        sprintf(name, "(%d)", node->pid);
         strcat(node->name, name); // should enough
     } else {
         strncpy(node->name, name, sizeof(node->name));
