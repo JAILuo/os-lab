@@ -92,11 +92,10 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     if (op_show_pids) {
         char name[16] = {0};
         sprintf(name, "(%d)", pid);
-        strncat(node->name, name, 16); // should enough
+        strcat(node->name, name); // should enough
     } else {
         strncpy(node->name, name, sizeof(node->name));
     }
-    
 
     node->parent = NULL;
     node->child = NULL;
