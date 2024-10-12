@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <getopt.h>
 
@@ -27,6 +28,29 @@ static proc_node root_node = {
     .name = "systemd", .process_state = 'X',
     .parent = NULL, .child = NULL, .next = NULL
 };
+
+const struct option table[] = {
+    {"show-pids"        , no_argument, NULL, 'p'},
+    {"numeric-sort"     , no_argument, NULL, 'n'},
+    {"version"          , no_argument, NULL, 'V'},
+};
+static bool op_show_pids = false;
+static bool op_numeric = false;
+
+void parse_option(int argc, char *argv[]) {
+    int o;
+    while ( (o = getopt_long(argc, argv, "-pnV", table, NULL)) != -1) {
+        switch (o) {
+        case 'p': op_show_pids = true; break;
+        case 'n': op_numeric = true; break;
+        case 'V': printf("own pstree implementation version\n"); break;
+        default:
+                  printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
+                  exit(0);
+        }
+    }
+}
+
 
 // learn from github, I have truoble in printing the whole tree
 // TODO
@@ -57,8 +81,17 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     node->pid = pid;
     node->ppid = ppid;
+
     assert(sizeof(node->name) <= 256);
-    strncpy(node->name, name, sizeof(node->name));
+    if (op_show_pids) {
+        char name[16] = {0};
+        sprintf(name, "(%d)", pid);
+        strncat(node->name, name, 16); // should enough
+    } else {
+        strncpy(node->name, name, sizeof(node->name));
+    }
+    
+
     node->parent = NULL;
     node->child = NULL;
     node->next = NULL;
@@ -182,29 +215,6 @@ void read_proc_dir() {
         }
     }
     closedir(dir);
-}
-
-const struct option table[] = {
-    {"show-pids"        , no_argument, NULL, 'p'},
-    {"numeric-sort"     , no_argument, NULL, 'n'},
-    {"version"          , no_argument, NULL, 'V'},
-};
-
-void parse_option(int argc, char *argv[]) {
-    int o;
-    while ( (o = getopt_long(argc, argv, "-bhl:d:p:e:", table, NULL)) != -1) {
-    switch (o) {
-    case 'p': break;
-    case 'n': break;
-    case 'V': printf("own pstree implementation version\n"); break;
-    default:
-              printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
-              exit(0);
-    }
-}
-
-
-    //TODO: use struct option table in ics-pa nemu/src/monitor/monitor.c
 }
 
 int main(int argc, char *argv[]) {
