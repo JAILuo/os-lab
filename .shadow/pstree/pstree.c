@@ -168,6 +168,15 @@ void add_proc_node(proc_node *proc) {
     }
 }
 
+void free_proc_tree(proc_node *node) {
+    if (node == NULL) return;
+    
+    if (node->child) free_proc_tree(node->child);
+
+    if (node->next) free_proc_tree(node->next);
+
+    free(node);
+}
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char path[256] = {0};
@@ -240,6 +249,7 @@ int main(int argc, char *argv[]) {
 
     printProcess(&root_node);
 
+    free_proc_tree(&root_node);
     return 0;
 }
 
