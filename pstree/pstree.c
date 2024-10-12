@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
+#include <getopt.h>
 
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
@@ -27,18 +29,57 @@ static proc_node root_node = {
     .parent = NULL, .child = NULL, .next = NULL
 };
 
+const struct option table[] = {
+    {"show-pids"        , no_argument, NULL, 'p'},
+    {"numeric-sort"     , no_argument, NULL, 'n'},
+    {"version"          , no_argument, NULL, 'V'},
+};
+static bool op_show_pids = false;
+static bool op_numeric = false;
+
+void parse_option(int argc, char *argv[]) {
+    for (int i = 0; i < argc; i++) {
+        assert(argv[i]);
+        //printf("argv[%d] = %s\n", i, argv[i]);
+    }
+    assert(!argv[argc]);
+
+    int o;
+    while ( (o = getopt_long(argc, argv, "-pnV", table, NULL)) != -1) {
+        switch (o) {
+        case 'p': op_show_pids = true; break;
+        case 'n': op_numeric = true; break;
+        case 'V': printf("own pstree implementation version\n"); break;
+        default:
+                  printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
+                  exit(0);
+        }
+    }
+}
+
+
 // learn from github, I have truoble in printing the whole tree
 // TODO
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
-           (proc == &root_node? "" : (proc->next ? " | " : "   ")),
+           (proc == &root_node? "" : (proc->next ? " │ " : "   ")),
            (int) strlen(proc->name), "");
 }
 
+/**
+ * traverse the process tree.(preorder traversal)
+ * if proc is root_node, print nothing,
+ * else if proc is the first child, and if it has a sibling,     print -+-, else ---
+ * else if proc is not the first child, and if it has a sibling, print |- , else 
+ *
+ */
 void printProcess(proc_node* proc) {
     printf("%s%s%s",
-           (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " |-"))),
+           (proc == &root_node ? "" : (proc == proc->parent->child ? 
+                                      (proc->next ? "─┬─" : "───") : 
+                                      (proc->next ? " ├─" : " ├─")
+                                     )),
            proc->name,
            proc->child ? "" : "\n");
 
@@ -56,8 +97,15 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     node->pid = pid;
     node->ppid = ppid;
+
     assert(sizeof(node->name) <= 256);
-    strncpy(node->name, name, sizeof(node->name));
+        strncpy(node->name, name, sizeof(node->name));
+    if (op_show_pids) {
+        char name[16] = {0};
+        sprintf(name, "(%d)", node->pid);
+        strcat(node->name, name); // should enough
+    }
+
     node->parent = NULL;
     node->child = NULL;
     node->next = NULL;
@@ -184,11 +232,7 @@ void read_proc_dir() {
 }
 
 int main(int argc, char *argv[]) {
-    for (int i = 0; i < argc; i++) {
-        assert(argv[i]);
-        printf("argv[%d] = %s\n", i, argv[i]);
-    }
-    assert(!argv[argc]);
+    parse_option(argc, argv);
 
     read_proc_dir();
 
