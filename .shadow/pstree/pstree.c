@@ -38,6 +38,12 @@ static bool op_show_pids = false;
 static bool op_numeric = false;
 
 void parse_option(int argc, char *argv[]) {
+    for (int i = 0; i < argc; i++) {
+        assert(argv[i]);
+        //printf("argv[%d] = %s\n", i, argv[i]);
+    }
+    assert(!argv[argc]);
+
     int o;
     while ( (o = getopt_long(argc, argv, "-pnV", table, NULL)) != -1) {
         switch (o) {
@@ -218,11 +224,7 @@ void read_proc_dir() {
 }
 
 int main(int argc, char *argv[]) {
-    for (int i = 0; i < argc; i++) {
-        assert(argv[i]);
-        printf("argv[%d] = %s\n", i, argv[i]);
-    }
-    assert(!argv[argc]);
+    parse_option(argc, argv);
 
     read_proc_dir();
 
