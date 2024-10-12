@@ -63,7 +63,7 @@ void parse_option(int argc, char *argv[]) {
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
-           (proc == &root_node? "" : (proc->next ? "│ " : "  ")),
+           (proc == &root_node? "" : (proc->next ? " │ " : "  ")),
            (int) strlen(proc->name), "");
 }
 
