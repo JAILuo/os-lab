@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <getopt.h>
 
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
@@ -27,8 +28,9 @@ static proc_node root_node = {
     .parent = NULL, .child = NULL, .next = NULL
 };
 
+// learn from github, I have truoble in printing the whole tree
+// TODO
 void printParentProcesses(proc_node* proc) {
-    /* Print the vertical lines of parent processes */
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
            (proc == &root_node? "" : (proc->next ? " | " : "   ")),
@@ -37,9 +39,9 @@ void printParentProcesses(proc_node* proc) {
 
 void printProcess(proc_node* proc) {
     printf("%s%s%s",
-    (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " |-"))),
-    proc->name,
-    proc->child ? "" : "\n");
+           (proc == &root_node? "" : (proc == proc->parent->child ? (proc->next ? "-+-" : "---") : (proc->next ? " |-" : " |-"))),
+           proc->name,
+           proc->child ? "" : "\n");
 
     // order same as find_process
     if (proc->child) printProcess(proc->child);
@@ -180,6 +182,29 @@ void read_proc_dir() {
         }
     }
     closedir(dir);
+}
+
+const struct option table[] = {
+    {"show-pids"        , no_argument, NULL, 'p'},
+    {"numeric-sort"     , no_argument, NULL, 'n'},
+    {"version"          , no_argument, NULL, 'V'},
+};
+
+void parse_option(int argc, char *argv[]) {
+    int o;
+    while ( (o = getopt_long(argc, argv, "-bhl:d:p:e:", table, NULL)) != -1) {
+    switch (o) {
+    case 'p': break;
+    case 'n': break;
+    case 'V': printf("own pstree implementation version\n"); break;
+    default:
+              printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
+              exit(0);
+    }
+}
+
+
+    //TODO: use struct option table in ics-pa nemu/src/monitor/monitor.c
 }
 
 int main(int argc, char *argv[]) {
