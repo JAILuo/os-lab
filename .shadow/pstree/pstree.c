@@ -40,7 +40,6 @@ static bool op_numeric = false;
 void parse_option(int argc, char *argv[]) {
     for (int i = 0; i < argc; i++) {
         assert(argv[i]);
-        //printf("argv[%d] = %s\n", i, argv[i]);
     }
     assert(!argv[argc]);
 
@@ -59,7 +58,6 @@ void parse_option(int argc, char *argv[]) {
 
 
 // learn from github, I have truoble in printing the whole tree
-// TODO
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
     printf("%s%*s",
@@ -171,11 +169,18 @@ void add_proc_node(proc_node *proc) {
 void free_proc_tree(proc_node *node) {
     if (node == NULL) return;
     
-    if (node->child) free_proc_tree(node->child);
+    if (node->child) {
+        free_proc_tree(node->child);
+        node->child = NULL;
+    }
 
-    if (node->next) free_proc_tree(node->next);
+    if (node->next) {
+        free_proc_tree(node->next);
+        node->next = NULL;
+    }
 
     free(node);
+    node = NULL;
 }
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
@@ -249,7 +254,7 @@ int main(int argc, char *argv[]) {
 
     printProcess(&root_node);
 
-    free_proc_tree(&root_node);
+    //free_proc_tree(&root_node);
     return 0;
 }
 
