@@ -77,7 +77,7 @@ void printParentProcesses(proc_node* proc) {
 void printProcess(proc_node* proc) {
     printf("%s%s%s",
            (proc == &root_node ? "" : (proc == proc->parent->child ? 
-                                      (proc->next ? " ┬" : " ───") : 
+                                      (proc->next ? " ┬" : "───") : 
                                       (proc->next ? " ├" : " ├")
                                      )),
            proc->name,
