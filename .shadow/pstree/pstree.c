@@ -96,35 +96,6 @@ void printProcess(proc_node* proc) {
     }
 }
 
-proc_node* create_proc_node(int pid, int ppid, const char *name) {
-    // for (int i = 0; i < 32768; i++) {
-    //     if (pid == pid_table[i])
-    //         return NULL;
-    // }
-
-    proc_node *node = malloc(sizeof(proc_node));
-    assert(node != NULL);
-
-    node->pid = pid;
-    node->ppid = ppid;
-    //pid_table[pid_index++] = pid;
-
-    assert(sizeof(node->name) <= 256);
-        strncpy(node->name, name, sizeof(node->name));
-    if (op_show_pids) {
-        char add_pid[16] = {0};
-        sprintf(add_pid, "(%d)", node->pid);
-        strcat(node->name, add_pid); // should enough
-    }
-
-    node->parent = NULL;
-    node->child = NULL;
-    node->next = NULL;
-
-    //printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
-    return node;
-}
-
 proc_node *find_node(pid_t pid, proc_node *cur) {
     if (cur == NULL) cur = &root_node;
 
@@ -149,6 +120,37 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
     }
 
     return NULL; // Not found
+}
+
+proc_node* create_proc_node(int pid, int ppid, const char *name) {
+    // for (int i = 0; i < 32768; i++) {
+    //     if (pid == pid_table[i])
+    //         return NULL;
+    // }
+    proc_node *existing_node = find_node(pid, NULL);
+    if (existing_node) return NULL;
+
+    proc_node *node = malloc(sizeof(proc_node));
+    assert(node != NULL);
+
+    node->pid = pid;
+    node->ppid = ppid;
+    //pid_table[pid_index++] = pid;
+
+    assert(sizeof(node->name) <= 256);
+        strncpy(node->name, name, sizeof(node->name));
+    if (op_show_pids) {
+        char add_pid[16] = {0};
+        sprintf(add_pid, "(%d)", node->pid);
+        strcat(node->name, add_pid); // should enough
+    }
+
+    node->parent = NULL;
+    node->child = NULL;
+    node->next = NULL;
+
+    //printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    return node;
 }
 
 void add_proc_node(proc_node *proc) {
@@ -270,7 +272,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
