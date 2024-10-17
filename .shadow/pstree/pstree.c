@@ -147,10 +147,8 @@ void add_proc_node(proc_node *proc) {
     if (proc == NULL) return;
     // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
-    if (self) {
-        free(proc);
-        return;
-    }
+    if (self) return;
+
     // 1. check proc if has parent
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
