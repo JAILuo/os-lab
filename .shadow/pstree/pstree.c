@@ -52,7 +52,7 @@ void parse_option(int argc, char *argv[]) {
         case 'V': printf("own pstree implementation version\n"); break;
         default:
                   printf("Usage: %s [OPTION...]\n"
-                         "          [-p, --show-pids] [-n, --numeric-sort:] [-V, --version]\n",
+                         "  [-p, --show-pids] [-n, --numeric-sort:] [-V, --version]\n",
                          argv[0]);
                   exit(0);
         }
