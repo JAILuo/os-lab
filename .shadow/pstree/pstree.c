@@ -24,10 +24,10 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-static int pid_index = 0;
-static int pid_table[32768] = {
-    1
-};
+// static int pid_index = 0;
+// static int pid_table[32768] = {
+//     1
+// };
 
 static proc_node root_node = {
     .pid = 1, .ppid = 0, 
@@ -97,17 +97,17 @@ void printProcess(proc_node* proc) {
 }
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
-    for (int i = 0; i < 32768; i++) {
-        if (pid == pid_table[i])
-            return NULL;
-    }
+    // for (int i = 0; i < 32768; i++) {
+    //     if (pid == pid_table[i])
+    //         return NULL;
+    // }
 
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
 
     node->pid = pid;
     node->ppid = ppid;
-    pid_table[pid_index++] = pid;
+    //pid_table[pid_index++] = pid;
 
     assert(sizeof(node->name) <= 256);
         strncpy(node->name, name, sizeof(node->name));
@@ -267,9 +267,10 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
     free_proc_tree(&root_node);
+
     return 0;
 }
 
