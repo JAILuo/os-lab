@@ -24,11 +24,6 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
-// static int pid_index = 0;
-// static int pid_table[32768] = {
-//     1
-// };
-
 static proc_node root_node = {
     .pid = 1, .ppid = 0, 
     .name = "systemd", .process_state = 'X',
@@ -123,11 +118,6 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 }
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
-    // for (int i = 0; i < 32768; i++) {
-    //     if (pid == pid_table[i])
-    //         return NULL;
-    // }
-
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
 
@@ -147,7 +137,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->child = NULL;
     node->next = NULL;
 
-    printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    //printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
