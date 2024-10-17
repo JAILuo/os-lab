@@ -119,7 +119,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->child = NULL;
     node->next = NULL;
 
-    //printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
@@ -258,12 +258,14 @@ void read_proc_dir() {
     closedir(dir);
 }
 
+
+//TODO redirect stderr
 int main(int argc, char *argv[]) {
     parse_option(argc, argv);
 
     read_proc_dir();
 
-    printProcess(&root_node);
+    //printProcess(&root_node);
 
     free_proc_tree(&root_node);
     return 0;
