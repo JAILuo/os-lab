@@ -110,6 +110,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->child = NULL;
     node->next = NULL;
 
+    printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
@@ -252,9 +253,9 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    printProcess(&root_node);
+    //printProcess(&root_node);
 
-    //free_proc_tree(&root_node);
+    free_proc_tree(&root_node);
     return 0;
 }
 
