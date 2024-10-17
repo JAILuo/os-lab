@@ -18,7 +18,6 @@ typedef struct proc_node {
     int pid;
     int ppid;
     char name[256];
-    char process_state;
     struct proc_node *parent;
     struct proc_node *child;   // 指向第一个子进程
     struct proc_node *next;    // 指向下一个兄弟进程
@@ -26,7 +25,7 @@ typedef struct proc_node {
 
 static proc_node root_node = {
     .pid = 1, .ppid = 0, 
-    .name = "systemd", .process_state = 'X',
+    .name = "systemd",
     .parent = NULL, .child = NULL, .next = NULL
 };
 
@@ -128,7 +127,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     assert(sizeof(node->name) <= 256);
     strncpy(node->name, name, sizeof(node->name));
-    node->process_state = '\0'; // unused
     if (op_show_pids) {
         char add_pid[16] = {0};
         sprintf(add_pid, "(%d)", node->pid);
