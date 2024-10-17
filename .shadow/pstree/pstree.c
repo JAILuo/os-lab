@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <dirent.h>
+#include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -22,6 +23,10 @@ typedef struct proc_node {
     struct proc_node *child;   // 指向第一个子进程
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
+
+static int pid_table[32768] = {
+    1
+};
 
 static proc_node root_node = {
     .pid = 1, .ppid = 0, 
@@ -55,7 +60,6 @@ void parse_option(int argc, char *argv[]) {
         }
     }
 }
-
 
 // learn from github, I have truoble in printing the whole tree
 void printParentProcesses(proc_node* proc) {
@@ -92,6 +96,11 @@ void printProcess(proc_node* proc) {
 }
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
+    for (int i = 0; i < 32768; i++) {
+        if (pid == pid_table[i])
+            return NULL;
+    }
+
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
 
