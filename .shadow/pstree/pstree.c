@@ -126,7 +126,8 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     //pid_table[pid_index++] = pid;
 
     assert(sizeof(node->name) <= 256);
-        strncpy(node->name, name, sizeof(node->name));
+    strncpy(node->name, name, sizeof(node->name));
+    node->process_state = '\0'; // unused
     if (op_show_pids) {
         char add_pid[16] = {0};
         sprintf(add_pid, "(%d)", node->pid);
@@ -170,6 +171,10 @@ void add_proc_node(proc_node *proc) {
     }
 }
 
+/**
+ * the flow same as find_node, 
+ * remember not to free root_node
+ */
 void free_proc_tree(proc_node *node) {
     if (node == NULL) return;
     
@@ -186,6 +191,9 @@ void free_proc_tree(proc_node *node) {
     if (node != &root_node) {
         free(node);
         node = NULL;
+    } else {
+        node->child = NULL;
+        node->next = NULL;
     }
 }
 
