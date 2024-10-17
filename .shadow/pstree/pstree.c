@@ -127,8 +127,8 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     //     if (pid == pid_table[i])
     //         return NULL;
     // }
-    proc_node *existing_node = find_node(pid, NULL);
-    if (existing_node) return NULL;
+    //proc_node *existing_node = find_node(pid, NULL);
+    //if (existing_node) return NULL;
 
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
