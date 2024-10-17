@@ -189,6 +189,7 @@ void free_proc_tree(proc_node *node) {
     }
 
     if (node != &root_node) {
+        printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
         free(node);
         node = NULL;
     } else {
@@ -210,9 +211,9 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
 
-    int pid, ppid;
+    int pid = 0, ppid = 0;
     char name[256] = {0};
-    char process_state;
+    char process_state = 'X';
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
 
     //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
