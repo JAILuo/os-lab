@@ -161,12 +161,23 @@ void add_proc_node(proc_node *proc) {
         } else {
             // Parent has child, so the proc should have sibling(next)
             // Find the last child in the list and add the new process there.
-            
-            proc_node *last_child = child;
-            while (last_child->next) {
-                last_child = last_child->next;
+            if (op_numeric) {
+                if (proc->pid < child->pid) {
+                    proc->next = child;
+                    parent->child = proc;
+                } else {
+                    while (child->next && proc->pid > child->next->pid) child = child->next;
+                    proc->next = child->next;
+                    child->next = proc;
+                }
+            } else {
+                proc_node *last_child = child;
+                while (last_child->next) {
+                    last_child = last_child->next;
+                }
+                last_child->next = proc;
             }
-            last_child->next = proc;
+            
         }
     }
 }
@@ -269,7 +280,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    printProcess(&root_node);
+    //printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
