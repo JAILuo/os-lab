@@ -125,7 +125,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     node->pid = pid;
     node->ppid = ppid;
-    //pid_table[pid_index++] = pid;
 
     assert(sizeof(node->name) <= 256);
     strncpy(node->name, name, sizeof(node->name));
@@ -148,8 +147,10 @@ void add_proc_node(proc_node *proc) {
     if (proc == NULL) return;
     // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
-    if (self) return;
-
+    if (self) {
+        free(proc);
+        return;
+    }
     // 1. check proc if has parent
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
