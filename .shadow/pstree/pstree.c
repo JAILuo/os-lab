@@ -62,7 +62,7 @@ void parse_option(int argc, char *argv[]) {
 // learn from github, I have truoble in printing the whole tree
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
-    printf("%s%*s",
+    fprintf(stderr, "%s%*s",
            (proc == &root_node? "" : (proc->next ? " │ " : "   ")),
            (int) strlen(proc->name), "");
 }
@@ -77,7 +77,7 @@ void printParentProcesses(proc_node* proc) {
  * The font is directly copied from the pstree displayed in the terminal.
  */
 void printProcess(proc_node* proc) {
-    printf("%s%s%s",
+    fprintf(stderr, "%s%s%s",
            (proc == &root_node ? "" : (proc == proc->parent->child ? 
                                       (proc->next ? "─┬─" : "───") : 
                                       (proc->next ? " ├─" : " └─")
