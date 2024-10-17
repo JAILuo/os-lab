@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
 
     printProcess(&root_node);
 
-    //free_proc_tree(&root_node);
+    free_proc_tree(&root_node);
 
     return 0;
 }
