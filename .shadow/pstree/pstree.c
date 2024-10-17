@@ -15,12 +15,12 @@
 #define CHECK_DIR(c) (((c)->d_type == DT_DIR) && isdigit(*((c)->d_name)))
 
 typedef struct proc_node {
-    int pid;
-    int ppid;
     char name[256];
     struct proc_node *parent;
     struct proc_node *child;   // 指向第一个子进程
     struct proc_node *next;    // 指向下一个兄弟进程
+    int pid;
+    int ppid;
 } proc_node;
 
 static proc_node root_node = {
