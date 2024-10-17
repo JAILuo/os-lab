@@ -193,8 +193,10 @@ void free_proc_tree(proc_node *node) {
         node->next = NULL;
     }
 
-    free(node);
-    node = NULL;
+    if (node != &root_node) {
+        free(node);
+        node = NULL;
+    }
 }
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
@@ -268,7 +270,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
