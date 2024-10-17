@@ -140,7 +140,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->child = NULL;
     node->next = NULL;
 
-    printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    //printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
@@ -201,7 +201,7 @@ void free_proc_tree(proc_node *node) {
     }
 
     if (node != &root_node) {
-        printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+        //printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
         free(node);
         node = NULL;
     } else {
