@@ -150,6 +150,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 }
 
 void add_proc_node(proc_node *proc) {
+    if (proc == NULL) return;
     // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
     if (self) return;
