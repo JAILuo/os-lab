@@ -231,22 +231,22 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
     //       pid, name, process_state, ppid);
 
-    //proc_node *node = create_proc_node(pid, ppid, name);
-    //if (parent) {
-    //    //printf("parent->pid: %d\n", parent->pid);
-    //    node->ppid = parent->pid;
-    //    snprintf(node->name, sizeof(node->name), "%s", parent->name);
-    //}
-    //add_proc_node(node);
+    proc_node *node = create_proc_node(pid, ppid, name);
+    if (parent) {
+        //printf("parent->pid: %d\n", parent->pid);
+        node->ppid = parent->pid;
+        snprintf(node->name, sizeof(node->name), "%s", parent->name);
+    }
+    add_proc_node(node);
 
         // 如果 parent 不为 NULL，那么我们就不需要创建新的节点
-    if (parent) {
-        fclose(fp);
-        return NULL; // 直接返回，因为我们只是来查找 pid 的，不是来创建新节点的
-    }
-
-    proc_node *node = create_proc_node(pid, ppid, name);
-    add_proc_node(node);
+//     if (parent) {
+//         fclose(fp);
+//         return NULL; // 直接返回，因为我们只是来查找 pid 的，不是来创建新节点的
+//     }
+// 
+//     proc_node *node = create_proc_node(pid, ppid, name);
+//     add_proc_node(node);
 
     fclose(fp);
     return node;
