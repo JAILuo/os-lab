@@ -121,7 +121,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->child = NULL;
     node->next = NULL;
 
-    printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    //printf("[add node] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
