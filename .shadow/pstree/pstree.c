@@ -24,6 +24,7 @@ typedef struct proc_node {
     struct proc_node *next;    // 指向下一个兄弟进程
 } proc_node;
 
+static int pid_index = 0;
 static int pid_table[32768] = {
     1
 };
@@ -106,6 +107,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 
     node->pid = pid;
     node->ppid = ppid;
+    pid_table[pid_index++] = pid;
 
     assert(sizeof(node->name) <= 256);
         strncpy(node->name, name, sizeof(node->name));
