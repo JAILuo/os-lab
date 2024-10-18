@@ -121,7 +121,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
     if (existing_node) {
-        //printf("has added: %s\n", name);
+        printf("has added: %s\n", name);
         return NULL;
     }
 
@@ -192,7 +192,7 @@ void add_proc_node(proc_node *proc) {
  * remember not to free root_node
  */
 void free_proc_tree(proc_node *node) {
-    if (node == NULL) return;
+    if (node == NULL || node == &root_node) return;
     
     if (node->child) {
         free_proc_tree(node->child);
@@ -204,14 +204,16 @@ void free_proc_tree(proc_node *node) {
         node->next = NULL;
     }
 
-    if (node != &root_node) {
-        printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
-        free(node);
-        node = NULL;
-    } else {
-        node->child = NULL;
-        node->next = NULL;
-    }
+    printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    free(node);
+    // if (node != &root_node) {
+    //     printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    //     free(node);
+    //     node = NULL;
+    // } else {
+    //     node->child = NULL;
+    //     node->next = NULL;
+    // }
 }
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
