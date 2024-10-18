@@ -268,7 +268,7 @@ void read_proc_dir() {
             
             // multi-thread
             char child_proc[128] = {0};
-            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
+            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task/%.16s", entry->d_name, entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
