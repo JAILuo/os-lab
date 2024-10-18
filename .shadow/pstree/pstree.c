@@ -265,6 +265,7 @@ void read_proc_dir() {
             proc_node *parent = read_proc(entry->d_name, NULL);
             if (parent == NULL) continue;
             
+            // multi-thread
             char child_proc[128] = {0};
             snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
