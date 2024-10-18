@@ -121,7 +121,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
     if (existing_node) {
-        printf("has added: %s\n", name);
+        //printf("has added: %s\n", name);
         return NULL;
     }
 
@@ -273,8 +273,9 @@ void read_proc_dir() {
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
                 while ((child_entry = readdir(child_proc_dir)) != NULL ) {
-                    if (CHECK_DIR(child_entry)) 
+                    if (CHECK_DIR(child_entry)) {
                         read_proc(child_entry->d_name, parent);
+                    }
                 }
             }
             closedir(child_proc_dir);
