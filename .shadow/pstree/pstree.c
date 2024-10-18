@@ -149,7 +149,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 void add_proc_node(proc_node *proc) {
-    // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
     if (self) return;
 
@@ -157,7 +156,8 @@ void add_proc_node(proc_node *proc) {
     //    if the proc's parent dead, proc should be orphan.
     //    we don't consider this.
     proc_node *parent = find_node(proc->ppid, NULL);
-    if (parent) {
+    if (parent == NULL) return;
+    //if (parent) {
         proc->parent = parent;
         // 2. then parent if proc has child
         proc_node *child = parent->child;
@@ -183,7 +183,7 @@ void add_proc_node(proc_node *proc) {
                 last_child->next = proc;
             }
         }
-    }
+    //}
 }
 
 /**
