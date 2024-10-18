@@ -48,6 +48,7 @@ typedef struct {
 } memory_pool_t;
 memory_pool_t proc_pool;
 
+
 void memory_pool_init(memory_pool_t *pool) {
     pool->block = malloc(POOL_BLOCK_SIZE + sizeof(char *));
     if (!pool->block) {
@@ -57,7 +58,19 @@ void memory_pool_init(memory_pool_t *pool) {
     pool->free_ptr = pool->block + sizeof(char *);
     pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
     pool->next_block = NULL;
+    *(char **)(pool->block + POOL_BLOCK_SIZE) = NULL; // 初始化 next_block 为 NULL
 }
+
+// void memory_pool_init(memory_pool_t *pool) {
+//     pool->block = malloc(POOL_BLOCK_SIZE + sizeof(char *));
+//     if (!pool->block) {
+//         fprintf(stderr, "Failed to allocate memory pool block\n");
+//         exit(EXIT_FAILURE);
+//     }
+//     pool->free_ptr = pool->block + sizeof(char *);
+//     pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
+//     pool->next_block = NULL;
+// }
 
 void memory_pool_destroy(memory_pool_t *pool) {
     char *block = pool->block;
