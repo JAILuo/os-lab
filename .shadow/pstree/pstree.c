@@ -252,11 +252,12 @@ void read_proc_dir() {
     struct dirent *entry = NULL;
     while ((entry = readdir(dir)) != NULL) {
         if (CHECK_DIR(entry)) {
+            // main process or single process/thread
             proc_node *parent = read_proc(entry->d_name, NULL);
             if (parent == NULL) continue;
             
             char child_proc[128] = {0};
-            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
+            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task/%.16s", entry->d_name, entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
