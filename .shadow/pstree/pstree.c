@@ -119,11 +119,11 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 }
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
-    //proc_node *existing_node = find_node(pid, NULL);
-    //if (existing_node) {
-    //    //printf("has added: %s\n", name);
-    //    return NULL;
-    //}
+    proc_node *existing_node = find_node(pid, NULL);
+    if (existing_node) {
+        //printf("has added: %s\n", name);
+        return NULL;
+    }
 
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
@@ -191,7 +191,7 @@ void add_proc_node(proc_node *proc) {
  * remember not to free root_node
  */
 void free_proc_tree(proc_node *node) {
-    if (node == NULL || node == &root_node) return;
+    if (node == NULL) return;
     
     if (node->child) {
         free_proc_tree(node->child);
