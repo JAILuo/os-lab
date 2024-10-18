@@ -149,7 +149,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 void add_proc_node(proc_node *proc) {
-    //if (proc)  return;
     proc_node *self = find_node(proc->pid, NULL);
     if (self) return;
 
