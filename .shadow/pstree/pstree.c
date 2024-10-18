@@ -122,7 +122,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
     if (existing_node) {
         printf("has added: %s\n", name);
-        return NULL;
     }
 
     proc_node *node = malloc(sizeof(proc_node));
