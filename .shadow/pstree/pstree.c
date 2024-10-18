@@ -127,8 +127,9 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->pid = pid;
     node->ppid = ppid;
 
-    assert(sizeof(node->name) <= 256);
+    assert(strlen(name) < sizeof(node->name));
     strncpy(node->name, name, sizeof(node->name));
+    node->name[sizeof(node->name) - 1] = '\0';
     if (op_show_pids) {
         char add_pid[16] = {0};
         sprintf(add_pid, "(%d)", node->pid);
@@ -144,7 +145,6 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
 }
 
 void add_proc_node(proc_node *proc) {
-    if (proc == NULL) return;
     // 0. remove duplication
     proc_node *self = find_node(proc->pid, NULL);
     if (self) return;
@@ -232,7 +232,6 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
 
     proc_node *node = create_proc_node(pid, ppid, name);
     if (parent) {
-        //printf("parent->pid: %d\n", parent->pid);
         node->ppid = parent->pid;
         snprintf(node->name, sizeof(node->name), "%s", parent->name);
     }
