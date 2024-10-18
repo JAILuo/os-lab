@@ -216,6 +216,9 @@ void free_proc_tree(proc_node *node) {
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     char path[256] = {0};
+    char name[256] = {0};
+    char process_state = 'X';
+    int pid = 0, ppid = 0;
 
     if (parent) {
         snprintf(path, sizeof(path), "/proc/%d/task/%.16s/stat", parent->pid, proc_dir);
@@ -227,9 +230,6 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
 
-    int pid = 0, ppid = 0;
-    char name[256] = {0};
-    char process_state = 'X';
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
 
     //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
@@ -239,7 +239,6 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     if (node == NULL) {
         fclose(fp);
         return NULL;
-        // has added? how to deal with it?
     }
     if (parent) {
         node->ppid = parent->pid;
