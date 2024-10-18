@@ -160,33 +160,32 @@ void add_proc_node(proc_node *proc) {
     //    we don't consider this.
     proc_node *parent = find_node(proc->ppid, NULL);
     if (parent == NULL) return;
-    //if (parent) {
-        proc->parent = parent;
-        // 2. then parent if proc has child
-        proc_node *child = parent->child;
-        if (child == NULL) {
-            parent->child = proc;
-        } else {
-            // Parent has child, so the proc should have sibling(next)
-            // Find the last child in the list and add the new process there.
-            if (op_numeric) {
-                if (proc->pid < child->pid) {
-                    proc->next = child;
-                    parent->child = proc;
-                } else {
-                    while (child->next && proc->pid > child->next->pid) child = child->next;
-                    proc->next = child->next;
-                    child->next = proc;
-                }
+
+    // 2. then parent if proc has child
+    proc->parent = parent;
+    proc_node *child = parent->child;
+    if (child == NULL) {
+        parent->child = proc;
+    } else {
+        // Parent has child, so the proc should have sibling(next)
+        // Find the last child in the list and add the new process there.
+        if (op_numeric) {
+            if (proc->pid < child->pid) {
+                proc->next = child;
+                parent->child = proc;
             } else {
-                proc_node *last_child = child;
-                while (last_child->next) {
-                    last_child = last_child->next;
-                }
-                last_child->next = proc;
+                while (child->next && proc->pid > child->next->pid) child = child->next;
+                proc->next = child->next;
+                child->next = proc;
             }
+        } else {
+            proc_node *last_child = child;
+            while (last_child->next) {
+                last_child = last_child->next;
+            }
+            last_child->next = proc;
         }
-    //}
+    }
 }
 
 /**
