@@ -121,7 +121,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
     if (existing_node) {
-        //printf("has added: %s\n", name);
+        printf("has added: %s\n", name);
         return NULL;
     }
 
@@ -147,7 +147,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
         node->parent = find_node(ppid, NULL);
     }
 
-    //printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
@@ -268,7 +268,7 @@ void read_proc_dir() {
             
             // multi-thread
             char child_proc[128] = {0};
-            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task/%.16s", entry->d_name, entry->d_name);
+            snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
             DIR *child_proc_dir = opendir(child_proc);
             if (child_proc_dir) {
                 struct dirent *child_entry = NULL;
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    printProcess(&root_node);
+    //printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
