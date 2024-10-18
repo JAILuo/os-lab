@@ -204,16 +204,14 @@ void free_proc_tree(proc_node *node) {
         node->next = NULL;
     }
 
-    printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
-    free(node);
-    // if (node != &root_node) {
-    //     printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
-    //     free(node);
-    //     node = NULL;
-    // } else {
-    //     node->child = NULL;
-    //     node->next = NULL;
-    // }
+    if (node != &root_node) {
+        printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+        free(node);
+        node = NULL;
+    } else {
+        node->child = NULL;
+        node->next = NULL;
+    }
 }
 
 proc_node *read_proc(const char *proc_dir, proc_node *parent) {
