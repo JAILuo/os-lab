@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
