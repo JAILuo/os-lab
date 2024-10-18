@@ -143,7 +143,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->parent = NULL;
     node->child = NULL;
     node->next = NULL;
-    if (pid != 1 || pid != 2) { // If it's not the root
+    if (ppid != 0) { // If it's not the root
         node->parent = find_node(ppid, NULL);
         if (node->parent) {
             node->parent->child = node; // Add as the first child
