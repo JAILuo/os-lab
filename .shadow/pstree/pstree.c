@@ -122,6 +122,7 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
     if (existing_node) {
         printf("has added: %s\n", name);
+        return NULL;
     }
 
     proc_node *node = malloc(sizeof(proc_node));
@@ -235,6 +236,11 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     //       pid, name, process_state, ppid);
 
     proc_node *node = create_proc_node(pid, ppid, name);
+    if (node == NULL) {
+        fclose(fp);
+        return NULL;
+        // has added? how to deal with it?
+    }
     if (parent) {
         node->ppid = parent->pid;
         snprintf(node->name, sizeof(node->name), "%s", parent->name);
