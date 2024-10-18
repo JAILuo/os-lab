@@ -143,11 +143,9 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->parent = NULL;
     node->child = NULL;
     node->next = NULL;
+
     if (ppid != 0) { // If it's not the root
         node->parent = find_node(ppid, NULL);
-        if (node->parent) {
-            node->parent->child = node; // Add as the first child
-        }
     }
 
     printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
