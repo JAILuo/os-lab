@@ -120,7 +120,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
-    if (existing_node) {
+    if (existing_node && existing_node != &root_node) {
         printf("has added: %s\n", name);
         return NULL;
     }
@@ -229,7 +229,6 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     
     FILE *fp = fopen(path, "r");
     assert(fp != NULL);
-
     fscanf(fp, "%d (%255[^)]) %c %d", &pid, name, &process_state, &ppid);
 
     //printf("pid: %d  name: %s  process_stat: %c  ppid: %d\n",
