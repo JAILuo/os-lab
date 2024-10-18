@@ -37,6 +37,61 @@ const struct option table[] = {
 static bool op_show_pids = false;
 static bool op_numeric = false;
 
+#define POOL_BLOCK_SIZE 1024
+#define POOL_MAX_BLOCKS 1024
+
+typedef struct {
+    char *block;
+    char *free_ptr;
+    size_t remaining;
+    char *next_block; // 用于存储下一个块的指针
+} memory_pool_t;
+memory_pool_t proc_pool;
+
+void memory_pool_init(memory_pool_t *pool) {
+    pool->block = malloc(POOL_BLOCK_SIZE + sizeof(char *));
+    if (!pool->block) {
+        fprintf(stderr, "Failed to allocate memory pool block\n");
+        exit(EXIT_FAILURE);
+    }
+    pool->free_ptr = pool->block + sizeof(char *);
+    pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
+    pool->next_block = NULL;
+}
+
+void memory_pool_destroy(memory_pool_t *pool) {
+    char *block = pool->block;
+    while (block) {
+        char *next_block = *(char **)(block + POOL_BLOCK_SIZE);
+        free(block);
+        block = next_block;
+    }
+    pool->block = NULL;
+    pool->free_ptr = NULL;
+    pool->remaining = 0;
+    pool->next_block = NULL;
+}
+
+void *memory_pool_alloc(memory_pool_t *pool, size_t size) {
+    if (pool->remaining < size) {
+        char *new_block = malloc(POOL_BLOCK_SIZE + sizeof(char *));
+        if (!new_block) {
+            fprintf(stderr, "Failed to allocate new memory pool block\n");
+            exit(EXIT_FAILURE);
+        }
+        *(char **)(new_block + POOL_BLOCK_SIZE) = pool->block;
+        pool->block = new_block;
+        pool->free_ptr = new_block + sizeof(char *);
+        pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
+    }
+
+    void *ptr = pool->free_ptr;
+    pool->free_ptr += size;
+    pool->remaining -= size;
+    return ptr;
+}
+
+
 void parse_option(int argc, char *argv[]) {
     for (int i = 0; i < argc; i++) {
         assert(argv[i]);
@@ -125,8 +180,12 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
         return NULL;
     }
 
-    proc_node *node = malloc(sizeof(proc_node));
-    assert(node != NULL);
+    // 使用内存池而不是 malloc 分配内存
+    proc_node *node = (proc_node *)memory_pool_alloc(&proc_pool, sizeof(proc_node));
+    memset(node, 0, sizeof(proc_node));
+
+    // proc_node *node = malloc(sizeof(proc_node));
+    // assert(node != NULL);
 
     node->pid = pid;
     node->ppid = ppid;
@@ -185,33 +244,6 @@ void add_proc_node(proc_node *proc) {
             }
             last_child->next = proc;
         }
-    }
-}
-
-/**
- * the flow same as find_node, 
- * remember not to free root_node
- */
-void free_proc_tree(proc_node *node) {
-    if (node == NULL) return;
-    
-    if (node->child) {
-        free_proc_tree(node->child);
-        node->child = NULL;
-    }
-
-    if (node->next) {
-        free_proc_tree(node->next);
-        node->next = NULL;
-    }
-
-    if (node != &root_node) {
-        //printf("[free] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
-        free(node);
-        node = NULL;
-    } else {
-        node->child = NULL;
-        node->next = NULL;
     }
 }
 
@@ -287,11 +319,13 @@ void read_proc_dir() {
 int main(int argc, char *argv[]) {
     parse_option(argc, argv);
 
+    memory_pool_init(&proc_pool);
+
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
-    free_proc_tree(&root_node);
+    memory_pool_destroy(&proc_pool);
 
     return 0;
 }
