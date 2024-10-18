@@ -119,6 +119,9 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 }
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
+    proc_node *existing_node = find_node(pid, NULL);
+    if (existing_node) return NULL;
+
     proc_node *node = malloc(sizeof(proc_node));
     assert(node != NULL);
 
@@ -229,8 +232,8 @@ proc_node *read_proc(const char *proc_dir, proc_node *parent) {
     //       pid, name, process_state, ppid);
 
     proc_node *node = create_proc_node(pid, ppid, name);
+    if (node == NULL) return NULL;
     if (parent) {
-        //printf("parent->pid: %d\n", parent->pid);
         node->ppid = parent->pid;
         snprintf(node->name, sizeof(node->name), "%s", parent->name);
     }
