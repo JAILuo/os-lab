@@ -143,12 +143,11 @@ proc_node* create_proc_node(int pid, int ppid, const char *name) {
     node->parent = NULL;
     node->child = NULL;
     node->next = NULL;
-
     if (ppid != 0) { // If it's not the root
         node->parent = find_node(ppid, NULL);
     }
 
-    printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
+    //printf("[create] name: %s  pid: %d  ppid: %d\n", node->name, node->pid, node->ppid);
     return node;
 }
 
@@ -289,7 +288,7 @@ int main(int argc, char *argv[]) {
 
     read_proc_dir();
 
-    //printProcess(&root_node);
+    printProcess(&root_node);
 
     free_proc_tree(&root_node);
 
