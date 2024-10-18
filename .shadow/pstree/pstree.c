@@ -120,7 +120,7 @@ proc_node *find_node(pid_t pid, proc_node *cur) {
 
 proc_node* create_proc_node(int pid, int ppid, const char *name) {
     proc_node *existing_node = find_node(pid, NULL);
-    if (existing_node && existing_node != &root_node) {
+    if (existing_node) {
         printf("has added: %s\n", name);
         return NULL;
     }
