@@ -116,55 +116,39 @@ void parse_option(int argc, char *argv[]) {
 }
 
 
+// learn from github, I have truoble in printing the whole tree
+void printParentProcesses(proc_node* proc) {
+    if (proc->parent) printParentProcesses(proc->parent);
+    fprintf(stderr, "%s%*s",
+           (proc == &root_node? "" : (proc->next ? " │ " : "   ")),
+           (int) strlen(proc->name), "");
+}
+
+/**
+ * Traverse the process tree.(preorder traversal)
+ * if proc is root_node, print nothing,
+ * else if proc is the first child, and if it has a sibling,     print─┬─, else───
+ * else if proc is not the first child, and if it has a sibling, print ├─, else └─
+ * notice the space
+ *
+ * The font is directly copied from the pstree displayed in the terminal.
+ */
 void printProcess(proc_node* proc) {
-    // 合并 printProcess 和 printParentProcesses 的逻辑
-    if (proc->parent) printProcess(proc->parent);
     fprintf(stderr, "%s%s%s",
-           (proc == &root_node || !proc->parent ? "" : (proc->parent->child == proc && proc->parent->next ? " │ " : "   ")),
-           (proc == &root_node ? "" : (proc == proc->parent->child ?
-                                      (proc->next ? "─┬─" : "───") :
+           (proc == &root_node ? "" : (proc == proc->parent->child ? 
+                                      (proc->next ? "─┬─" : "───") : 
                                       (proc->next ? " ├─" : " └─")
                                      )),
            proc->name,
            proc->child ? "" : "\n");
 
+    // order same as find_process
     if (proc->child) printProcess(proc->child);
-    if (proc->next) printProcess(proc->next);
+    if (proc->next) {
+        if (proc->next->parent) printParentProcesses(proc->next->parent);
+        printProcess(proc->next);
+    }
 }
-
-// // learn from github, I have truoble in printing the whole tree
-// void printParentProcesses(proc_node* proc) {
-//     if (proc->parent) printParentProcesses(proc->parent);
-//     fprintf(stderr, "%s%*s",
-//            (proc == &root_node? "" : (proc->next ? " │ " : "   ")),
-//            (int) strlen(proc->name), "");
-// }
-// 
-// /**
-//  * Traverse the process tree.(preorder traversal)
-//  * if proc is root_node, print nothing,
-//  * else if proc is the first child, and if it has a sibling,     print─┬─, else───
-//  * else if proc is not the first child, and if it has a sibling, print ├─, else └─
-//  * notice the space
-//  *
-//  * The font is directly copied from the pstree displayed in the terminal.
-//  */
-// void printProcess(proc_node* proc) {
-//     fprintf(stderr, "%s%s%s",
-//            (proc == &root_node ? "" : (proc == proc->parent->child ? 
-//                                       (proc->next ? "─┬─" : "───") : 
-//                                       (proc->next ? " ├─" : " └─")
-//                                      )),
-//            proc->name,
-//            proc->child ? "" : "\n");
-// 
-//     // order same as find_process
-//     if (proc->child) printProcess(proc->child);
-//     if (proc->next) {
-//         if (proc->next->parent) printParentProcesses(proc->next->parent);
-//         printProcess(proc->next);
-//     }
-// }
 
 proc_node *find_node(pid_t pid, proc_node *cur) {
     if (cur == NULL) cur = &root_node;
