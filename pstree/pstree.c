@@ -45,10 +45,6 @@ typedef struct {
     char *block;
     char *free_ptr;
     size_t remaining;
-<<<<<<< HEAD
-=======
-    char *next_block; // 用于存储下一个块的指针
->>>>>>> 755fae6 (improve code by simple memory pool)
 } memory_pool_t;
 memory_pool_t proc_pool;
 
@@ -60,11 +56,6 @@ void memory_pool_init(memory_pool_t *pool) {
     }
     pool->free_ptr = pool->block + sizeof(char *);
     pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
-<<<<<<< HEAD
-=======
-    pool->next_block = NULL;
-    *(char **)(pool->block + POOL_BLOCK_SIZE) = NULL; // 初始化 next_block 为 NULL
->>>>>>> 755fae6 (improve code by simple memory pool)
 }
 
 void memory_pool_destroy(memory_pool_t *pool) {
@@ -77,10 +68,6 @@ void memory_pool_destroy(memory_pool_t *pool) {
     pool->block = NULL;
     pool->free_ptr = NULL;
     pool->remaining = 0;
-<<<<<<< HEAD
-=======
-    pool->next_block = NULL;
->>>>>>> 755fae6 (improve code by simple memory pool)
 }
 
 void *memory_pool_alloc(memory_pool_t *pool, size_t size) {
@@ -310,10 +297,7 @@ void read_proc_dir() {
             proc_node *parent = read_proc(entry->d_name, NULL);
             if (parent == NULL) continue;
             
-<<<<<<< HEAD
             // notice that thread is a special process in Linux
-=======
->>>>>>> 755fae6 (improve code by simple memory pool)
             // multi-thread
             char child_proc[128] = {0};
             snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
