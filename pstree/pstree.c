@@ -115,6 +115,7 @@ void parse_option(int argc, char *argv[]) {
     }
 }
 
+
 // learn from github, I have truoble in printing the whole tree
 void printParentProcesses(proc_node* proc) {
     if (proc->parent) printParentProcesses(proc->parent);
@@ -300,6 +301,7 @@ void read_proc_dir() {
             proc_node *parent = read_proc(entry->d_name, NULL);
             if (parent == NULL) continue;
             
+            // notice that thread is a special process in Linux
             // multi-thread
             char child_proc[128] = {0};
             snprintf(child_proc, sizeof(child_proc), "/proc/%.16s/task", entry->d_name);
