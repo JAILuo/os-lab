@@ -45,7 +45,6 @@ typedef struct {
     char *block;
     char *free_ptr;
     size_t remaining;
-    char *next_block; // 用于存储下一个块的指针
 } memory_pool_t;
 memory_pool_t proc_pool;
 
@@ -57,8 +56,7 @@ void memory_pool_init(memory_pool_t *pool) {
     }
     pool->free_ptr = pool->block + sizeof(char *);
     pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
-    pool->next_block = NULL;
-    *(char **)(pool->block + POOL_BLOCK_SIZE) = NULL; // 初始化 next_block 为 NULL
+    //*(char **)(pool->block + POOL_BLOCK_SIZE) = NULL; // 初始化 next_block 为 NULL
 }
 
 void memory_pool_destroy(memory_pool_t *pool) {
@@ -71,7 +69,6 @@ void memory_pool_destroy(memory_pool_t *pool) {
     pool->block = NULL;
     pool->free_ptr = NULL;
     pool->remaining = 0;
-    pool->next_block = NULL;
 }
 
 void *memory_pool_alloc(memory_pool_t *pool, size_t size) {
