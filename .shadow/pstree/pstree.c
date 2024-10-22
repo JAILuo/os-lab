@@ -56,7 +56,6 @@ void memory_pool_init(memory_pool_t *pool) {
     }
     pool->free_ptr = pool->block + sizeof(char *);
     pool->remaining = POOL_BLOCK_SIZE - sizeof(char *);
-    //*(char **)(pool->block + POOL_BLOCK_SIZE) = NULL; // 初始化 next_block 为 NULL
 }
 
 void memory_pool_destroy(memory_pool_t *pool) {
