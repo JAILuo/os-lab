@@ -45,6 +45,7 @@ void splash() {
   ioe_read(AM_GPU_CONFIG, &info);
   w = info.width;
   h = info.height;
+  printf("w: %d h: %d\n", w, h);
 
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
@@ -55,10 +56,9 @@ void splash() {
   }
 }
 
-void Draw_BMP(int x, int y, int w, int h, unsigned char bmp[]) {
-
-
-    io_write(AM_GPU_FBDRAW, x, y, (void *)bmp, w, h, true);
+extern unsigned char test_jpg[];
+void Draw_BMP(int x, int y, int w, int h) {
+    io_write(AM_GPU_FBDRAW, x, y, (void *)test_jpg, w, h, true);
 }
 
 // Operating system is a C program!
@@ -75,6 +75,7 @@ int main(const char *args) {
   while (1) {
     print_key();
 
+    //Draw_BMP(0, 0);
   }
   return 0;
 }
