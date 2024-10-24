@@ -2,6 +2,7 @@
 #include <amdev.h>
 #include <klib.h>
 #include <klib-macros.h>
+#include <stdbool.h>
 
 #define SIDE 16
 
@@ -47,15 +48,17 @@ void splash() {
 
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
-      if ((x & 1) ^ (y & 1)) {
+      //if ((x & 1) ^ (y & 1)) {
         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-      }
+      //}
     }
   }
 }
 
 void Draw_BMP(int x, int y, int w, int h, unsigned char bmp[]) {
 
+
+    io_write(AM_GPU_FBDRAW, x, y, (void *)bmp, w, h, true);
 }
 
 // Operating system is a C program!
