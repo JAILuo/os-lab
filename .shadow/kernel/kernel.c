@@ -16,14 +16,14 @@ static inline void puts(const char *s) {
 }
 
 void print_key() {
-    AM_INPUT_KEYBRD_T event = { .keycode = AM_KEY_NONE };
-    ioe_read(AM_INPUT_KEYBRD, &event);
-    if (event.keydown && event.keycode == AM_KEY_ESCAPE) halt(0);
-    if (event.keycode != AM_KEY_NONE && event.keydown) {
-        puts("Key pressed: ");
-        puts(key_names[event.keycode]);
-        puts("\n");
-    }
+  AM_INPUT_KEYBRD_T event = { .keycode = AM_KEY_NONE };
+  ioe_read(AM_INPUT_KEYBRD, &event);
+  if (event.keydown && event.keycode == AM_KEY_ESCAPE) halt(0);
+  if (event.keycode != AM_KEY_NONE && event.keydown) {
+    puts("Key pressed: ");
+    puts(key_names[event.keycode]);
+    puts("\n");
+  }
 }
 
 static void draw_tile(int x, int y, int w, int h, uint32_t color) {
