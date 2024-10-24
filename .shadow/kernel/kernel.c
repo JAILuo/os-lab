@@ -43,9 +43,8 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color) {
 void splash() {
   AM_GPU_CONFIG_T info = {0};
   ioe_read(AM_GPU_CONFIG, &info);
-  w = info.width;
-  h = info.height;
-  printf("w: %d h: %d\n", w, h);
+  w = info.width; // 640
+  h = info.height; //480
 
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
@@ -75,7 +74,7 @@ int main(const char *args) {
   while (1) {
     print_key();
 
-    //Draw_BMP(0, 0);
+    Draw_BMP(0, 0, 640, 480);
   }
   return 0;
 }
