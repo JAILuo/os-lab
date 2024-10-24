@@ -18,14 +18,15 @@ static inline void puts(const char *s) {
 void print_key() {
   AM_INPUT_KEYBRD_T event = { .keycode = AM_KEY_NONE };
   ioe_read(AM_INPUT_KEYBRD, &event);
-  if (event.keydown && event.keycode == AM_KEY_ESCAPE) halt(0);
   if (event.keycode != AM_KEY_NONE && event.keydown) {
     puts("Key pressed: ");
     puts(key_names[event.keycode]);
     puts("\n");
   }
+  if (event.keydown && event.keycode == AM_KEY_ESCAPE) halt(0);
 }
 
+// draw one pixels
 static void draw_tile(int x, int y, int w, int h, uint32_t color) {
   uint32_t pixels[w * h]; // WARNING: large stack-allocated memory
   AM_GPU_FBDRAW_T event = {
@@ -46,7 +47,7 @@ void splash() {
 
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
-      if (!((x & 1) ^ (y & 1))) {
+      if ((x & 1) ^ (y & 1)) {
         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
       }
     }
@@ -70,6 +71,7 @@ int main(const char *args) {
   puts("Press any key to see its key code...\n");
   while (1) {
     print_key();
+
   }
   return 0;
 }
