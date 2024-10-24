@@ -43,7 +43,6 @@ void splash() {
   ioe_read(AM_GPU_CONFIG, &info);
   w = info.width;
   h = info.height;
-  printf("w: %d, h: %d\n", w, h);
 
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
@@ -52,6 +51,10 @@ void splash() {
       }
     }
   }
+}
+
+void Draw_BMP(int x, int y, int w, int h, unsigned char bmp[]) {
+
 }
 
 // Operating system is a C program!
