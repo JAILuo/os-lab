@@ -48,26 +48,26 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color) {
   ioe_write(AM_GPU_FBDRAW, &event);
 }
 
-void splash() {
-  // AM_GPU_CONFIG_T info = {0};
-  // ioe_read(AM_GPU_CONFIG, &info);
-  // w = info.width; // 640
-  // h = info.height; //480
-  
-  int w, h;
-  get_screen_size(&w, &h);
-
-  for (int x = 0; x * SIDE <= w; x++) {
-    for (int y = 0; y * SIDE <= h; y++) {
-      if ((x & 1) ^ (y & 1)) {
-        draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-        for (int i = 0; i < 1000; i++) {
-            printf("tes.......\n");
-        }
-      }
-    }
-  }
-}
+// void splash() {
+//   // AM_GPU_CONFIG_T info = {0};
+//   // ioe_read(AM_GPU_CONFIG, &info);
+//   // w = info.width; // 640
+//   // h = info.height; //480
+//   
+//   int w, h;
+//   get_screen_size(&w, &h);
+// 
+//   for (int x = 0; x * SIDE <= w; x++) {
+//     for (int y = 0; y * SIDE <= h; y++) {
+//       if ((x & 1) ^ (y & 1)) {
+//         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
+//         for (int i = 0; i < 1000; i++) {
+//             printf("tes.......\n");
+//         }
+//       }
+//     }
+//   }
+// }
 
 extern unsigned char test_jpg[];
 extern unsigned int test_jpg_len;
@@ -116,10 +116,14 @@ void draw_image(const unsigned char* src,
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int idx = y * src_width + x;
-            unsigned char r = src[idx * 3];
+            unsigned char r = src[idx * 3 + 2];
             unsigned char g = src[idx * 3 + 1];
-            unsigned char b = src[idx * 3 + 2];
+            unsigned char b = src[idx * 3];
             src_pixels[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+            // unsigned char r = src[idx * 3];
+            // unsigned char g = src[idx * 3 + 1];
+            // unsigned char b = src[idx * 3 + 2];
+            // src_pixels[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
     }
 
