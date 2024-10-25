@@ -74,7 +74,10 @@ extern unsigned int test_jpg_len;
 
 /**
  * 1. 将xxd得到图片像素数据
- * 2. 绘制图片
+ *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样？
+ *      ARGB、ABGR...
+ * 2. 缩放
+ * 3. 绘制图片
  */
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
@@ -98,6 +101,7 @@ void draw_image(const unsigned char* src,
                 int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
+    printf("w: %d  h: %d\n", screen_w, screen_h);
 
     // 分配内存来存储缩放后的像素数据
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
@@ -138,10 +142,6 @@ void draw_image(const unsigned char* src,
     free(src_pixels);
     free(dst_pixels);
 }
-
-// The (0,0) is at the top-left corner of the screen
-// and the order of rgb is actually bgr. https://blog.csdn.net/weixin_40437029/article/details/117530796
-// This function display a half-decoded BMP image
 
 // Operating system is a C program!
 int main(const char *args) {
