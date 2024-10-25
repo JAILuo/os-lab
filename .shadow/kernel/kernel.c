@@ -65,6 +65,25 @@ void vga_init() {
     h = info.height; //480
 }
 
+void Draw_BMP(int x, int y, int w, int h, uint32_t *pixels){
+    //AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
+    //int width = info.width;
+
+    // for (int row = 0; row < h; row++) {
+    //     //int offset = (y + row) * screen_w + x;
+    //     
+    //     size_t offset = (size_t)pixels + (row * w);
+    //     int y = offset / width;
+    //     int x = offset - y * width;
+
+    //     AM_GPU_FBDRAW_T event = {
+    //         .x = x, .y = y, .w = w, .h = 1, .sync = true,
+    //         .pixels = pixels,
+    //     };
+    //     ioe_write(AM_GPU_FBDRAW, &event);
+    // }
+}
+
 // The (0,0) is at the top-left corner of the screen
 // and the order of rgb is actually bgr. https://blog.csdn.net/weixin_40437029/article/details/117530796
 // This function display a half-decoded BMP image
@@ -101,26 +120,6 @@ void draw_image(const unsigned char* image_data, int image_width, int image_heig
   }
 }
 
-void Draw_BMP(int x, int y, int w, int h, uint32_t *pixels){
-    //AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
-    //int width = info.width;
-
-    // for (int row = 0; row < h; row++) {
-    //     //int offset = (y + row) * screen_w + x;
-    //     
-    //     size_t offset = (size_t)pixels + (row * w);
-    //     int y = offset / width;
-    //     int x = offset - y * width;
-
-    //     AM_GPU_FBDRAW_T event = {
-    //         .x = x, .y = y, .w = w, .h = 1, .sync = true,
-    //         .pixels = pixels,
-    //     };
-    //     ioe_write(AM_GPU_FBDRAW, &event);
-    // }
-}
-
-
 extern unsigned char test_jpg[];
 
 // Operating system is a C program!
@@ -133,10 +132,7 @@ int main(const char *args) {
 
   splash();
 
-  draw_image(test_jpg, 800, 600);
-
-  //Draw_BMP(0, 0, 640, 480, (uint32_t *)test_jpg);
-  //draw_pic(0, 0, 480, 640, (uint32_t *)test_jpg);
+  draw_image(test_jpg, w, h);
 
   puts("Press any key to see its key code...\n");
   while (1) {
