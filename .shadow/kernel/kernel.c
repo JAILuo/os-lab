@@ -116,14 +116,10 @@ void draw_image(const unsigned char* src,
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int idx = y * src_width + x;
-            unsigned char r = src[idx * 3 + 2];
+            unsigned char r = src[idx * 3];
             unsigned char g = src[idx * 3 + 1];
-            unsigned char b = src[idx * 3];
+            unsigned char b = src[idx * 3 + 2];
             src_pixels[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
-            // unsigned char r = src[idx * 3];
-            // unsigned char g = src[idx * 3 + 1];
-            // unsigned char b = src[idx * 3 + 2];
-            // src_pixels[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
     }
 
