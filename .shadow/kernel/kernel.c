@@ -52,7 +52,6 @@ void splash() {
     for (int y = 0; y * SIDE <= h; y++) {
       if ((x & 1) ^ (y & 1)) {
         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-        //draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0x000000); // white
       }
     }
   }
@@ -134,6 +133,7 @@ int main(const char *args) {
   splash();
 
   draw_image(test_jpg, w, h);
+  splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
