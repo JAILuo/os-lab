@@ -8,7 +8,7 @@
 
 #define SIDE 16
 
-static int w, h;  // Screen size
+//static int w, h;  // Screen size
 
 #define KEYNAME(key) \
   [AM_KEY_##key] = #key,
@@ -29,7 +29,13 @@ void print_key() {
   if (event.keydown && event.keycode == AM_KEY_ESCAPE) halt(0);
 }
 
-// draw one pixels
+void get_screen_size(int *w, int *h) {
+    AM_GPU_CONFIG_T info = {0};
+    ioe_read(AM_GPU_CONFIG, &info);
+    *w = info.width; // 640
+    *h = info.height; //480
+}
+
 static void draw_tile(int x, int y, int w, int h, uint32_t color) {
   uint32_t pixels[w * h]; // WARNING: large stack-allocated memory
   AM_GPU_FBDRAW_T event = {
@@ -43,10 +49,13 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color) {
 }
 
 void splash() {
-  AM_GPU_CONFIG_T info = {0};
-  ioe_read(AM_GPU_CONFIG, &info);
-  w = info.width; // 640
-  h = info.height; //480
+  // AM_GPU_CONFIG_T info = {0};
+  // ioe_read(AM_GPU_CONFIG, &info);
+  // w = info.width; // 640
+  // h = info.height; //480
+  
+  int w, h;
+  get_screen_size(&w, &h);
 
   for (int x = 0; x * SIDE <= w; x++) {
     for (int y = 0; y * SIDE <= h; y++) {
@@ -60,12 +69,6 @@ void splash() {
   }
 }
 
-void vga_init() {
-    AM_GPU_CONFIG_T info = {0};
-    ioe_read(AM_GPU_CONFIG, &info);
-    w = info.width; // 640
-    h = info.height; //480
-}
 
 #define N 32
 uint32_t color_buf[32 * 32];
@@ -73,19 +76,71 @@ uint32_t canvas[32][32];
 extern unsigned char test_jpg[];
 extern unsigned int test_jpg_len;
 
-void Draw_BMP() {
-    io_write(AM_GPU_FBDRAW, 0, 0, test_jpg, w, h, false);
-    io_write(AM_GPU_FBDRAW, 0, 0, NULL, 0, 0, true);
+/**
+ * 1. 将xxd得到图片像素数据
+ * 2. 绘制图片
+ *
+ */
 
-    // for (int y = 0; y < N; y ++) {
-    //     for (int x = 0; x < N; x ++) {
-    //         for (int k = 0; k < w * h; k ++) {
-    //             color_buf[k] = canvas[y][x];
-    //         }
-    //         io_write(AM_GPU_FBDRAW, x * w, y * h, color_buf, w, h, false);
-    //     }
-    // }
-    // io_write(AM_GPU_FBDRAW, 0, 0, NULL, 0, 0, true);
+void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
+                  uint32_t* dst_pixels, int dst_width, int dst_height) {
+    float x_scale = (float)src_width / dst_width;
+    float y_scale = (float)src_height / dst_height;
+
+    for (int y = 0; y < dst_height; y++) {
+        for (int x = 0; x < dst_width; x++) {
+            // Calculate the corresponding position in the source image
+            int src_x = (int)(x * x_scale);
+            int src_y = (int)(y * y_scale);
+
+            // Copy the pixel value from the source image to the destination image
+            dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
+        }
+    }
+}
+
+void draw_image(const unsigned char* src, int src_width, int src_height, int dst_x, int dst_y) {
+    int screen_w, screen_h;
+    get_screen_size(&screen_w, &screen_h);
+
+    // 分配内存来存储缩放后的像素数据
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
+    if (!dst_pixels) {
+        printf("Memory allocation failed\n");
+        return;
+    }
+
+    // 将图片数据转换为32位ARGB格式
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
+    if (!src_pixels) {
+        printf("Memory allocation failed\n");
+        free(dst_pixels);
+        return;
+    }
+    for (int y = 0; y < src_height; y++) {
+        for (int x = 0; x < src_width; x++) {
+            int idx = y * src_width + x;
+            unsigned char r = src[idx * 3];
+            unsigned char g = src[idx * 3 + 1];
+            unsigned char b = src[idx * 3 + 2];
+            src_pixels[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+        }
+    }
+
+    // 缩放图片
+    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
+
+    // 绘制图片
+    for (int y = 0; y < screen_h; y++) {
+        for (int x = 0; x < screen_w; x++) {
+            uint32_t color = dst_pixels[y * screen_w + x];
+            draw_tile(dst_x + x, dst_y + y, 1, 1, color);
+        }
+    }
+
+    // 释放内存
+    free(src_pixels);
+    free(dst_pixels);
 }
 
 // The (0,0) is at the top-left corner of the screen
@@ -95,13 +150,12 @@ void Draw_BMP() {
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
-  vga_init();
 
   puts("mainargs = \"");
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  splash();
+  //splash();
 
   //Draw_BMP();
 
