@@ -52,8 +52,8 @@ void splash() {
     for (int y = 0; y * SIDE <= h; y++) {
       if ((x & 1) ^ (y & 1)) {
         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-        for (int i = 0; i < 1000000; i++) {
-            printf("tes.............\n");
+        for (int i = 0; i < 1000; i++) {
+            printf("tes.......\n");
         }
       }
     }
