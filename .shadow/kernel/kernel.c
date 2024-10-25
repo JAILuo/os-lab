@@ -125,6 +125,7 @@ extern unsigned char test_jpg[];
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
+  vga_init();
 
   puts("mainargs = \"");
   puts(args);  // make run mainargs=xxx
