@@ -124,7 +124,7 @@ void draw_image(const unsigned char* src,
     }
 
     // 缩放图片
-    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
+    //resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
