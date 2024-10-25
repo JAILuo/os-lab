@@ -69,17 +69,12 @@ void splash() {
   }
 }
 
-
-#define N 32
-uint32_t color_buf[32 * 32];
-uint32_t canvas[32][32];
 extern unsigned char test_jpg[];
 extern unsigned int test_jpg_len;
 
 /**
  * 1. 将xxd得到图片像素数据
  * 2. 绘制图片
- *
  */
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
@@ -156,6 +151,8 @@ int main(const char *args) {
   puts("\"\n");
 
   //splash();
+
+  draw_image(test_jpg, 640, 480, 0, 0);
 
   //Draw_BMP();
 
