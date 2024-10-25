@@ -134,6 +134,7 @@ int main(const char *args) {
   splash();
 
   draw_image(test_jpg, w, h);
+  splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
