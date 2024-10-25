@@ -94,7 +94,8 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
     }
 }
 
-void draw_image(const unsigned char* src, int src_width, int src_height, int dst_x, int dst_y) {
+void draw_image(const unsigned char* src, 
+                int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
@@ -152,7 +153,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 640, 480, 0, 0);
+  draw_image(test_jpg, 0, 0, 100,400);
 
   //Draw_BMP();
 
