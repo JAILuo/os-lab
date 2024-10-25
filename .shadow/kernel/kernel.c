@@ -152,7 +152,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 0, 0);
+  draw_image(test_jpg, 0, 0, 10, 10);
 
   //Draw_BMP();
 
