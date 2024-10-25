@@ -89,7 +89,7 @@ int main(const char *args) {
 
   splash();
 
-  Draw_BMP(0, 0, 800, 600, (uint32_t *)test_jpg);
+  Draw_BMP(0, 0, 400, 300, (uint32_t *)test_jpg);
 
   puts("Press any key to see its key code...\n");
   while (1) {
