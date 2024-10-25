@@ -61,9 +61,6 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color) {
 //     for (int y = 0; y * SIDE <= h; y++) {
 //       if ((x & 1) ^ (y & 1)) {
 //         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-//         for (int i = 0; i < 1000; i++) {
-//             printf("tes.......\n");
-//         }
 //       }
 //     }
 //   }
@@ -127,7 +124,7 @@ void draw_image(const unsigned char* src,
     }
 
     // 缩放图片
-    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
+    //resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
