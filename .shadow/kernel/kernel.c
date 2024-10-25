@@ -66,26 +66,42 @@ void vga_init() {
 
 }
 
-void Draw_BMP(int x, int y, int w, int h, uint32_t *pixels){
-    AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
-    int width = info.width;
+void draw_pic(int x, int y, int w, int h, uint32_t *pixel){
 
-    for (int row = 0; row < h; row++) {
-        //int offset = (y + row) * screen_w + x;
-        
-        size_t offset = (size_t)pixels + (row * w);
-        int y = offset / width;
-        int x = offset - y * width;
+  AM_GPU_CONFIG_T info = {0};
+  ioe_read(AM_GPU_CONFIG, &info);
+  w = info.width;
+  h = info.height;
 
-        AM_GPU_FBDRAW_T event = {
-            .x = x, .y = y, .w = w, .h = 1, .sync = true,
-            .pixels = pixels,
-        };
-        ioe_write(AM_GPU_FBDRAW, &event);
-    }
+  AM_GPU_FBDRAW_T event = {
+    .x = x, .y = y, .w = w, .h = h, .sync = 1,
+    .pixels = pixel,
+  };
+  ioe_write(AM_GPU_FBDRAW, &event);
 }
 
+// void Draw_BMP(int x, int y, int w, int h, uint32_t *pixels){
+//     AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
+//     int width = info.width;
+// 
+//     for (int row = 0; row < h; row++) {
+//         //int offset = (y + row) * screen_w + x;
+//         
+//         size_t offset = (size_t)pixels + (row * w);
+//         int y = offset / width;
+//         int x = offset - y * width;
+// 
+//         AM_GPU_FBDRAW_T event = {
+//             .x = x, .y = y, .w = w, .h = 1, .sync = true,
+//             .pixels = pixels,
+//         };
+//         ioe_write(AM_GPU_FBDRAW, &event);
+//     }
+// }
+
+
 extern unsigned char test_jpg[];
+
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
@@ -96,7 +112,8 @@ int main(const char *args) {
 
   splash();
 
-  Draw_BMP(0, 0, 640, 480, (uint32_t *)test_jpg);
+  //Draw_BMP(0, 0, 640, 480, (uint32_t *)test_jpg);
+  draw_pic(0, 0, 640, 480, (uint32_t *)test_jpg);
 
   puts("Press any key to see its key code...\n");
   while (1) {
