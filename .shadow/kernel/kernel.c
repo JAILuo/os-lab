@@ -68,8 +68,8 @@ void vga_init() {
 void Draw_BMP(int x, int y, int w, int h, uint32_t *pixel){
     AM_GPU_CONFIG_T info = {0};
     ioe_read(AM_GPU_CONFIG, &info);
-    w = info.width;
-    h = info.height;
+    //w = info.width;
+    //h = info.height;
 
     AM_GPU_FBDRAW_T event = {
         .x = x, .y = y, .w = w, .h = h, .sync = true,
@@ -79,7 +79,6 @@ void Draw_BMP(int x, int y, int w, int h, uint32_t *pixel){
 }
 
 extern unsigned char test_jpg[];
-
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
