@@ -100,19 +100,22 @@ void draw_image(const unsigned char* src,
     get_screen_size(&screen_w, &screen_h);
 
     // 分配内存来存储缩放后的像素数据
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
-    if (!dst_pixels) {
-        printf("Memory allocation failed\n");
-        return;
-    }
+    // uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
+    // if (!dst_pixels) {
+    //     printf("Memory allocation failed\n");
+    //     return;
+    // }
+    uint32_t dst_pixels[screen_w * screen_h];
 
     // 将图片数据转换为32位ARGB格式
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
-    if (!src_pixels) {
-        printf("Memory allocation failed\n");
-        free(dst_pixels);
-        return;
-    }
+    // uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
+    // if (!src_pixels) {
+    //     printf("Memory allocation failed\n");
+    //     free(dst_pixels);
+    //     return;
+    // }
+    uint32_t src_pixels[src_width * src_height];
+
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int idx = y * src_width + x;
@@ -124,7 +127,7 @@ void draw_image(const unsigned char* src,
     }
 
     // 缩放图片
-    //resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
+    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
@@ -149,7 +152,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 8, 6);
+  draw_image(test_jpg, 0, 0, 1024, 682);
 
   //Draw_BMP();
 
