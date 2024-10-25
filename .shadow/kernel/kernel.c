@@ -3,6 +3,7 @@
 #include <klib.h>
 #include <klib-macros.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define SIDE 16
 
@@ -46,7 +47,7 @@ void splash() {
   w = info.width; // 640
   h = info.height; //480
 
-  for (int x = 0; x * SIDE <= w; x ++) {
+  for (int x = 0; x * SIDE <= w; x++) {
     for (int y = 0; y * SIDE <= h; y++) {
       //if ((x & 1) ^ (y & 1)) {
         //draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
@@ -56,10 +57,28 @@ void splash() {
   }
 }
 
-extern unsigned char test_jpg[];
-void Draw_BMP(int x, int y, int w, int h) {
-    io_write(AM_GPU_FBDRAW, x, y, (void *)test_jpg, w, h, true);
+void vga_init() {
+    AM_GPU_CONFIG_T info = {0};
+    ioe_read(AM_GPU_CONFIG, &info);
+    w = info.width; // 640
+    h = info.height; //480
+
 }
+
+void Draw_BMP(int x, int y, int w, int h, uint32_t *pixel){
+    AM_GPU_CONFIG_T info = {0};
+    ioe_read(AM_GPU_CONFIG, &info);
+    w = info.width;
+    h = info.height;
+
+    AM_GPU_FBDRAW_T event = {
+        .x = x, .y = y, .w = w, .h = h, .sync = true,
+        .pixels = pixel,
+    };
+    ioe_write(AM_GPU_FBDRAW, &event);
+}
+
+extern unsigned char test_jpg[];
 
 // Operating system is a C program!
 int main(const char *args) {
@@ -71,11 +90,11 @@ int main(const char *args) {
 
   splash();
 
+  Draw_BMP(0, 0, 640, 480, (uint32_t *)test_jpg);
+
   puts("Press any key to see its key code...\n");
   while (1) {
     print_key();
-
-    Draw_BMP(0, 0, 640, 480);
   }
   return 0;
 }
