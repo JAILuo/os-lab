@@ -101,7 +101,6 @@ void draw_image(const unsigned char* src,
                 int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
-    printf("w: %d  h: %d\n", screen_w, screen_h);
 
     // 分配内存来存储缩放后的像素数据
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
@@ -153,7 +152,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 640, 480);
+  draw_image(test_jpg, 0, 0, 64, 48);
 
   //Draw_BMP();
 
