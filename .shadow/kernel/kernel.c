@@ -100,8 +100,7 @@ int main(const char *args) {
 
   splash();
 
-  Draw_BMP();
-  splash();
+  //Draw_BMP();
 
   puts("Press any key to see its key code...\n");
   while (1) {
