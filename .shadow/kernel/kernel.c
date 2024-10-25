@@ -101,11 +101,9 @@ void draw_image(const unsigned char* image_data, int image_width, int image_heig
   }
 }
 
-
 void Draw_BMP(int x, int y, int w, int h, uint32_t *pixels){
     //AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
     //int width = info.width;
-
 
     // for (int row = 0; row < h; row++) {
     //     //int offset = (y + row) * screen_w + x;
@@ -135,7 +133,7 @@ int main(const char *args) {
 
   splash();
 
-  draw_image(test_jpg, 1024, 682);
+  draw_image(test_jpg, 800, 600);
 
   //Draw_BMP(0, 0, 640, 480, (uint32_t *)test_jpg);
   //draw_pic(0, 0, 480, 640, (uint32_t *)test_jpg);
