@@ -108,7 +108,7 @@ void draw_image(const unsigned char* src,
     get_screen_size(&screen_w, &screen_h);
 
     // 分配内存来存储缩放后的像素数据
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h);
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
@@ -116,7 +116,7 @@ void draw_image(const unsigned char* src,
     printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * sizeof(uint32_t));
 
     // 将图片数据转换为32位ARGB格式
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height);
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
@@ -140,7 +140,7 @@ void draw_image(const unsigned char* src,
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
-            draw_tile(dst_x + x, dst_y + y, 1, 1, color);
+            draw_tile(SIDE *(dst_x + x), SIDE *(dst_y + y), 1, 1, color);
             //printf("x * y = %d\n", x * y);
         }
     }
@@ -160,7 +160,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 640, 480);
+  draw_image(test_jpg, 0, 0, 160, 120);
 
   puts("Press any key to see its key code...\n");
   while (1) {
