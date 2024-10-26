@@ -122,7 +122,7 @@ void draw_image(const unsigned char* src,
         free(dst_pixels);
         return;
     }
-    printf("src_width * src_height * 4\n", src_width * src_height * sizeof(uint32_t));
+    printf("src_width * src_height * 4: %d\n", src_width * src_height * sizeof(uint32_t));
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
