@@ -48,23 +48,23 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color) {
   ioe_write(AM_GPU_FBDRAW, &event);
 }
 
-// void splash() {
-//   // AM_GPU_CONFIG_T info = {0};
-//   // ioe_read(AM_GPU_CONFIG, &info);
-//   // w = info.width; // 640
-//   // h = info.height; //480
-//   
-//   int w, h;
-//   get_screen_size(&w, &h);
-// 
-//   for (int x = 0; x * SIDE <= w; x++) {
-//     for (int y = 0; y * SIDE <= h; y++) {
-//       if ((x & 1) ^ (y & 1)) {
-//         draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
-//       }
-//     }
-//   }
-// }
+void splash() {
+  // AM_GPU_CONFIG_T info = {0};
+  // ioe_read(AM_GPU_CONFIG, &info);
+  // w = info.width; // 640
+  // h = info.height; //480
+  
+  int w, h;
+  get_screen_size(&w, &h);
+
+  for (int x = 0; x * SIDE <= w; x++) {
+    for (int y = 0; y * SIDE <= h; y++) {
+      if ((x & 1) ^ (y & 1)) {
+        draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff); // white
+      }
+    }
+  }
+}
 
 extern unsigned char test_jpg[];
 extern unsigned int test_jpg_len;
@@ -172,9 +172,10 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  //splash();
+  splash();
 
   draw_image(test_jpg, 0, 0, 640, 480);
+  splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
