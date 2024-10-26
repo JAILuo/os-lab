@@ -102,6 +102,12 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
     }
 }
 
+void sleep() {
+    for (int i = 0; i < 1000; i++) {
+    printf("..............\n");
+    }
+}
+
 void draw_image(const unsigned char* src, 
                 int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
@@ -131,6 +137,7 @@ void draw_image(const unsigned char* src,
             unsigned char b = src[offset * 3 + 2];
             src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
+        sleep();
     }
 
     // 缩放图片
