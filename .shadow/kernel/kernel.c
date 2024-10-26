@@ -130,7 +130,7 @@ void draw_image(const unsigned char* src,
     }
     printf("src_width * src_height * 4: %d\n", src_width * src_height * sizeof(uint32_t));
     for (int y = 0; y < src_height; y++) {
-        for (int x = 0; x < src_width; x++) {
+        for (int x = src_width; x >= 0; x--) {
             int offset = y * src_width + x;
             unsigned char r = src[offset * 3 + 2];
             unsigned char g = src[offset * 3 + 1];
@@ -138,7 +138,7 @@ void draw_image(const unsigned char* src,
             // unsigned char r = src[offset * 3];
             // unsigned char g = src[offset * 3 + 1];
             // unsigned char b = src[offset * 3 + 2];
-            src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+            src_pixels[offset] = (r << 16) | (g << 8) | b;
         }
     }
 
