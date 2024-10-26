@@ -79,9 +79,11 @@ extern unsigned int test_jpg_len;
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-    float x_scale = (float)src_width / dst_width;
-    float y_scale = (float)src_height / dst_height;
-    printf("src_width: %d  src_height: %d\n", src_width, src_height);
+    // float x_scale = (float)src_width / dst_width;
+    // float y_scale = (float)src_height / dst_height;
+    float x_scale = (float)640 / dst_width;
+    float y_scale = (float)480 / dst_height;
+    //printf("src_width: %d  src_height: %d\n", src_width, src_height);
 
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
