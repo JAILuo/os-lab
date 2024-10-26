@@ -159,9 +159,8 @@ void draw_image(const unsigned char* src,
             test++;
         }
         sleep();
-        printf("in y : %d\n", y);
     }
-    printf("test: %d\n",test);
+    //printf("test: %d\n",test);
 
     // 释放内存
     free(src_pixels);
@@ -176,7 +175,7 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  splash();
+  //splash();
 
   draw_image(test_jpg, 0, 0, 640, 480);
   //splash();
