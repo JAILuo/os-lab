@@ -99,18 +99,18 @@ void draw_image(const unsigned char* src,
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
-    // 分配内存来存储缩放后的像素数据
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
-    if (!dst_pixels) {
-        printf("Memory allocation failed\n");
-        return;
-    }
+    // // 分配内存来存储缩放后的像素数据
+    // uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
+    // if (!dst_pixels) {
+    //     printf("Memory allocation failed\n");
+    //     return;
+    // }
 
     // 将图片数据转换为32位ARGB格式
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
     if (!src_pixels) {
         printf("Memory allocation failed\n");
-        free(dst_pixels);
+        //free(dst_pixels);
         return;
     }
     for (int y = 0; y < src_height; y++) {
@@ -119,7 +119,7 @@ void draw_image(const unsigned char* src,
             unsigned char r = src[offset * 3];
             unsigned char g = src[offset * 3 + 1];
             unsigned char b = src[offset * 3 + 2];
-            src_pixels[offset] = (0x00 << 24) | (r << 16) | (g << 8) | b;
+            src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
     }
 
@@ -136,7 +136,7 @@ void draw_image(const unsigned char* src,
 
     // 释放内存
     free(src_pixels);
-    free(dst_pixels);
+    //free(dst_pixels);
 }
 
 // Operating system is a C program!
