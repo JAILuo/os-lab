@@ -136,7 +136,7 @@ void draw_image(const unsigned char* src,
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
-            printf("x * y = %d\n", x * y);
+            //printf("x * y = %d\n", x * y);
         }
     }
 
@@ -155,7 +155,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 32, 24);
+  draw_image(test_jpg, 0, 0, 320, 240);
 
   puts("Press any key to see its key code...\n");
   while (1) {
