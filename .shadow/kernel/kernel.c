@@ -108,7 +108,7 @@ void draw_image(const unsigned char* src,
     get_screen_size(&screen_w, &screen_h);
 
     // 分配内存来存储缩放后的像素数据
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h);
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
@@ -116,7 +116,7 @@ void draw_image(const unsigned char* src,
     printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * sizeof(uint32_t));
 
     // 将图片数据转换为32位ARGB格式
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
