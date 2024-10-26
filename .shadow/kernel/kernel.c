@@ -145,16 +145,19 @@ void draw_image(const unsigned char* src,
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
+    static int test = 0;
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w / 2; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
             //printf("x * y = %d\n", x * y);
+            test++;
         }
         //sleep();
         printf("in y : %d\n", y);
     }
+    printf("test: %d\n",test);
 
     // 释放内存
     free(src_pixels);
