@@ -119,7 +119,7 @@ void draw_image(const unsigned char* src,
             unsigned char r = src[offset * 3];
             unsigned char g = src[offset * 3 + 1];
             unsigned char b = src[offset * 3 + 2];
-            src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+            src_pixels[offset] = (0x00 << 24) | (r << 16) | (g << 8) | b;
         }
     }
 
