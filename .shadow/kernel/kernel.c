@@ -77,10 +77,33 @@ extern unsigned int test_jpg_len;
  * 3. 绘制图片
  */
 
+//     7 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
+//     8                   uint32_t* dst_pixels, int dst_width, int dst_height) {
+//     9     float x_scale = (float)src_width / dst_width;
+//    10     float y_scale = (float)src_height / dst_height;
+//    11
+//    12     for (int y = 0; y < dst_height; y++) {
+//    13         for (int x = 0; x < dst_width; x++) {
+//    14             // Calculate the corresponding position in the source image
+//    15             int src_x = (int)(x * x_scale);
+//    16             int src_y = (int)(y * y_scale);
+//    17
+//    18             // Ensure the coordinates are within the bounds of the source image
+//    19             src_x = src_x < src_width ? src_x : src_width - 1;
+//    20             src_y = src_y < src_height ? src_y : src_height - 1;
+//    21
+//    22             // Copy the pixel value from the source image to the destination image
+//    23             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
+//    24         }
+//    25     }
+//    26 }
+
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
     float x_scale = (float)src_width / dst_width;
     float y_scale = (float)src_height / dst_height;
+    // float x_scale = (float)dst_width / src_width;
+    // float y_scale = (float)dst_height / src_height;
 
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
@@ -88,9 +111,9 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             int src_x = (int)(x * x_scale);
             int src_y = (int)(y * y_scale);
 
-            // Ensure the coordinates are within the bounds of the source image
-            src_x = src_x < src_width ? src_x : src_width - 1;
-            src_y = src_y < src_height ? src_y : src_height - 1;
+            // 使用最近邻插值，直接取最接近的像素点
+            if (src_x >= src_width - 1) src_x = src_width - 1;
+            if (src_y >= src_height - 1) src_y = src_height - 1;
 
             // Copy the pixel value from the source image to the destination image
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
@@ -171,7 +194,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 48, 64);
+  draw_image(test_jpg, 0, 0, 1024, 682);
 
   //splash();
 
