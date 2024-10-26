@@ -103,7 +103,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
 }
 
 void sleep() {
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 100; i++) {
     printf("..............\n");
     }
 }
@@ -138,6 +138,7 @@ void draw_image(const unsigned char* src,
             src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
         sleep();
+        printf("in y : %d\n", y);
     }
 
     // 缩放图片
