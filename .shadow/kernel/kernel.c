@@ -81,8 +81,6 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
     float x_scale = (float)src_width / dst_width;
     float y_scale = (float)src_height / dst_height;
-    printf("src_width: %d  src_height: %d\n", src_width, src_height);
-    printf("x_scale: %f  y_scale: %f\n", x_scale, y_scale);
 
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
@@ -99,23 +97,6 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
         }
     }
 }
-
-// void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
-//                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-//     float x_scale = (float)src_width / dst_width;
-//     float y_scale = (float)src_height / dst_height;
-// 
-//     for (int y = 0; y < dst_height; y++) {
-//         for (int x = 0; x < dst_width; x++) {
-//             // Calculate the corresponding position in the source image
-//             int src_x = (int)(x * x_scale);
-//             int src_y = (int)(y * y_scale);
-// 
-//             // Copy the pixel value from the source image to the destination image
-//             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
-//         }
-//     }
-// }
 
 void draw_image(const unsigned char* src, 
                 int dst_x, int dst_y, int src_width, int src_height) {
