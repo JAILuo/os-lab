@@ -64,7 +64,7 @@ Area __am_heap_init() {
   uint32_t lo = inb(0x71);
   outb(0x70, 0x35);
   uint32_t hi = inb(0x71) + 1;
-  return RANGE(ROUNDUP(&end, 1 << 20), (uintptr_t)((lo | hi << 8) << 16));
+  return RANGE(ROUNDUP(&end, 1 << 22), (uintptr_t)((lo | hi << 8) << 16));
 }
 
 void __am_lapic_init() {
