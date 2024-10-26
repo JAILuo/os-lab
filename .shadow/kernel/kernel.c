@@ -81,6 +81,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
     float x_scale = (float)src_width / dst_width;
     float y_scale = (float)src_height / dst_height;
+    printf("src_width: %d  src_height: %d\n", src_width, src_height);
 
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
@@ -137,9 +138,12 @@ void draw_image(const unsigned char* src,
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
-            unsigned char r = src[offset * 3];
+            unsigned char r = src[offset * 3 + 2];
             unsigned char g = src[offset * 3 + 1];
-            unsigned char b = src[offset * 3 + 2];
+            unsigned char b = src[offset * 3];
+            // unsigned char r = src[offset * 3];
+            // unsigned char g = src[offset * 3 + 1];
+            // unsigned char b = src[offset * 3 + 2];
             src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
     }
