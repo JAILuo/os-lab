@@ -139,6 +139,7 @@ void draw_image(const unsigned char* src,
             // unsigned char g = src[offset * 3 + 1];
             // unsigned char b = src[offset * 3 + 2];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
+            printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
 
