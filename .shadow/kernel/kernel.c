@@ -171,7 +171,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 1024, 682);
+  draw_image(test_jpg, 0, 0, 480, 640);
 
   //splash();
 
