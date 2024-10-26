@@ -43,6 +43,7 @@ void *malloc(size_t size) {
     size_t size_adj = size & 0xF ? (size & ~(size_t)0xF) + 0x10 : size;
     void *old = last_addr;
     last_addr = (uint8_t *)last_addr + size_adj;
+    printf("last_addr: %x\n", last_addr);
     return old;
 #endif
     return NULL;
