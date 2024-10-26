@@ -176,8 +176,8 @@ int main(const char *args) {
 
   splash();
 
-  draw_image(test_jpg, 0, 0, 640, 480);
-  splash();
+  draw_image(test_jpg, 0, 0, 64, 48);
+  //splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
