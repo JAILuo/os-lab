@@ -154,7 +154,7 @@ void draw_image(const unsigned char* src,
             //printf("x * y = %d\n", x * y);
             test++;
         }
-        //sleep();
+        sleep();
         printf("in y : %d\n", y);
     }
     printf("test: %d\n",test);
