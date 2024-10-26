@@ -103,7 +103,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
 }
 
 void sleep() {
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
     printf("..............\n");
     }
 }
