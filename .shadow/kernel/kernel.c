@@ -173,7 +173,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 320, 240);
+  draw_image(test_jpg, 0, 0, 32, 24);
 
   puts("Press any key to see its key code...\n");
   while (1) {
