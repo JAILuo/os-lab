@@ -176,7 +176,7 @@ int main(const char *args) {
 
   splash();
 
-  draw_image(test_jpg, 0, 0, 1024, 682);
+  draw_image(test_jpg, 0, 0, 640, 480);
   //splash();
 
   puts("Press any key to see its key code...\n");
