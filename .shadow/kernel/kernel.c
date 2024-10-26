@@ -166,18 +166,14 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
-    static int test = 0;
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
-            //printf("x * y = %d\n", x * y);
-            test++;
         }
         //sleep();
     }
-    //printf("test: %d\n",test);
 
     // 释放内存
     free(src_pixels);
@@ -194,7 +190,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 480, 640);
+  draw_image(test_jpg, 0, 0, 48, 64);
 
   //splash();
 
