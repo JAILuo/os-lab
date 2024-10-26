@@ -170,6 +170,9 @@ int main(const char *args) {
   puts("\"\n");
 
   //splash();
+    for (int i = 0; i < test_jpg_len; i++) {
+        printf("src[%d]: %x(%d)\n", i, test_jpg[i], test_jpg[i]);
+    }   
 
   draw_image(test_jpg, 0, 0, 480, 640);
 
