@@ -110,10 +110,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
-    for (int i = 0; i < test_jpg_len; i++) {
-        printf("src[%d]: %x(%d)\n", i, src[i], src[i]);
-    }   
-
     // 分配内存来存储缩放后的像素数据
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
     if (!dst_pixels) {
@@ -131,10 +127,11 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     printf("src_width * src_height * 4: %d\n", src_width * src_height * sizeof(uint32_t));
     
-    for (int y = src_height - 1; y >= 0; y--) {
+    for (int y = 0; y < src_height; y++) {
         for (int x = src_width - 1; x >= 0; x--) {
             int offset = y * src_width;
             printf("offset: %d\n"); 
+            printf("src[%d]: %d\n", offset, src[offset]);
             uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x + 2);
             uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
             uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x);
