@@ -137,8 +137,6 @@ void draw_image(const unsigned char* src,
             unsigned char b = src[offset * 3 + 2];
             src_pixels[offset] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
-        sleep();
-        printf("in y : %d\n", y);
     }
 
     // 缩放图片
@@ -151,6 +149,8 @@ void draw_image(const unsigned char* src,
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
             //printf("x * y = %d\n", x * y);
         }
+        sleep();
+        printf("in y : %d\n", y);
     }
 
     // 释放内存
