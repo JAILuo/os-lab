@@ -134,11 +134,13 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < src_height; y++) {
         for (int x = src_width - 1; x >= 0; x--) {
             int offset = y * src_width;
+
             printf("offset: %d\n", offset); 
-            printf("src[%d]: %d\n", offset, src[offset]);
-            uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x + 2);
-            uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
+            printf("src[%d]: %d\n", offset + 3 * x, src[offset + 3 * x]);
+
             uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x);
+            uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
+            uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x + 2);
 
             printf("b: %d g: %d r: %d\n", b, g, r);
             src_pixels[offset + x] = (r << 16) | (g << 8) | b;
