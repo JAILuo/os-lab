@@ -79,14 +79,16 @@ extern unsigned int test_jpg_len;
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-    float x_scale = (float)src_width / dst_width;
-    float y_scale = (float)src_height / dst_height;
+    //float x_scale = (float)src_width / dst_width;
+    //float y_scale = (float)src_height / dst_height;
 
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
             // Calculate the corresponding position in the source image
-            int src_x = (int)(x * x_scale);
-            int src_y = (int)(y * y_scale);
+            // int src_x = (int)(x * x_scale);
+            // int src_y = (int)(y * y_scale);
+            int src_x = x;
+            int src_y = y;
 
             // Ensure the coordinates are within the bounds of the source image
             src_x = src_x < src_width ? src_x : src_width - 1;
@@ -131,12 +133,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
             uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x + 2);
 
-            // int offset = y * src_width + x;
-            // unsigned char r = src[offset * 3];
-            // unsigned char g = src[offset * 3 + 1];
-            // unsigned char b = src[offset * 3 + 2];
             src_pixels[offset + x] = (r << 16) | (g << 8) | b;
-            //printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
 
