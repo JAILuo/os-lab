@@ -127,9 +127,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     printf("src_width * src_height * 4: %d\n", src_width * src_height * sizeof(uint32_t));
 
 
-    for (int y = 0; y < src_height; y++) {
-        for (int x = 0; x < src_width; x++) {
-            int offset = y * src_width;
+    for (unsigned int y = 0; y < src_height; y++) {
+        for (unsigned int x = 0; x < src_width; x++) {
+            unsigned int offset = y * src_width;
             //printf("offset: %d\n", offset); 
             //printf("src[%d]: %d\n", offset + 3 * x, src[offset + 3 * x]);
 
