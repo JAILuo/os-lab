@@ -138,9 +138,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             int offset = y * src_width + x;
             
             // little-endian, (low addr) BGR (high addr)
-            unsigned char r = pixel_data[offset * 3 + 2];
+            unsigned char r = pixel_data[offset * 3];
             unsigned char g = pixel_data[offset * 3 + 1];
-            unsigned char b = pixel_data[offset * 3];
+            unsigned char b = pixel_data[offset * 3 + 2];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
             // //printf("src_pixels: %x\n", src_pixels[offset]);
         }
