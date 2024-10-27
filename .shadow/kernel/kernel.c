@@ -126,7 +126,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         printf("Memory allocation failed\n");
         return;
     }
-    printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h);
+    printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 3);
 
     // 将图片数据转换为32位RGB格式
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
@@ -137,7 +137,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     printf("src_width * src_height * 3: %d\n", src_width * src_height * 3);
     for (int y = 0; y < src_height; y++) {
-        for (int x = 0; x < src_width; x++) {
+        for (int x = src_width; x >= 0; x--) {
             int offset = y * src_width + x;
             unsigned char r = src[offset * 3];
             unsigned char g = src[offset * 3 + 1];
