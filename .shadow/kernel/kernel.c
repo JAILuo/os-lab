@@ -94,7 +94,8 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
             // 反转 y 坐标
-            //src_y = src_height - 1 - src_y;
+            // 好像是因为BMP是从左下角开始存的？然后我读的有问题？
+            src_y = src_height - 1 - src_y;
 
             // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
