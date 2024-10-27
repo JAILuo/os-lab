@@ -134,7 +134,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 4);
 
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 3);
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
