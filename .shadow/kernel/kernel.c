@@ -94,29 +94,13 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
             // 反转 y 坐标
-            src_y = src_height - 1 - src_y;
+            //src_y = src_height - 1 - src_y;
 
             // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
         }
     }
 }
-// void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
-//                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-//     for (int y = 0; y < dst_height; y++) {
-//         for (int x = 0; x < dst_width; x++) {
-//             int src_x = (int)(x * dst_width / src_width);
-//             int src_y = (int)(y * dst_height / src_height);
-// 
-//             // 使用最近邻插值，直接取最接近的像素点
-//             if (src_x >= src_width - 1) src_x = src_width - 1;
-//             if (src_y >= src_height - 1) src_y = src_height - 1;
-// 
-//             // Copy the pixel value from the source image to the destination image
-//             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
-//         }
-//     }
-// }
 
 void sleep() {
     for (int i = 0; i < 1000; i++) {
