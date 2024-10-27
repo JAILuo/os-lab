@@ -83,10 +83,13 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
             // 使用最近邻插值，计算源图像中的坐标
-            float src_x_ratio = (float)x / dst_width;
-            float src_y_ratio = (float)y / dst_height;
-            int src_x = (int)(src_x_ratio * src_width);
-            int src_y = (int)(src_y_ratio * src_height);
+            //float src_x_ratio = (float)x / dst_width;
+            //float src_y_ratio = (float)y / dst_height;
+            //int src_x = (int)(src_x_ratio * src_width);
+            //int src_y = (int)(src_y_ratio * src_height);
+
+            int src_x = (int)(x / dst_width * src_width);
+            int src_y = (int)(y / dst_height * src_height);
 
             // 确保坐标不会超出源图像的边界
             if (src_x >= src_width - 1) src_x = src_width - 1;
