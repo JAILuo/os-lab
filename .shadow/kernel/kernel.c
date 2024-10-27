@@ -93,7 +93,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
             // 反转 y 坐标
-            src_y = src_height - 1 - src_y;
+            // src_y = src_height - 1 - src_y;
 
             // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
@@ -155,7 +155,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
-            uint32_t color = src_pixels[y * screen_w + x];
+            uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
         }
     }
