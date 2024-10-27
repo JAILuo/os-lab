@@ -92,6 +92,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             if (src_x >= src_width - 1) src_x = src_width - 1;
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
+            // 反转 y 坐标
             src_y = src_height - 1 - src_y;
 
             // 从源图像中复制像素值到目标图像
@@ -139,17 +140,17 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     printf("src_width * src_height * 3: %d\n", src_width * src_height * 3);
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
-            // int offset = y * src_width;
-            // uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x);
-            // uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
-            // uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x + 2);
-            // src_pixels[offset + x] = (r << 16) | (g << 8) | b;
+            int offset = y * src_width;
+            uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x);
+            uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
+            uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x + 2);
+            src_pixels[offset + x] = (r << 16) | (g << 8) | b;
 
-            int offset = y * src_width + x;
-            unsigned char r = src[offset * 3];
-            unsigned char g = src[offset * 3 + 1];
-            unsigned char b = src[offset * 3 + 2];
-            src_pixels[offset] = (r << 16) | (g << 8) | b;
+            // int offset = y * src_width + x;
+            // unsigned char r = src[offset * 3];
+            // unsigned char g = src[offset * 3 + 1];
+            // unsigned char b = src[offset * 3 + 2];
+            // src_pixels[offset] = (r << 16) | (g << 8) | b;
             //printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
