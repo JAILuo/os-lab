@@ -96,6 +96,7 @@ void resize_image(uint32_t* src_pixels, int src_width, int src_height, uint32_t*
 
             // 将值赋给目标像素
             dst_pixels[y * dst_width + x] = src_color;
+            printf("src_color: %x dst_pixels: %x\n\n", src_color, dst_pixels[y * dst_width + x]);
         }
     }
 }
@@ -125,7 +126,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width;
-
             //printf("offset: %d\n", offset); 
             //printf("src[%d]: %d\n", offset + 3 * x, src[offset + 3 * x]);
 
