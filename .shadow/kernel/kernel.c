@@ -133,6 +133,10 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             //printf("offset: %d\n", offset); 
             //printf("src[%d]: %d\n", offset + 3 * x, src[offset + 3 * x]);
 
+            if (x * y > test_jpg_len) {
+                printf("mdasdioasdoa0qe..........\n");
+            }
+
             uint8_t r = *(((uint8_t*)&src[offset]) + 3 * x + 2);
             uint8_t g = *(((uint8_t*)&src[offset]) + 3 * x + 1);
             uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x);
