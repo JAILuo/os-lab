@@ -139,7 +139,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
-            draw_tile(x, y, 3, 3, color);
+            draw_tile(x, y, 1, 1, color);
             //printf("x * y = %d\n", x * y);
         }
     }
