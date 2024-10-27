@@ -162,9 +162,13 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  //splash();
+  for (int i = 0; i < test_jpg_len ; i++) {
+   printf("test_jpg[%d]: %d\n", i, test_jpg[i]);
+  }
 
-  draw_image(test_jpg, 0, 0, 480, 640);
+  splash();
+
+  //draw_image(test_jpg, 0, 0, 480, 640);
 
   //splash();
 
