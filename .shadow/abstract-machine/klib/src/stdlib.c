@@ -40,11 +40,12 @@ void *malloc(size_t size) {
     if (!last_addr) {
         last_addr = (void*)ROUNDUP(heap.start, 4);
     }
+    printf("before alloc, last_addr: %p\n", last_addr);
     printf("heap.start: %x(%d)  heap.end: %x(%d)\n", heap.start, heap.start, heap.end, heap.end);
     size_t size_adj = size & 0xF ? (size & ~(size_t)0xF) + 0x10 : size;
     void *old = last_addr;
     last_addr = (uint8_t *)last_addr + size_adj;
-    printf("last_addr: %p\n", last_addr);
+    printf("affter alloc, last_addr: %p\n", last_addr);
 
     assert(last_addr <= heap.end);
     return old;
