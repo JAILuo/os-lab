@@ -178,7 +178,7 @@ int main(const char *args) {
 //    printf("test_jpg[%d]: %d\n", i, test_jpg[i]);
 //   }
 
-  splash();
+  //splash();
 
   draw_image(test_jpg, 0, 0, 480, 640);
 
