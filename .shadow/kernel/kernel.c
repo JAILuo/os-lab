@@ -166,9 +166,9 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  for (int i = 0; i < test_jpg_len ; i++) {
-   printf("test_jpg[%d]: %d\n", i, test_jpg[i]);
-  }
+//   for (int i = 0; i < test_jpg_len ; i++) {
+//    printf("test_jpg[%d]: %d\n", i, test_jpg[i]);
+//   }
 
   splash();
 
