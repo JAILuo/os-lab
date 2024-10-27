@@ -114,14 +114,14 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     get_screen_size(&screen_w, &screen_h);
 
     // 640 * 480 * 4 = 1228800 ~= 1.17 MiB 
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h* 4);
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h);
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
     }
     //printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 4);
 
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
