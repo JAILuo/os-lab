@@ -35,6 +35,8 @@ void get_screen_size(int *w, int *h) {
     ioe_read(AM_GPU_CONFIG, &info);
     *w = info.width; // 640
     *h = info.height; //480
+    *w = 360;
+    *h = 480;
 }
 
 static void draw_tile(int x, int y, int w, int h, uint32_t color) {
@@ -190,7 +192,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 640, 480);
+  draw_image(test_bmp, 0, 0, 360, 480);
 
   //splash();
 
