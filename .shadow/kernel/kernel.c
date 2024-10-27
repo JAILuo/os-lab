@@ -138,7 +138,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
-            uint32_t color = dst_pixels[y * screen_w + x];
+            uint32_t color = src_pixels[y * screen_w + x];
             draw_tile(x, y, 1, 1, color);
             //printf("x * y = %d\n", x * y);
         }
@@ -162,7 +162,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 2048, 1024);
+  draw_image(test_bmp, 0, 0, 480, 640);
 
   //splash();
 
