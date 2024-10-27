@@ -102,8 +102,8 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
 }
 
 void sleep() {
-    for (int i = 0; i < 100; i++) {
-        printf("..............\n");
+    for (int i = 0; i < 10000; i++) {
+        //printf("..............\n");
     }
 }
 
@@ -148,14 +148,17 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
+    for (int i = 0; i < screen_h; i++) {
+        for (int j = 0; j < screen_w; j++) {
+            printf("color: %x\n", dst_pixels[i * screen_w + j]);
+        }
+        printf(".......\n");
+    }
+
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
-            printf("color: 0x%x\n", color);
-            if (color == 0) {
-                assert(0);
-            }
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
         }
     }
