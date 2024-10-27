@@ -45,6 +45,8 @@ void *malloc(size_t size) {
     void *old = last_addr;
     last_addr = (uint8_t *)last_addr + size_adj;
     printf("last_addr: %p\n", last_addr);
+
+    assert(last_addr <= heap.end);
     return old;
 #endif
     return NULL;
