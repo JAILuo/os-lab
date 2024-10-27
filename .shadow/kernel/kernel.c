@@ -77,33 +77,26 @@ extern unsigned int test_jpg_len;
  * 3. 绘制图片
  */
 
-void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
-                  uint32_t* dst_pixels, int dst_width, int dst_height) {
+void resize_image(uint32_t* src_pixels, int src_width, int src_height, uint32_t* dst_pixels, int dst_width, int dst_height) {
+    float x_ratio = (float)src_width / dst_width;
+    float y_ratio = (float)src_height / dst_height;
+
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
-            int src_x = x * src_width / dst_width;
-            int src_y = y * src_height / src_height;
+            // 计算目标像素在源图像中的位置
+            int src_x = (int)(x * x_ratio);
+            int src_y = (int)(y * y_ratio);
 
-            // Ensure the coordinates are within the bounds of the source image
+            // 确保坐标不越界
             src_x = src_x < src_width ? src_x : src_width - 1;
             src_y = src_y < src_height ? src_y : src_height - 1;
 
-                        // 获取原始图像的像素值
-            int src_index = (src_y * src_width + src_x) * 3;
-            int dst_index = (y * dst_width + x) * 3;
-            dst_pixels[dst_index + 0] = src_pixels[src_index + 0]; // Red
-            dst_pixels[dst_index + 1] = src_pixels[src_index + 1]; // Green
-            dst_pixels[dst_index + 2] = src_pixels[src_index + 2]; // Blue
+            // 获取源图像中最近邻像素的值
+            uint32_t src_color = src_pixels[src_y * src_width + src_x];
 
-            // Copy the pixel value from the source image to the destination image
-            //dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
+            // 将值赋给目标像素
+            dst_pixels[y * dst_width + x] = src_color;
         }
-    }
-}
-
-void sleep() {
-    for (int i = 0; i < 10000; i++) {
-        //printf("..............\n");
     }
 }
 
