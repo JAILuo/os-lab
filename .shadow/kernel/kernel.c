@@ -92,8 +92,10 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             // Calculate the corresponding position in the source image
             //int src_x = (int)(x * x_scale);
             //int src_y = (int)(y * y_scale);
-            int src_x = (int)(x * src_width / dst_width);
-            int src_y = (int)(y * src_height / dst_height);
+            //int src_x = (int)(x * src_width / dst_width);
+            //int src_y = (int)(y * src_height / dst_height);
+            int src_x = (int)(x * dst_width / src_width);
+            int src_y = (int)(y * dst_height / src_height);
 
             // 使用最近邻插值，直接取最接近的像素点
             if (src_x >= src_width - 1) src_x = src_width - 1;
