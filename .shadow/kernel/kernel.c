@@ -80,13 +80,6 @@ extern unsigned int test_jpg_len;
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-    // float x_scale = (float)src_width / dst_width;
-    // float y_scale = (float)src_height / dst_height;
-    // float x_scale = (float)dst_width / src_width;
-    // float y_scale = (float)dst_height / src_height;
-    //float x_scale = (float)dst_width / src_width;
-    //float y_scale = (float)dst_height / src_height;
-
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
             // Calculate the corresponding position in the source image
@@ -107,32 +100,26 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
     }
 }
 
-void sleep() {
-    for (int i = 0; i < 100; i++) {
-    printf("..............\n");
-    }
-}
-
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
     // 分配内存来存储缩放后的像素数据
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h);
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 3);
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
     }
-    printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * sizeof(uint32_t));
+    printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * 3);
 
     // 将图片数据转换为32位ARGB格式
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height);
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 3);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
         return;
     }
-    printf("src_width * src_height * 4: %d\n", src_width * src_height * sizeof(uint32_t));
+    printf("src_width * src_height * 4: %d\n", src_width * src_height * 3);
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = src_width - 1; x >= 0; x--) {
             int offset = y * src_width;
@@ -152,20 +139,15 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
-    static int test = 0;
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(dst_x + x, dst_y + y, 16, 16, color);
             //printf("x * y = %d\n", x * y);
-            test++;
         }
-        //sleep();
     }
-    //printf("test: %d\n",test);
 
-    // 释放内存
     free(src_pixels);
     free(dst_pixels);
 }
