@@ -67,8 +67,8 @@ void splash() {
   }
 }
 
-extern unsigned char test_jpg[];
-extern unsigned int test_jpg_len;
+extern unsigned char test_bmp[];
+extern unsigned int test_bmp_len;
 
 /**
  * 1. 将xxd得到图片像素数据
@@ -156,13 +156,13 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-//   for (int i = 0; i < test_jpg_len ; i++) {
-//    printf("test_jpg[%d]: %d\n", i, test_jpg[i]);
+//   for (int i = 0; i < test_bmp_len ; i++) {
+//    printf("test_bmp[%d]: %d\n", i, test_bmp[i]);
 //   }
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 480, 640);
+  draw_image(test_bmp, 0, 0, 480, 640);
 
   //splash();
 
