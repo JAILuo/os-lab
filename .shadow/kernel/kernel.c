@@ -155,6 +155,42 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     free(dst_pixels);
 }
 
+// The (0,0) is at the top-left corner of the screen
+// and the order of rgb is actually bgr. https://blog.csdn.net/weixin_40437029/article/details/117530796
+// This function display a half-decoded BMP image
+void draw_image_new(const unsigned char* image_data, int image_width, int image_height) {
+  AM_GPU_CONFIG_T info = {0};
+  ioe_read(AM_GPU_CONFIG, &info);
+  int w = info.width;
+  int h = info.height;
+
+  int pixel_size = 3;
+
+  // Calculate the scaling factors
+  float scale_x = (float)w / image_width;
+  float scale_y = (float)h / image_height;
+
+  // Iterate over each pixel in the new grid
+  for (int y = h-1; y >= 0; y--) {
+    for (int x = 0; x < w; x++) {
+      // Calculate the corresponding pixel position in the original grid
+      int original_x = (int)(x / scale_x);
+      int original_y = (int)((h-y-1) / scale_y);
+
+      // Get the RGB values from the original image data
+      unsigned char b = image_data[(original_y * image_width + original_x) * pixel_size];
+      unsigned char g = image_data[(original_y * image_width + original_x) * pixel_size + 1];
+      unsigned char r = image_data[(original_y * image_width + original_x) * pixel_size + 2];
+
+      // Combine the RGB values into a single color value
+      uint32_t color = (r << 16) | (g << 8) | b;
+
+      // Draw the pixel on the screen
+      draw_tile(x, y, 1, 1, color);
+    }
+  }
+}
+
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
@@ -165,7 +201,9 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_jpg, 0, 0, 480, 640);
+  //draw_image(test_jpg, 0, 0, 480, 640);
+  
+  draw_image_new(test_jpg, 480, 640);
 
   //splash();
 
