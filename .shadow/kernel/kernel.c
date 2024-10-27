@@ -79,15 +79,8 @@ extern unsigned int test_jpg_len;
 
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
-    //float x_scale = (float)src_width / dst_width;
-    //float y_scale = (float)src_height / dst_height;
-
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
-            // Calculate the corresponding position in the source image
-            // int src_x = (int)(x * x_scale);
-            // int src_y = (int)(y * y_scale);
-
             int src_x = x * src_width / dst_width;
             int src_y = y * src_height / src_height;
 
@@ -159,6 +152,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
+            printf("color: 0x%x\n", color);
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
         }
     }
