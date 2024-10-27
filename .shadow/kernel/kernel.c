@@ -154,27 +154,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     free(dst_pixels);
 }
 
-static void draw_image_new(int x, int y, int img_width, int img_height, unsigned char *img_data) {
-    // 计算像素数组的大小
-    uint32_t pixels[img_width * img_height];
-
-    for (int j = 0; j < img_height; j++) {
-        for (int i = 0; i < img_width; i++) {
-            unsigned char r = img_data[(j * img_width + i) * 3];     // 假设为 RGB 格式
-            unsigned char g = img_data[(j * img_width + i) * 3 + 1];
-            unsigned char b = img_data[(j * img_width + i) * 3 + 2];
-            pixels[j * img_width + i] = (r << 16) | (g << 8) | b; // 将 RGB 转换为 32 位整数
-        }
-    }
-
-    AM_GPU_FBDRAW_T event = {
-        .x = x, .y = y, .w = img_width, .h = img_height, .sync = 1,
-        .pixels = pixels,
-    };
-
-    ioe_write(AM_GPU_FBDRAW, &event);
-}
-
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
@@ -183,21 +162,9 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  //splash();
+  splash();
 
-  //draw_image(test_jpg, 0, 0, 48, 64);
-      int screen_width = 0, screen_height = 0;
-    get_screen_size(&screen_width, &screen_height);
-
-    int image_width = 640;
-    int image_height = 480;
-
-    // 计算图片绘制的位置
-    int img_x = (screen_width - image_width) / 2; // 居中绘制
-    int img_y = (screen_height - image_height) / 2;
-
-    // 绘制图像
-    draw_image_new(img_x, img_y, image_width, image_height, test_jpg);
+  draw_image(test_jpg, 0, 0, 48, 64);
 
   //splash();
 
