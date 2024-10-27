@@ -82,11 +82,6 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                   uint32_t* dst_pixels, int dst_width, int dst_height) {
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
-            // Calculate the corresponding position in the source image
-            //int src_x = (int)(x * x_scale);
-            //int src_y = (int)(y * y_scale);
-            //int src_x = (int)(x * src_width / dst_width);
-            //int src_y = (int)(y * src_height / dst_height);
             int src_x = (int)(x * dst_width / src_width);
             int src_y = (int)(y * dst_height / src_height);
 
