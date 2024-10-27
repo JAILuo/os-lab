@@ -146,6 +146,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
+            
+            // little-endian, (low addr) BGR (high addr)
             unsigned char r = src[offset * 3 + 2];
             unsigned char g = src[offset * 3 + 1];
             unsigned char b = src[offset * 3];
