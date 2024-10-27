@@ -153,6 +153,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             printf("color: 0x%x\n", color);
+            if (color == 0) {
+                assert(0);
+            }
             draw_tile(dst_x + x, dst_y + y, 1, 1, color);
         }
     }
