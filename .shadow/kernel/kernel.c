@@ -113,7 +113,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * sizeof(uint32_t));
 
     // 将图片数据转换为32位ARGB格式
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * sizeof(uint32_t));
+    uint32_t* src_pixels = (uint32_t*)malloc(screen_h * screen_w * sizeof(uint32_t));
     if (!src_pixels) {
         printf("Memory allocation failed\n");
         free(dst_pixels);
@@ -145,7 +145,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
-            draw_tile(x, y, 16, 16, color);
+            draw_tile(dst_x + x, dst_y + y, 16, 16, color);
         }
     }
 
