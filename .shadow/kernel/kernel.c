@@ -87,8 +87,9 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             // Calculate the corresponding position in the source image
             // int src_x = (int)(x * x_scale);
             // int src_y = (int)(y * y_scale);
-            int src_x = x;
-            int src_y = y;
+
+            int src_x = x * src_width / dst_width;
+            int src_y = y * src_height / src_height;
 
             // Ensure the coordinates are within the bounds of the source image
             src_x = src_x < src_width ? src_x : src_width - 1;
@@ -109,10 +110,6 @@ void sleep() {
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
-
-    // for (int i = 0; i < test_jpg_len; i++) {
-    //     printf("src[%d]: %x(%d)\n", i, src[i], src[i]);
-    // }   
 
     // 分配内存来存储缩放后的像素数据
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
