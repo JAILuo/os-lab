@@ -116,6 +116,12 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
 //     }
 // }
 
+void sleep() {
+    for (int i = 0; i < 1000; i++) {
+        printf("asda.......\n");
+    }
+}
+
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
@@ -155,6 +161,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
+            sleep();
         }
     }
 
