@@ -96,7 +96,7 @@ void resize_image(uint32_t* src_pixels, int src_width, int src_height, uint32_t*
 
             // 将值赋给目标像素
             dst_pixels[y * dst_width + x] = src_color;
-            printf("src_color: %x dst_pixels: %x\n\n", src_color, dst_pixels[y * dst_width + x]);
+            //printf("src_color: %x dst_pixels: %x\n\n", src_color, dst_pixels[y * dst_width + x]);
         }
     }
 }
