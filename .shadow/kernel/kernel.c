@@ -143,7 +143,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         }
     }
 
-  for (int i = 0; i < test_jpg_len ; i++) {
+  for (int i = 0; i < test_jpg_len + 100; i++) {
    printf("src[%d]: %d\n", i, src_pixels[i]);
   }
 
