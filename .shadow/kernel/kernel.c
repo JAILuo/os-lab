@@ -134,6 +134,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             //printf("src[%d]: %d\n", offset + 3 * x, src[offset + 3 * x]);
 
             if (x * y > test_jpg_len) {
+                printf("x: %d  y:%d \n", x, y);
                 printf("mdasdioasdoa0qe..........\n");
             }
 
