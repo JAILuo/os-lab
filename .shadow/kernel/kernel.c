@@ -93,6 +93,8 @@ void resize_image(uint32_t* src_pixels, int src_width, int src_height, uint32_t*
 
             // 获取源图像中最近邻像素的值
             uint32_t src_color = src_pixels[src_y * src_width + src_x];
+            printf("src_x: %d  src_y: %d\n", src_x, src_y);
+            printf("src_color: %x\n", src_color);
 
             // 将值赋给目标像素
             dst_pixels[y * dst_width + x] = src_color;
