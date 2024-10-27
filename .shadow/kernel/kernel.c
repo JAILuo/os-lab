@@ -164,11 +164,11 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  splash();
+  //splash();
 
   draw_image(test_jpg, 0, 0, 480, 640);
 
-  splash();
+  //splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
