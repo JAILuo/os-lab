@@ -121,15 +121,18 @@ void sleep() {
         printf("................\n");
     }
 }
+
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 4);
+    // 640 * 480 * 4 = 1228800 ~= 1.17 MiB 
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h* 4);
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
     }
+    //printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 4);
 
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
     if (!src_pixels) {
@@ -137,13 +140,20 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         free(dst_pixels);
         return;
     }
+    //printf("src_width * src_height * 3: %d\n", src_width * src_height * 4);
 
-    // BMP is BGR(A), so we need to reverse the byte order to get RGB(A)
+    // BMP shoulud be (B G R)
     for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
-            int offset = (src_height - 1 - y) * src_width + x;
-            uint32_t pixel = *(const uint32_t*)(src + offset * 4);
-            src_pixels[y * src_width + x] = (pixel >> 16) | (pixel << 16) | (pixel & 0xFF00FF00);
+            int offset = y * src_width + x;
+            
+            // little-endian, (low addr) BGR (high addr)
+            unsigned char r = src[offset * 3 + 2];
+            unsigned char g = src[offset * 3 + 1];
+            unsigned char b = src[offset * 3];
+            src_pixels[offset] = (0xff000000) | (r << 16) | (g << 8) | b;
+            //src_pixels[offset] = (0xff000000) | (b << 16) | (g << 8) | r;
+            // //printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
 
@@ -155,63 +165,13 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
+            //sleep();
         }
     }
 
     free(src_pixels);
     free(dst_pixels);
 }
-
-// void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
-//     int screen_w, screen_h;
-//     get_screen_size(&screen_w, &screen_h);
-// 
-//     // 640 * 480 * 4 = 1228800 ~= 1.17 MiB 
-//     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h* 4);
-//     if (!dst_pixels) {
-//         printf("Memory allocation failed\n");
-//         return;
-//     }
-//     //printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 4);
-// 
-//     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
-//     if (!src_pixels) {
-//         printf("Memory allocation failed\n");
-//         free(dst_pixels);
-//         return;
-//     }
-//     //printf("src_width * src_height * 3: %d\n", src_width * src_height * 4);
-// 
-//     // BMP shoulud be (B G R)
-//     for (int y = 0; y < src_height; y++) {
-//         for (int x = 0; x < src_width; x++) {
-//             int offset = y * src_width + x;
-//             
-//             // little-endian, (low addr) BGR (high addr)
-//             unsigned char r = src[offset * 3 + 2];
-//             unsigned char g = src[offset * 3 + 1];
-//             unsigned char b = src[offset * 3];
-//             src_pixels[offset] = (0xff000000) | (r << 16) | (g << 8) | b;
-//             //src_pixels[offset] = (0xff000000) | (b << 16) | (g << 8) | r;
-//             // //printf("src_pixels: %x\n", src_pixels[offset]);
-//         }
-//     }
-// 
-//     // 缩放图片
-//     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
-// 
-//     // 绘制图片
-//     for (int y = 0; y < screen_h; y++) {
-//         for (int x = 0; x < screen_w; x++) {
-//             uint32_t color = dst_pixels[y * screen_w + x];
-//             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
-//             //sleep();
-//         }
-//     }
-// 
-//     free(src_pixels);
-//     free(dst_pixels);
-// }
 
 // Operating system is a C program!
 int main(const char *args) {
