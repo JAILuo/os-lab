@@ -92,6 +92,8 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             if (src_x >= src_width - 1) src_x = src_width - 1;
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
+            src_y = src_height - 1 - src_y;
+
             // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
         }
@@ -135,7 +137,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         return;
     }
     printf("src_width * src_height * 3: %d\n", src_width * src_height * 3);
-    for (int y = src_height - 1; y >= 0; y--) {
+    for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             // int offset = y * src_width;
             // uint8_t b = *(((uint8_t*)&src[offset]) + 3 * x);
