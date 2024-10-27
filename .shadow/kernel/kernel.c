@@ -95,8 +95,15 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
             src_x = src_x < src_width ? src_x : src_width - 1;
             src_y = src_y < src_height ? src_y : src_height - 1;
 
+                        // 获取原始图像的像素值
+            int src_index = (src_y * src_width + src_x) * 3;
+            int dst_index = (y * dst_width + x) * 3;
+            dst_pixels[dst_index + 0] = src_pixels[src_index + 0]; // Red
+            dst_pixels[dst_index + 1] = src_pixels[src_index + 1]; // Green
+            dst_pixels[dst_index + 2] = src_pixels[src_index + 2]; // Blue
+
             // Copy the pixel value from the source image to the destination image
-            dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
+            //dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
         }
     }
 }
