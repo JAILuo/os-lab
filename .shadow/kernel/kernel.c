@@ -148,13 +148,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
-    for (int i = 0; i < screen_h; i++) {
-        for (int j = 0; j < screen_w; j++) {
-            printf("color: %x\n", dst_pixels[i * screen_w + j]);
-        }
-        printf(".......\n");
-    }
-
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
