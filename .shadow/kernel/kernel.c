@@ -159,7 +159,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 绘制图片
     for (int y = 0; y < screen_h; y++) {
         for (int x = 0; x < screen_w; x++) {
-            uint32_t color = src_pixels[y * screen_w + x];
+            uint32_t color = dst_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
             //sleep();
         }
