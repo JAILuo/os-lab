@@ -149,7 +149,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     // BMP shoulud be (B G R)
     for (int y = 0; y < src_height; y++) {
-        for (int x = 0; x < src_width; x++) {
+        for (int x = src_width - 1; x >= 0; x--) {
             int offset = y * src_width + x;
             
             // little-endian, (low addr) BGR (high addr)
@@ -157,7 +157,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             unsigned char g = src[offset * 3 + 1];
             unsigned char b = src[offset * 3];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
-            //src_pixels[offset] = (0xff000000) | (b << 16) | (g << 8) | r;
             // //printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
