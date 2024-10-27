@@ -105,6 +105,10 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
+  for (int i = 0; i < test_jpg_len ; i++) {
+   printf("src[%d]: %d\n", i, src[i]);
+  }
+
     // 分配内存来存储缩放后的像素数据
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * sizeof(uint32_t));
     if (!dst_pixels) {
