@@ -186,7 +186,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     int line_padding = (4 - (src_width * 3) % 4) % 4;
     for (int y = src_height - 1; y >= 0; y--) {
         //for (int x = 0; x < src_width / 3; x++) {
-        for (int x = 0; x < src_width; x++) {
+        for (int x = src_width; x >= 0; x--) {
             int offset = y * src_width + x;
 
             // uint8_t b = *(((uint8_t*)&src[src_width * y]) + 3 * x);
