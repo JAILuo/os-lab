@@ -36,8 +36,6 @@ void get_screen_size(int *w, int *h) {
     ioe_read(AM_GPU_CONFIG, &info);
     *w = info.width; // 640
     *h = info.height; //480
-    *w = 480;
-    *h = 360;
 }
 
 static void draw_tile(int x, int y, int w, int h, uint32_t color) {
@@ -198,7 +196,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     // 每行的填充字节
     //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
-    int line_padding = ((src_width * 3 + 31) & ~31);
+    int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
     //int line_padding = (4 - (src_width * 3) % 4) % 4;
 
     // BMP shoulud be (B G R)
