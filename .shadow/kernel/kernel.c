@@ -162,7 +162,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             uint32_t color = src_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
         }
-        sleep();
     }
 
     // 释放内存
