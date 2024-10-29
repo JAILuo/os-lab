@@ -108,9 +108,9 @@ void sleep() {
     }
 }
 
-//#define OWN
+#define OWN
 //#define NEW
-#define NEW1
+//#define NEW1
 
 #ifdef NEW1
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
