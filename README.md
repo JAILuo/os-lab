@@ -3,7 +3,6 @@
 Mini Labs & OS Labs 
 
 The individual learning implementation version, without Online Judge, only local test
-Individual learning implementation, no online judge.
 
 
 - Course Homepage: https://jyywiki.cn/OS/2024/
