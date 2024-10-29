@@ -258,7 +258,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             //printf("src_index: %d\n", src_index);
             //printf("offset: %d\n\n", offset);
         }
-        src += line_padding; // 跳过行填充
+        //src += line_padding; // 跳过行填充
     }
 
     // src = (uint8_t *)src + 54;
