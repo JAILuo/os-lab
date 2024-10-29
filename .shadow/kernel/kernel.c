@@ -248,7 +248,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
-            int src_index = (y * (src_width + line_padding)) + (x * 4);
+            int src_index = (y * (src_width * 3 + line_padding)) + (x * 4);
             //int src_index = (y * 3 * src_width) + (x * 4);
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
