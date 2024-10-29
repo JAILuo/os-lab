@@ -246,7 +246,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     int line_padding = ((src_width & 24) + 31) & ~31;
     //int line_padding = (4 - (src_width * 3) % 4) % 4;
 
-    for (int y = src_height - 1; y >= 0; y--) {
+    for (int y = 0; y < src_height; y++) {
         for (int x = 0; x < src_width; x++) {
             int src_index = (y * (src_width * 3 + line_padding)) + (x * 4);
             //int src_index = (y * 3 * src_width) + (x * 4);
