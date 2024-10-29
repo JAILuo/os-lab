@@ -131,8 +131,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     src = (uint8_t *)src + 54;
     // BMP shoulud be (B G R)
-    for (int y = src_height - 1; y >= 0; y--) {
-        for (int x = 0; x < src_width / 3; x++) {
+    for (int y = (src_height - 1) / 3; y >= 0; y--) {
+        for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
 
             // uint8_t b = *(((uint8_t*)&src[src_width * y]) + 3 * x);
