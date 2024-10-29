@@ -245,8 +245,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
     src = (uint8_t *)src + 54; // 跳过BMP文件头
-    int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
-    //int line_padding = (4 - (src_width * 3) % 4) % 4;
+    //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
+    int line_padding = (4 - (src_width * 3) % 4) % 4;
 
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
