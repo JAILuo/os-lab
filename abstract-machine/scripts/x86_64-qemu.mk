@@ -11,3 +11,11 @@ AM_SRCS := x86/qemu/start64.S \
 
 run: build-arg
 	@qemu-system-x86_64 $(QEMU_FLAGS)
+
+disasm: $(IMAGE).elf
+	@$(OBJDUMP) $(OBJDUMPFLAGS) $(IMAGE).elf > $(BUILD_DIR)/disasm.txt
+
+elf:
+	@$(READELF) $(READELFFLAGS) $(IMAGE).elf > $(BUILD_DIR)/elf.txt
+
+
