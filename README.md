@@ -2,7 +2,7 @@
 
 Mini Labs & OS Labs 
 
-Individual learning implementation, no online judge.
+The individual learning implementation version, without Online Judge, only local test
 
 
 
