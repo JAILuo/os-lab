@@ -176,6 +176,8 @@ void draw_bmp(int x, int y, int bmp_width, int bmp_height, unsigned char *bmp_da
     float scale_x = (float)screen_width / bmp_width;
     float scale_y = (float)screen_height / bmp_height;
 
+    bmp_data = (uint8_t *)bmp_data + 54;
+
     for (int i = 0; i < bmp_height; i++) {
         for (int j = 0; j < bmp_width; j++) {
             // 计算BMP中每个像素在屏幕上的位置
@@ -201,9 +203,9 @@ int main(const char *args) {
 
   //splash();
 
-  //draw_image(test_bmp, 0, 0, 640, 480);
+  draw_image(test_bmp, 0, 0, 640, 480);
 
-  draw_bmp(0, 0, 640, 360, test_bmp);
+  //draw_bmp(0, 0, 640, 360, test_bmp);
 
   //splash();
 
