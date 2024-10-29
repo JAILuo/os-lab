@@ -2,6 +2,7 @@
 #include <klib.h>
 #include <klib-macros.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 static unsigned long int next = 1;
@@ -39,9 +40,14 @@ void *malloc(size_t size) {
     if (!last_addr) {
         last_addr = (void*)ROUNDUP(heap.start, 4);
     }
+    printf("before alloc, last_addr: %p\n", last_addr);
+    printf("heap.start: %x(%d)  heap.end: %x(%d)\n", heap.start, heap.start, heap.end, heap.end);
     size_t size_adj = size & 0xF ? (size & ~(size_t)0xF) + 0x10 : size;
     void *old = last_addr;
     last_addr = (uint8_t *)last_addr + size_adj;
+    printf("affter alloc, last_addr: %p\n", last_addr);
+
+    assert(last_addr <= heap.end);
     return old;
 #endif
     return NULL;
@@ -49,6 +55,7 @@ void *malloc(size_t size) {
 
 
 void free(void *ptr) {
+
 }
 
 #endif
