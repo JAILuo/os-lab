@@ -295,11 +295,13 @@ int main(const char *args) {
 
   splash();
 
+  sleep();
+
   draw_image(test_bmp, 0, 0, 480, 360);
 
   //draw_bmp(0, 0, 480, 640, test_bmp);
 
-  splash();
+  //splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
