@@ -313,8 +313,7 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-  splash();
-
+  //splash();
 
   draw_image(test_bmp, 0, 0, 480, 360);
 
