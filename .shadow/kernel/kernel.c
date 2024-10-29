@@ -257,9 +257,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             // src_pixels[offset] = (r << 16) | (g << 8) | b;
 
             //little-endian, (low addr) B-G-R (high addr)
-            unsigned char r = src[offset * 3 + 2];
+            unsigned char r = src[offset * 3 ];
             unsigned char g = src[offset * 3 + 1];
-            unsigned char b = src[offset * 3];
+            unsigned char b = src[offset * 3 + 2];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
 
             // printf("offset: %d\n", offset);
