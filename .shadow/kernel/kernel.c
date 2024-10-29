@@ -117,12 +117,14 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
 
+    // 为屏幕像素数据分配内存
     uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 4);
     if (!dst_pixels) {
         printf("Memory allocation failed\n");
         return;
     }
 
+    // 为源图像像素数据分配内存
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
@@ -130,17 +132,24 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         return;
     }
 
-    src = (uint8_t *)src + 54; // 跳过BMP文件头
-    int line_off = (src_width * 3 + 3) & ~0x3; // 计算每行的填充字节
+    // 跳过BMP文件头
+    //src += 54;
+
+    // 计算每行的填充字节
+    int line_padding = (4 - (src_width * 3) % 4) % 4;
+    int line_off = src_width * 3 + line_padding; // 每行的总字节数，包括填充
+
+    // 读取像素数据
     for (int y = src_height - 1; y >= 0; y--) {
+        // 定位到当前行的开始
+        const unsigned char* row_ptr = src + 54 + y * line_off;
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
-            unsigned char b = src[(y * line_off) + x * 3];
-            unsigned char g = src[(y * line_off) + x * 3 + 1];
-            unsigned char r = src[(y * line_off) + x * 3 + 2];
+            unsigned char b = row_ptr[x * 3];
+            unsigned char g = row_ptr[x * 3 + 1];
+            unsigned char r = row_ptr[x * 3 + 2];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
         }
-        src += line_off; // 跳到下一行的开始，并考虑行填充
     }
 
     // 缩放图片
@@ -154,6 +163,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         }
     }
 
+    // 释放内存
     free(src_pixels);
     free(dst_pixels);
 }
