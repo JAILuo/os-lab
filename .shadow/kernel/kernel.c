@@ -109,7 +109,56 @@ void sleep() {
 }
 
 //#define OWN
-#define NEW
+//#define NEW
+#define NEW1
+
+#ifdef NEW1
+void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
+    int screen_w, screen_h;
+    get_screen_size(&screen_w, &screen_h);
+
+    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 4);
+    if (!dst_pixels) {
+        printf("Memory allocation failed\n");
+        return;
+    }
+
+    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
+    if (!src_pixels) {
+        printf("Memory allocation failed\n");
+        free(dst_pixels);
+        return;
+    }
+
+    src = (uint8_t *)src + 54; // 跳过BMP文件头
+    int line_off = (src_width * 3 + 3) & ~0x3; // 计算每行的填充字节
+    for (int y = src_height - 1; y >= 0; y--) {
+        for (int x = 0; x < src_width; x++) {
+            int offset = y * src_width + x;
+            unsigned char b = src[(y * line_off) + x * 3];
+            unsigned char g = src[(y * line_off) + x * 3 + 1];
+            unsigned char r = src[(y * line_off) + x * 3 + 2];
+            src_pixels[offset] = (r << 16) | (g << 8) | b;
+        }
+        src += line_off; // 跳到下一行的开始，并考虑行填充
+    }
+
+    // 缩放图片
+    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
+
+    // 绘制图片
+    for (int y = 0; y < screen_h; y++) {
+        for (int x = 0; x < screen_w; x++) {
+            uint32_t color = dst_pixels[y * screen_w + x];
+            draw_tile(x + dst_x, y + dst_y, 1, 1, color);
+        }
+    }
+
+    free(src_pixels);
+    free(dst_pixels);
+}
+#endif
+
 
 #ifdef NEW
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
