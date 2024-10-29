@@ -108,7 +108,7 @@ void sleep() {
     }
 }
 
-#define OWN
+#define old
 //#define NEW
 //#define NEW1
 
@@ -221,7 +221,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 #endif
 
 
-#ifdef OWN
+#ifdef old
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
