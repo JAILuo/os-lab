@@ -118,7 +118,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         printf("Memory allocation failed\n");
         return;
     }
-    //printf("screen_w * screen_h * 3: %d\n", screen_w * screen_h * 4);
+    //printf("screen_w * screen_h * 4: %d\n", screen_w * screen_h * 4);
 
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
     if (!src_pixels) {
@@ -126,8 +126,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         free(dst_pixels);
         return;
     }
-    //printf("src_width * src_height * 3: %d\n", src_width * src_height * 4);
-
+    //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
     // BMP shoulud be (B G R)
     for (int y = src_height - 1; y >= 0; y--) {
@@ -144,7 +143,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             // unsigned char g = src[offset * 3 + 1];
             // unsigned char b = src[offset * 3];
             //src_pixels[offset] = (r << 16) | (g << 8) | b;
-            //printf("src_pixels: %x\n", src_pixels[offset]);
+            printf("src_pixels: %x\n", src_pixels[offset]);
         }
     }
 
@@ -177,7 +176,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 3600, 4800);
+  draw_image(test_bmp, 0, 0, 360, 480);
 
   //splash();
 
