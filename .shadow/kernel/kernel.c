@@ -248,10 +248,12 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
     int line_padding = (4 - (src_width * 3) % 4) % 4;
 
+    // BMP shoulud be (B G R)
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
             int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
-            //int src_index = (y * 3 * src_width) + (x * 4);
+            // int src_index = (y * 3 * src_width) + (x * 4);
+            // little-endian, (low addr) B-G-R (high addr)
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
             unsigned char r = src[src_index + 2];
