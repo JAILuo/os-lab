@@ -295,7 +295,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 360, 480);
+  draw_image(test_bmp, 0, 0, 640, 480);
 
   //draw_bmp(0, 0, 480, 640, test_bmp);
 
