@@ -103,7 +103,7 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
 }
 
 void sleep() {
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 10000; i++) {
         printf("................\n");
     }
 }
@@ -162,6 +162,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             uint32_t color = src_pixels[y * screen_w + x];
             draw_tile(x + dst_x, y + dst_y, 1, 1, color);
         }
+        sleep();
     }
 
     // 释放内存
@@ -295,7 +296,6 @@ int main(const char *args) {
 
   splash();
 
-  sleep();
 
   draw_image(test_bmp, 0, 0, 480, 360);
 
