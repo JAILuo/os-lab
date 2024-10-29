@@ -167,6 +167,30 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     free(dst_pixels);
 }
 
+void draw_bmp(int x, int y, int bmp_width, int bmp_height, unsigned char *bmp_data) {
+    // 获取屏幕大小
+    int screen_width = 640;
+    int screen_height = 480;
+
+    // 计算缩放比例
+    float scale_x = (float)screen_width / bmp_width;
+    float scale_y = (float)screen_height / bmp_height;
+
+    for (int i = 0; i < bmp_height; i++) {
+        for (int j = 0; j < bmp_width; j++) {
+            // 计算BMP中每个像素在屏幕上的位置
+            int screen_x = (int)(j * scale_x);
+            int screen_y = (int)(i * scale_y);
+
+            // 获取BMP中的像素颜色值
+            uint32_t color = *((uint32_t *)(bmp_data + (i * bmp_width + j) * 4));
+
+            // 绘制到屏幕上
+            draw_tile(screen_x, screen_y, 1, 1, color);
+        }
+    }
+}
+
 // Operating system is a C program!
 int main(const char *args) {
   ioe_init();
@@ -177,7 +201,9 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 640, 480);
+  //draw_image(test_bmp, 0, 0, 640, 480);
+
+  draw_bmp(0, 0, 480, 640, test_bmp);
 
   //splash();
 
