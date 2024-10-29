@@ -128,6 +128,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
+
+    src = (uint8_t *)src + 54;
+
     // BMP shoulud be (B G R)
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
