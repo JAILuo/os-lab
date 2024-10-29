@@ -118,9 +118,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         return;
     }
 
-    // 跳过BMP文件头
-    src += 54;
-
     uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
     if (!src_pixels) {
         printf("Memory allocation failed\n");
@@ -128,10 +125,17 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         return;
     }
 
-    int line_padding = (4 - (src_width * 3) % 4) % 4; // 计算每行的填充字节
+    // 跳过BMP文件头
+    src += 54;
+
+    // 计算每行的填充字节
+    int line_padding = (4 - (src_width * 3) % 4) % 4;
+
+    // BMP应该是(B G R)
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
             int offset = y * src_width + x;
+
             unsigned char r = src[(offset * 3) + 2];
             unsigned char g = src[(offset * 3) + 1];
             unsigned char b = src[(offset * 3) + 0];
@@ -141,7 +145,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         src += line_padding;
     }
 
-    // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
     // 绘制图片
@@ -155,6 +158,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     free(src_pixels);
     free(dst_pixels);
 }
+
 
 // void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
 //     int screen_w, screen_h;
