@@ -267,7 +267,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             // printf("b: %x  g: %x  r: %x\n", b, g, r);
             // printf("src_pixels: %x\n\n", src_pixels[offset]);
         }
-        //src += line_padding;
+        src += line_padding;
     }
 
     // 缩放图片
