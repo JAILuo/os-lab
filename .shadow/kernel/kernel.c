@@ -250,9 +250,9 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
         for (int x = 0; x < src_width; x++) {
             int src_index = (y * (src_width * 3 + line_padding)) + (x * 4);
             //int src_index = (y * 3 * src_width) + (x * 4);
-            unsigned char b = src[src_index + 2];
+            unsigned char b = src[src_index];
             unsigned char g = src[src_index + 1];
-            unsigned char r = src[src_index];
+            unsigned char r = src[src_index + 2];
             int offset = y * src_width + x;
             src_pixels[offset] = (0x00000000) | (r << 16) | (g << 8) | b;
             //printf("src_index: %d\n", src_index);
