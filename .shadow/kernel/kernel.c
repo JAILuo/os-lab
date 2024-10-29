@@ -183,7 +183,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     src = (uint8_t *)src + 54;
     // BMP shoulud be (B G R)
-    int line_padding = (4 - (src_width * 3) % 4) % 4;
+    //int line_padding = (4 - (src_width * 3) % 4) % 4;
     for (int y = src_height - 1; y >= 0; y--) {
         //for (int x = 0; x < src_width / 3; x++) {
         for (int x = 0; x < src_width; x++) {
@@ -204,7 +204,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             // printf("b: %x  g: %x  r: %x\n", b, g, r);
             //printf("src_pixels: %x\n\n", src_pixels[offset]);
         }
-        src += line_padding;
+        //src += line_padding;
     }
 
     // 缩放图片
