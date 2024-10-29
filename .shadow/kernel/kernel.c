@@ -171,56 +171,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 #endif
 
 
-#ifdef NEW
-void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
-    int screen_w, screen_h;
-    get_screen_size(&screen_w, &screen_h);
-
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 4);
-    if (!dst_pixels) {
-        printf("Memory allocation failed\n");
-        return;
-    }
-
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
-    if (!src_pixels) {
-        printf("Memory allocation failed\n");
-        free(dst_pixels);
-        return;
-    }
-
-    src = (uint8_t *)src + 54; // 跳过BMP文件头
-    int line_padding = (4 - (src_width * 3) % 4) % 4; // 计算每行的填充字节
-
-    for (int y = src_height - 1; y >= 0; y--) {
-        for (int x = 0; x < src_width; x++) {
-            int offset = y * src_width + x;
-            int src_offset = (y * (src_width * 3 + line_padding)) + (x * 3);
-            unsigned char b = src[src_offset];
-            unsigned char g = src[src_offset + 1];
-            unsigned char r = src[src_offset + 2];
-            src_pixels[offset] = (r << 16) | (g << 8) | b;
-        }
-        src += line_padding; // 跳过行填充
-    }
-
-    // 缩放图片
-    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
-
-    // 绘制图片
-    for (int y = 0; y < screen_h; y++) {
-        for (int x = 0; x < screen_w; x++) {
-            uint32_t color = src_pixels[y * screen_w + x];
-            draw_tile(x + dst_x, y + dst_y, 1, 1, color);
-        }
-    }
-
-    free(src_pixels);
-    free(dst_pixels);
-}
-#endif
-
-
 #ifdef old
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
@@ -243,8 +193,11 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
     src = (uint8_t *)src + 54; // 跳过BMP文件头
+
+    // 每行的填充字节
     //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
-    int line_padding = (4 - (src_width * 3) % 4) % 4;
+    int line_padding = ((src_width * 3 + 31) & ~31);
+    //int line_padding = (4 - (src_width * 3) % 4) % 4;
 
     // BMP shoulud be (B G R)
     for (int y = src_height - 1; y >= 0; y--) {
