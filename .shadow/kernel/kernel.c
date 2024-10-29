@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <float.h>
+#include "../L0/image.h"
 
 #define SIDE 16
 
