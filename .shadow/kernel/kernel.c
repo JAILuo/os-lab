@@ -242,32 +242,46 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
-
-    src = (uint8_t *)src + 54;
-    // BMP shoulud be (B G R)
+        src = (uint8_t *)src + 54; // 跳过BMP文件头
     int line_padding = (4 - (src_width * 3) % 4) % 4;
+
     for (int y = src_height - 1; y >= 0; y--) {
-        //for (int x = 0; x < src_width / 3; x++) {
-        for (int x = src_width; x >= 0; x--) {
+        for (int x = 0; x < src_width; x++) {
+            int src_index = (y * (src_width * 3 + line_padding)) + (x * 3);
+            unsigned char b = src[src_index];
+            unsigned char g = src[src_index + 1];
+            unsigned char r = src[src_index + 2];
             int offset = y * src_width + x;
-
-            // uint8_t b = *(((uint8_t*)&src[src_width * y]) + 3 * x);
-            // uint8_t g = *(((uint8_t*)&src[src_width * y]) + 3 * x + 1);
-            // uint8_t r = *(((uint8_t*)&src[src_width * y]) + 3 * x + 2);
-            // src_pixels[offset] = (r << 16) | (g << 8) | b;
-
-            //little-endian, (low addr) B-G-R (high addr)
-            unsigned char r = src[offset * 3 + 2];
-            unsigned char g = src[offset * 3 + 1];
-            unsigned char b = src[offset * 3];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
-
-            // printf("offset: %d\n", offset);
-            // printf("b: %x  g: %x  r: %x\n", b, g, r);
-            // printf("src_pixels: %x\n\n", src_pixels[offset]);
         }
-        src += line_padding;
+        src += line_padding; // 跳过行填充
     }
+
+    // src = (uint8_t *)src + 54;
+    // // BMP shoulud be (B G R)
+    // int line_padding = (4 - (src_width * 3) % 4) % 4;
+    // for (int y = src_height - 1; y >= 0; y--) {
+    //     //for (int x = 0; x < src_width / 3; x++) {
+    //     for (int x = src_width; x >= 0; x--) {
+    //         int offset = y * src_width + x;
+
+    //         // uint8_t b = *(((uint8_t*)&src[src_width * y]) + 3 * x);
+    //         // uint8_t g = *(((uint8_t*)&src[src_width * y]) + 3 * x + 1);
+    //         // uint8_t r = *(((uint8_t*)&src[src_width * y]) + 3 * x + 2);
+    //         // src_pixels[offset] = (r << 16) | (g << 8) | b;
+
+    //         //little-endian, (low addr) B-G-R (high addr)
+    //         unsigned char r = src[offset * 3 + 2];
+    //         unsigned char g = src[offset * 3 + 1];
+    //         unsigned char b = src[offset * 3];
+    //         src_pixels[offset] = (r << 16) | (g << 8) | b;
+
+    //         // printf("offset: %d\n", offset);
+    //         // printf("b: %x  g: %x  r: %x\n", b, g, r);
+    //         // printf("src_pixels: %x\n\n", src_pixels[offset]);
+    //     }
+    //     src += line_padding;
+    // }
 
     // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
