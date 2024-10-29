@@ -253,8 +253,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             unsigned char r = src[src_index + 2];
             int offset = y * src_width + x;
             src_pixels[offset] = (r << 16) | (g << 8) | b;
-            printf("src_index: %d\n", src_index);
-            printf("offset: %d\n\n", offset);
+            //printf("src_index: %d\n", src_index);
+            //printf("offset: %d\n\n", offset);
         }
         src += line_padding; // 跳过行填充
     }
