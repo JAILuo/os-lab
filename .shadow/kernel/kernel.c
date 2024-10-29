@@ -136,7 +136,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     //src += 54;
 
     // 计算每行的填充字节
-    int line_padding = (4 - (src_width * 3) % 4) % 4;
+    //int line_padding = (4 - (src_width * 3) % 4) % 4;
+    int line_padding = ((src_width & 24) + 31) & ~31;
     int line_off = src_width * 3 + line_padding; // 每行的总字节数，包括填充
 
     // 读取像素数据
