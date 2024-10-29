@@ -108,8 +108,8 @@ void sleep() {
     }
 }
 
-#define OWN
-//#define NEW
+//#define OWN
+#define NEW
 //#define NEW1
 
 #ifdef NEW1
