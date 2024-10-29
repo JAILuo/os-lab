@@ -145,6 +145,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
             unsigned char g = src[offset * 3 + 1];
             unsigned char b = src[offset * 3];
             src_pixels[offset] = (r << 16) | (g << 8) | b;
+            printf("offset: %d\n", offset);
             // printf("b: %x  g: %x  r: %x\n", b, g, r);
             // printf("src_pixels: %x\n\n", src_pixels[offset]);
         }
@@ -173,13 +174,9 @@ int main(const char *args) {
   puts(args);  // make run mainargs=xxx
   puts("\"\n");
 
-//   for (int i = 0; i < test_bmp_len ; i++) {
-//    printf("test_bmp[%d]: %d\n", i, test_bmp[i]);
-//   }
-
   //splash();
 
-  draw_image(test_bmp, 0, 0, 640, 320);
+  draw_image(test_bmp, 0, 0, 640, 480);
 
   //splash();
 
