@@ -12,6 +12,8 @@
 
 //static int w, h;  // Screen size
 
+#define BMP_FILE_HEADER_SIZE 0x36
+
 #define KEYNAME(key) \
   [AM_KEY_##key] = #key,
 static const char *key_names[] = { AM_KEYS(KEYNAME) };
@@ -68,110 +70,42 @@ void splash() {
   }
 }
 
-extern unsigned char test_bmp[];
-extern unsigned int test_bmp_len;
+extern unsigned char test2_bmp[];
 
 /**
- * 1. 将xxd得到图片像素数据
- *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样？
+ * 最初的思考过程
+ * 1. 用xxd得到图片像素数据
+ *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样，还要解码？
  *      ARGB、ABGR...
+ *      得到的数据是怎么样的？需要我再进行处理吗？
+ *      还要怎么处理？
  * 2. 缩放
+ *      具体算法种类？
  * 3. 绘制图片
+ *     基本的基于行的写像素 
  */
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                  uint32_t* dst_pixels, int dst_width, int dst_height) {
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
-            // 使用最近邻插值，计算源图像中的坐标
+            // Nearest Neighbor interpolation
             float src_x_ratio = (float)x / dst_width;
             float src_y_ratio = (float)y / dst_height;
             int src_x = (int)(src_x_ratio * src_width);
             int src_y = (int)(src_y_ratio * src_height);
 
-            // 确保坐标不会超出源图像的边界
             if (src_x >= src_width - 1) src_x = src_width - 1;
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
-            // 反转 y 坐标
-            // 好像是因为BMP是从左下角开始存的？然后我读的有问题？
+            // Invert the y-coordinates
+            // The bmp image starts at the last line and is scanned upwards progressively
             src_y = src_height - 1 - src_y;
 
-            // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
         }
     }
 }
 
-void sleep() {
-    for (int i = 0; i < 10000; i++) {
-        printf("................\n");
-    }
-}
-
-#define old
-//#define NEW
-//#define NEW1
-
-#ifdef NEW1
-void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
-    int screen_w, screen_h;
-    get_screen_size(&screen_w, &screen_h);
-
-    // 为屏幕像素数据分配内存
-    uint32_t* dst_pixels = (uint32_t*)malloc(screen_w * screen_h * 4);
-    if (!dst_pixels) {
-        printf("Memory allocation failed\n");
-        return;
-    }
-
-    // 为源图像像素数据分配内存
-    uint32_t* src_pixels = (uint32_t*)malloc(src_width * src_height * 4);
-    if (!src_pixels) {
-        printf("Memory allocation failed\n");
-        free(dst_pixels);
-        return;
-    }
-
-    // 跳过BMP文件头
-    //src += 54;
-
-    // 计算每行的填充字节
-    //int line_padding = (4 - (src_width * 3) % 4) % 4;
-    int line_padding = ((src_width & 24) + 31) & ~31;
-    int line_off = src_width * 3 + line_padding; // 每行的总字节数，包括填充
-
-    // 读取像素数据
-    for (int y = src_height - 1; y >= 0; y--) {
-        // 定位到当前行的开始
-        const unsigned char* row_ptr = src + 54 + y * line_off;
-        for (int x = 0; x < src_width; x++) {
-            int offset = y * src_width + x;
-            unsigned char b = row_ptr[x * 3];
-            unsigned char g = row_ptr[x * 3 + 1];
-            unsigned char r = row_ptr[x * 3 + 2];
-            src_pixels[offset] = (r << 16) | (g << 8) | b;
-        }
-    }
-
-    // 缩放图片
-    resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
-
-    // 绘制图片
-    for (int y = 0; y < screen_h; y++) {
-        for (int x = 0; x < screen_w; x++) {
-            uint32_t color = src_pixels[y * screen_w + x];
-            draw_tile(x + dst_x, y + dst_y, 1, 1, color);
-        }
-    }
-
-    // 释放内存
-    free(src_pixels);
-    free(dst_pixels);
-}
-#endif
-
-
-#ifdef old
 void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, int src_height) {
     int screen_w, screen_h;
     get_screen_size(&screen_w, &screen_h);
@@ -192,60 +126,37 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
-    src = (uint8_t *)src + 54; // 跳过BMP file header 
+    src = (uint8_t *)src + BMP_FILE_HEADER_SIZE; // jump BMP file header 
 
-    // 每行的填充字节
-    //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
-    int line_padding = (4 - (src_width * 3) % 4) % 4;
-    //int line_padding = ((src_width * 3 + 31) & ~31);
+    // Padding bytes per row
+    // int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
+    // int line_padding = (4 - (src_width * 3) % 4) % 4;
+    // The above is GPT generated, but can be used
+    int line_padding = ((src_width & 32) + 31) & ~31;
 
-    // BMP shoulud be (B G R)
     for (int y = src_height - 1; y >= 0; y--) {
-        for (int x = 0; x < src_width; x++) {
+        for (int x = src_width - 1; x >= 0; x--) {
+            // hexedit xx.bmp, read biBitCount: 0x0020 = 32 bits = 4 bytes <-> 1 pixels
             int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
-            // int src_index = (y * 3 * src_width) + (x * 4);
+            
+            // BMP shoulud be (B G R)
             // little-endian, (low addr) B-G-R (high addr)
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
             unsigned char r = src[src_index + 2];
+
             int offset = y * src_width + x;
-            src_pixels[offset] = (0x00000000) | (r << 16) | (g << 8) | b;
+            src_pixels[offset] = (0xff000000) | (r << 16) | (g << 8) | b;
+
             //printf("src_index: %d\n", src_index);
             //printf("offset: %d\n\n", offset);
         }
-        src += line_padding; // jump high padding
+        src += line_padding; // jump line padding
     }
 
-    // src = (uint8_t *)src + 54;
-    // // BMP shoulud be (B G R)
-    // int line_padding = (4 - (src_width * 3) % 4) % 4;
-    // for (int y = src_height - 1; y >= 0; y--) {
-    //     //for (int x = 0; x < src_width / 3; x++) {
-    //     for (int x = src_width; x >= 0; x--) {
-    //         int offset = y * src_width + x;
-
-    //         // uint8_t b = *(((uint8_t*)&src[src_width * y]) + 3 * x);
-    //         // uint8_t g = *(((uint8_t*)&src[src_width * y]) + 3 * x + 1);
-    //         // uint8_t r = *(((uint8_t*)&src[src_width * y]) + 3 * x + 2);
-    //         // src_pixels[offset] = (r << 16) | (g << 8) | b;
-
-    //         //little-endian, (low addr) B-G-R (high addr)
-    //         unsigned char r = src[offset * 3 + 2];
-    //         unsigned char g = src[offset * 3 + 1];
-    //         unsigned char b = src[offset * 3];
-    //         src_pixels[offset] = (r << 16) | (g << 8) | b;
-
-    //         // printf("offset: %d\n", offset);
-    //         // printf("b: %x  g: %x  r: %x\n", b, g, r);
-    //         // printf("src_pixels: %x\n\n", src_pixels[offset]);
-    //     }
-    //     src += line_padding;
-    // }
-
-    // 缩放图片
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
-    // 绘制图片
+    // Actual drawing
     for (int y = screen_h; y >= 0; y--) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
@@ -256,7 +167,6 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     free(src_pixels);
     free(dst_pixels);
 }
-#endif
 
 // Operating system is a C program!
 int main(const char *args) {
@@ -268,11 +178,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 480, 360);
-
-  //draw_bmp(0, 0, 480, 640, test_bmp);
-
-  //splash();
+  draw_image(test2_bmp, 0, 0, 640, 427);
 
   puts("Press any key to see its key code...\n");
   while (1) {
