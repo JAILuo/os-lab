@@ -124,7 +124,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     src = (uint8_t *)src + 54; // jump BMP file header 
 
     // 每行的填充字节
-    int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 4);
+    int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
     //int line_padding = (4 - (src_width * 3) % 4) % 4;
     //int line_padding = ((src_width * 3 + 31) & ~31);
 
@@ -134,8 +134,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = src_width - 1; x >= 0; x--) {
             // 1 pixels <-> 4 pixels
-            //int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
-            int src_index = (y * (src_width * 3 + line_padding)) + (x * 3);
+            int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
             // int src_index = (y * 3 * src_width) + (x * 4);
             
             unsigned char b = src[src_index + 0];
