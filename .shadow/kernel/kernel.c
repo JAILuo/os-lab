@@ -121,7 +121,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
-    src = (uint8_t *)src + 54; // 跳过BMP file header 
+    src = (uint8_t *)src + 54; // jump BMP file header 
 
     // 每行的填充字节
     //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
@@ -133,14 +133,16 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // The bmp image starts at the last line and is scanned upwards progressively
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = 0; x < src_width; x++) {
-            int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
+            int src_index = (y * (x * 4 + line_padding)) + (x * 4);
             // int src_index = (y * 3 * src_width) + (x * 4);
             
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
             unsigned char r = src[src_index + 2];
+
             int offset = y * src_width + x;
             src_pixels[offset] = (0xff000000) | (r << 16) | (g << 8) | b;
+
             //printf("src_index: %d\n", src_index);
             //printf("offset: %d\n\n", offset);
         }
