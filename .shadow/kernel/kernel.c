@@ -12,6 +12,8 @@
 
 //static int w, h;  // Screen size
 
+#define BMP_FILE_HEADER_SIZE 0x36
+
 #define KEYNAME(key) \
   [AM_KEY_##key] = #key,
 static const char *key_names[] = { AM_KEYS(KEYNAME) };
@@ -81,21 +83,19 @@ void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                  uint32_t* dst_pixels, int dst_width, int dst_height) {
     for (int y = 0; y < dst_height; y++) {
         for (int x = 0; x < dst_width; x++) {
-            // 使用最近邻插值，计算源图像中的坐标
+            // Nearest Neighbor interpolation
             float src_x_ratio = (float)x / dst_width;
             float src_y_ratio = (float)y / dst_height;
             int src_x = (int)(src_x_ratio * src_width);
             int src_y = (int)(src_y_ratio * src_height);
 
-            // 确保坐标不会超出源图像的边界
             if (src_x >= src_width - 1) src_x = src_width - 1;
             if (src_y >= src_height - 1) src_y = src_height - 1;
 
-            // 反转 y 坐标
-            // 好像是因为BMP是从左下角开始存的？然后我读的有问题？
+            // Invert the y-coordinates
+            // The bmp image starts at the last line and is scanned upwards progressively
             src_y = src_height - 1 - src_y;
 
-            // 从源图像中复制像素值到目标图像
             dst_pixels[y * dst_width + x] = src_pixels[src_y * src_width + src_x];
         }
     }
@@ -121,23 +121,20 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     }
     //printf("src_width * src_height * 4: %d\n", src_width * src_height * 4);
 
-    src = (uint8_t *)src + 54; // jump BMP file header 
+    src = (uint8_t *)src + BMP_FILE_HEADER_SIZE; // jump BMP file header 
 
-    // 每行的填充字节
-    //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
-    //int line_padding = (4 - (src_width * 3) % 4) % 4;
-    //int line_padding = ((src_width & 32) + 31) & ~31;
-    //int line_padding = ((src_width * 3 + 31) & ~31);
-    int line_padding = (32 * src_width + 31) / 32 * 4;
+    // Padding bytes per row
+    // int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
+    // int line_padding = (4 - (src_width * 3) % 4) % 4;
+    // The above is GPT generated, but can be used
+    int line_padding = ((src_width & 32) + 31) & ~31;
 
     // BMP shoulud be (B G R)
     // little-endian, (low addr) B-G-R (high addr)
-    // The bmp image starts at the last line and is scanned upwards progressively
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = src_width - 1; x >= 0; x--) {
-            // 1 pixels <-> 4 pixels
+            // hexedit xx.bmp, read biBitCount: 0x0020 = 32 bits = 4 bytes <-> 1 pixels
             int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
-            // int src_index = (y * 3 * src_width) + (x * 4);
             
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
@@ -154,7 +151,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
 
     resize_image(src_pixels, src_width, src_height, dst_pixels, screen_w, screen_h);
 
-    // 绘制图片
+    // Actual drawing
     for (int y = screen_h; y >= 0; y--) {
         for (int x = 0; x < screen_w; x++) {
             uint32_t color = dst_pixels[y * screen_w + x];
