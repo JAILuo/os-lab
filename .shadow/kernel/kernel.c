@@ -68,12 +68,11 @@ void splash() {
   }
 }
 
-extern unsigned char test1_bmp[];
-extern unsigned int test1_bmp_len;
+extern unsigned char test2_bmp[];
 
 /**
  * 1. 将xxd得到图片像素数据
- *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样？
+ *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样，还要解码？
  *      ARGB、ABGR...
  * 2. 缩放
  * 3. 绘制图片
@@ -268,7 +267,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test1_bmp, 0, 0, 480, 360);
+  draw_image(test2_bmp, 0, 0, 480, 360);
 
   //draw_bmp(0, 0, 480, 640, test_bmp);
 
