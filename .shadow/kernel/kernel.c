@@ -124,7 +124,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     src = (uint8_t *)src + 54; // jump BMP file header 
 
     // 每行的填充字节
-    int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
+    int line_padding = ((src_width * 4 + 31) & ~31) - (src_width * 3);
     //int line_padding = (4 - (src_width * 3) % 4) % 4;
     //int line_padding = ((src_width * 3 + 31) & ~31);
 
