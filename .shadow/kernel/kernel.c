@@ -68,8 +68,8 @@ void splash() {
   }
 }
 
-extern unsigned char test_bmp[];
-extern unsigned int test_bmp_len;
+extern unsigned char test1_bmp[];
+extern unsigned int test1_bmp_len;
 
 /**
  * 1. 将xxd得到图片像素数据
@@ -268,7 +268,7 @@ int main(const char *args) {
 
   //splash();
 
-  draw_image(test_bmp, 0, 0, 480, 360);
+  draw_image(test1_bmp, 0, 0, 480, 360);
 
   //draw_bmp(0, 0, 480, 640, test_bmp);
 
