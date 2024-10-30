@@ -73,11 +73,16 @@ void splash() {
 extern unsigned char test2_bmp[];
 
 /**
- * 1. 将xxd得到图片像素数据
+ * 最初的思考过程
+ * 1. 用xxd得到图片像素数据
  *      需要看看是什么类型的，bmp、jpeg，不然好像用的颜色通道顺序不一样，还要解码？
  *      ARGB、ABGR...
+ *      得到的数据是怎么样的？需要我再进行处理吗？
+ *      还要怎么处理？
  * 2. 缩放
+ *      具体算法种类？
  * 3. 绘制图片
+ *     基本的基于行的写像素 
  */
 void resize_image(const uint32_t* src_pixels, int src_width, int src_height,
                  uint32_t* dst_pixels, int dst_width, int dst_height) {
@@ -129,13 +134,13 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // The above is GPT generated, but can be used
     int line_padding = ((src_width & 32) + 31) & ~31;
 
-    // BMP shoulud be (B G R)
-    // little-endian, (low addr) B-G-R (high addr)
     for (int y = src_height - 1; y >= 0; y--) {
         for (int x = src_width - 1; x >= 0; x--) {
             // hexedit xx.bmp, read biBitCount: 0x0020 = 32 bits = 4 bytes <-> 1 pixels
             int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
             
+            // BMP shoulud be (B G R)
+            // little-endian, (low addr) B-G-R (high addr)
             unsigned char b = src[src_index + 0];
             unsigned char g = src[src_index + 1];
             unsigned char r = src[src_index + 2];
@@ -174,10 +179,6 @@ int main(const char *args) {
   //splash();
 
   draw_image(test2_bmp, 0, 0, 640, 427);
-
-  //draw_bmp(0, 0, 480, 640, test_bmp);
-
-  //splash();
 
   puts("Press any key to see its key code...\n");
   while (1) {
