@@ -126,7 +126,8 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // 每行的填充字节
     //int line_padding = ((src_width * 3 + 31) & ~31) - (src_width * 3);
     //int line_padding = (4 - (src_width * 3) % 4) % 4;
-    int line_padding = ((src_width * 4 + 31) & ~31);
+    //int line_padding = ((src_width * 3 + 31) & ~31);
+    int line_padding = ((src_width & 32) + 31) & ~31;
 
     // BMP shoulud be (B G R)
     // little-endian, (low addr) B-G-R (high addr)
