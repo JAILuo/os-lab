@@ -132,7 +132,7 @@ void draw_image(const unsigned char* src, int dst_x, int dst_y, int src_width, i
     // little-endian, (low addr) B-G-R (high addr)
     // The bmp image starts at the last line and is scanned upwards progressively
     for (int y = src_height - 1; y >= 0; y--) {
-        for (int x = src_width; x >= 0; x--) {
+        for (int x = src_width - 1; x >= 0; x--) {
             int src_index = (y * (src_width * 4 + line_padding)) + (x * 4);
             // int src_index = (y * 3 * src_width) + (x * 4);
             
