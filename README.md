@@ -1,6 +1,6 @@
 **2024 Nanjing University, Operating System: Design and Implementation**
 
-Mini Labs & OS Labs 
+Mini Labs & OS Labs
 
 The individual learning implementation version, without Online Judge, only local test
 
