@@ -36,16 +36,27 @@ static struct co *current = NULL;
 static struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
-__attribute__((constructor))
-void co_init(void) {
-   strcpy(current->name, "main");
-   current->func = NULL;
-   current->arg = NULL;
-   current->status = CO_RUNNING;
-   current->waiter = NULL;
-   memset(current->stack, 0, STACK_SIZE);
-   co_list[co_num++] = current;
+__attribute__((constructor)) void init() {
+  struct co* main = (struct co*)malloc(sizeof(struct co));
+  strcpy(main->name, "main");
+  main->status = CO_RUNNING;
+  main->waiter = NULL;
+  current = main;
+  co_num = 1;
+  memset(co_list, 0, sizeof(co_list));
+  co_list[0] = main;
 }
+
+// __attribute__((constructor))
+// void co_init(void) {
+//    strcpy(current->name, "main");
+//    current->func = NULL;
+//    current->arg = NULL;
+//    current->status = CO_RUNNING;
+//    current->waiter = NULL;
+//    memset(current->stack, 0, STACK_SIZE);
+//    co_list[co_num++] = current;
+// }
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
     asm volatile (
