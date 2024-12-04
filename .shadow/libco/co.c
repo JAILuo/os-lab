@@ -49,16 +49,12 @@ __attribute__((constructor)) void co_init() {
     co_list[co_num++] = main;
 }
 
-// __attribute__((constructor))
-// void co_init(void) {
-//    strcpy(current->name, "main");
-//    current->func = NULL;
-//    current->arg = NULL;
-//    current->status = CO_RUNNING;
-//    current->waiter = NULL;
-//    memset(current->stack, 0, STACK_SIZE);
-//    co_list[co_num++] = current;
-// }
+__attribute__((destructor)) void co_exit() {
+    if (current && strcmp(current->name, "main") == 0) {
+        free(current);
+        current = NULL;
+    }
+}
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
     asm volatile (
