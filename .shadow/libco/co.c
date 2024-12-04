@@ -52,14 +52,15 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 #if __x86_64__
                   "movq %0, %%rsp;"
                   "movq %2, %%rdi;"
-                  "jmp *%1"
+                  "call *%1"
+                  "movq (%0), %%rdi"
                   :
                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
                   : "memory"
 #else
                   "movl %0, %%esp;"
                   "movl %2, 4(%0);"
-                  "jmp *%1"
+                  "call *%1"
                   :
                   : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
                   : "memory"
@@ -150,7 +151,7 @@ void co_yield(void) {
         switch (current->status) {
         case CO_NEW:
             current->status = CO_RUNNING;
-            stack_switch_call(current->stack, current->func, (uintptr_t)(current->arg));
+            stack_switch_call(current->stack + STACK_SIZE, current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
