@@ -43,9 +43,8 @@ __attribute__((constructor)) void co_init() {
     main->waiter = NULL;
     main->func = (void (*)(void *))main;
     current = main;
-    co_num = 1;
     memset(co_list, 0, sizeof(co_list));
-    co_list[0] = main;
+    co_list[co_num++] = main;
 }
 
 // __attribute__((constructor))
