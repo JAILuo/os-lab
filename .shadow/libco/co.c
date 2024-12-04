@@ -53,7 +53,6 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
                   "movq %0, %%rsp;"
                   "movq %2, %%rdi;"
                   "call *%1"
-                  "movq (%0), %%rdi"
                   :
                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
                   : "memory"
@@ -66,6 +65,19 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
                   : "memory"
 #endif
     );
+          asm volatile(
+      #if __x86_64__
+                "movq (%0), %%rdi"
+                :
+                : "b"((uintptr_t)sp)
+                : "memory"
+      #else
+                "movl 0x8(%0), %%esp; movl 0x4(%0), %%ecx"
+                :
+                : "b"((uintptr_t)sp)
+                : "memory"
+      #endif
+      );
 }
 
 static inline void *wrapper_(void *arg) {
