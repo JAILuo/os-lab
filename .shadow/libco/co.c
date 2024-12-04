@@ -141,6 +141,7 @@ void co_yield(void) {
                 current = current->waiter;
                 longjmp(current->context, 1);
             }
+            co_yield();
             break;
         case CO_RUNNING:
             longjmp(current->context, 1);
@@ -149,7 +150,6 @@ void co_yield(void) {
             printf("now status is %d\n", current->status);
             break;
         }
-
     } else { // longjmp return 1...
         return;
     }
