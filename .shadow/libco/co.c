@@ -67,7 +67,6 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
     );
 }
 
-
 static inline void *wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
     t->func(t->name);
@@ -93,11 +92,32 @@ void co_wait(struct co *co) {
 
 }
 
-static struct co * switch_to_co() {
-    assert(co_num != 0 && current != NULL);
-    // random switch
-    int random_index = rand() % co_num;
-    return co_list[random_index];
+// static struct co * switch_to_co() {
+//     assert(co_num != 0 && current != NULL);
+//     // random switch
+//     int random_index = rand() % co_num;
+//     return co_list[random_index];
+// }
+
+struct co *switch_to_co() {
+  int count = 0;
+  for (int i = 0; i < co_num; ++i) {
+    assert(co_list[i]);
+    if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
+      ++count;
+    }
+  }
+
+  int id = rand() % count, i = 0;
+  for (i = 0; i < co_num; ++i) {
+    if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
+      if (id == 0) {
+        break;
+      }
+      --id;
+    }
+  }
+  return co_list[i];
 }
 
 void co_yield(void) {
