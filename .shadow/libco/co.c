@@ -89,8 +89,27 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 }
 
 void co_wait(struct co *co) {
-
+  assert(co != NULL);
+  co->waiter = current;
+  current->status = CO_WAITING;
+  while (co->status != CO_DEAD) {
+    co_yield();
+  }
+  free(co);
+  int id = 0;
+  for (id = 0; id < co_num; ++id) {
+    if (co_list[id] == co) {
+      break;
+    }
+  }
+  while (id < co_num - 1) {
+    co_list[id] = co_list[id+1];
+    ++id;
+  }
+  --co_num;
+  co_list[co_num] = NULL;
 }
+
 
 // static struct co * switch_to_co() {
 //     assert(co_num != 0 && current != NULL);
@@ -141,7 +160,6 @@ void co_yield(void) {
                 current = current->waiter;
                 longjmp(current->context, 1);
             }
-            co_yield();
             break;
         case CO_RUNNING:
             longjmp(current->context, 1);
