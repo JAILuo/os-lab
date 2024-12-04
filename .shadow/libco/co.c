@@ -21,7 +21,7 @@ enum co_status {
 };
 
 struct co {
-    char name[30];
+    char *name;
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
@@ -98,54 +98,47 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 }
 
 void co_wait(struct co *co) {
-  assert(co != NULL);
-  co->waiter = current;
-  current->status = CO_WAITING;
-  while (co->status != CO_DEAD) {
-    co_yield();
-  }
-  free(co);
-  int id = 0;
-  for (id = 0; id < co_num; ++id) {
-    if (co_list[id] == co) {
-      break;
+    assert(co != NULL);
+    co->waiter = current;
+    current->status = CO_WAITING;
+    while (co->status != CO_DEAD) {
+        co_yield();
     }
-  }
-  while (id < co_num - 1) {
-    co_list[id] = co_list[id+1];
-    ++id;
-  }
-  --co_num;
-  co_list[co_num] = NULL;
+    free(co);
+    int id = 0;
+    for (id = 0; id < co_num; ++id) {
+        if (co_list[id] == co) {
+          break;
+        }
+    }
+    while (id < co_num - 1) {
+        co_list[id] = co_list[id+1];
+        ++id;
+    }
+    --co_num;
+    co_list[co_num] = NULL;
 }
 
 
-// static struct co * switch_to_co() {
-//     assert(co_num != 0 && current != NULL);
-//     // random switch
-//     int random_index = rand() % co_num;
-//     return co_list[random_index];
-// }
-
 struct co *switch_to_co() {
-  int count = 0;
-  for (int i = 0; i < co_num; ++i) {
-    assert(co_list[i]);
-    if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
-      ++count;
+    int count = 0;
+    for (int i = 0; i < co_num; ++i) {
+        assert(co_list[i]);
+        if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
+        ++count;
+        }
     }
-  }
 
-  int id = rand() % count, i = 0;
-  for (i = 0; i < co_num; ++i) {
-    if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
-      if (id == 0) {
-        break;
-      }
-      --id;
+    int id = rand() % count, i = 0;
+    for (i = 0; i < co_num; ++i) {
+        if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
+            if (id == 0) {
+                break;
+            }
+        --id;
+        }
     }
-  }
-  return co_list[i];
+    return co_list[i];
 }
 
 void co_yield(void) {
