@@ -104,6 +104,13 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->arg = arg;
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
+    if (current == NULL) {
+        current = (struct co *)malloc(sizeof(struct co));
+		current->status = CO_RUNNING; // BUG !! 写成了 current->status==CO_RUNNING;
+		current->waiter = NULL;
+		strcpy(current->name, "main");
+        co_list[co_num++] = current;
+    }
 
     co_list[co_num++] = new_co;
     return new_co;
