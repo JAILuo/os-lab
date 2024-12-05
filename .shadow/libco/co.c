@@ -167,6 +167,7 @@ void co_yield(void) {
     if (val == 0) {
         struct co *next_co = switch_to_co();
         current = next_co;
+        printf("e0193j01\n");
 
         switch (next_co->status) {
         case CO_NEW:
