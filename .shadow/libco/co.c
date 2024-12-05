@@ -21,7 +21,7 @@ enum co_status {
 };
 
 struct co {
-    __attribute__((aligned(16))) char name[50];
+    __attribute__((aligned(16))) char name[30];
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
@@ -36,7 +36,6 @@ static struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
 __attribute__((constructor)) void co_init() {
-    printf("test: %zu\n", sizeof(struct co));
     struct co* main = (struct co*)malloc(sizeof(struct co));
     strcpy(main->name, "main");
     main->status = CO_RUNNING;
