@@ -187,7 +187,7 @@ void co_yield(void) {
 	asm volatile(
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
-		: "b"((uintptr_t)next_co->stack[STACK_SIZE - 1]), "d"(next_co->func), "a"(next_co->arg)
+		: "b"((next_co->stack[STACK_SIZE - 1])), "d"(next_co->func), "a"(next_co->arg)
 		: "memory"
 	);
             //stack_switch_call(&(current->stack[STACK_SIZE - 1]), current->func, (uintptr_t)(current->arg));
