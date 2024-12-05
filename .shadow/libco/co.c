@@ -114,6 +114,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 }
 
 void co_wait(struct co *co) {
+    printf("co_wait...\n");
     assert(co != NULL);
     co->waiter = current;
     current->status = CO_WAITING;
@@ -158,6 +159,7 @@ struct co *switch_to_co() {
 }
 
 void co_yield(void) {
+    printf("co_yield");
     assert(current != NULL);
 
     int val = setjmp(current->context);
