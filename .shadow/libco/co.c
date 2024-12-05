@@ -150,7 +150,6 @@ void co_yield(void) {
 
         switch (next_co->status) {
         case CO_NEW:
-            printf("dapodco_yield\n");
             next_co->status = CO_RUNNING;
             stack_switch_call(current->stack + STACK_SIZE, current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
