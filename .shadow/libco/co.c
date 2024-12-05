@@ -174,8 +174,8 @@ void co_yield(void) {
         switch (next_co->status) {
         case CO_NEW:
             ((struct co volatile *)next_co)->status = CO_RUNNING;
-            printf("next_co: %p next_co->stack: %p\n" ,next_co, next_co->stack);
-            stack_switch_call((uint8_t *)(next_co->stack) + STACK_SIZE, &(next_co->func), (uintptr_t)&(next_co->arg));
+            //printf("next_co: %p next_co->stack: %p\n" ,next_co, next_co->stack);
+            stack_switch_call(&(next_co->stack[STACK_SIZE - 1]), &(next_co->func), (uintptr_t)&(next_co->arg));
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
