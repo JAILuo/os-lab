@@ -28,7 +28,7 @@ struct co {
 };
 
 struct co *current = NULL;
-static struct co *co_list[CO_AMOUNT];;
+struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
 // __attribute__((constructor)) void co_init() {
