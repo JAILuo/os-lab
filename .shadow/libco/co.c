@@ -21,7 +21,7 @@ enum co_status {
 };
 
 struct co {
-    char name[30];
+    char name[20];
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
@@ -175,6 +175,7 @@ void co_yield(void) {
             // it return here, which mean the end of task? 
             // So it should be CO_DEAD? TODO: test
             current->status = CO_DEAD;
+
             if (current->waiter) {
                 current = current->waiter;
                 longjmp(current->context, 1);
