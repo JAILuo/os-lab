@@ -92,20 +92,20 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 //     );
 // }
 
-static inline void *wrapper_(void *arg) {
-    struct co *t = (struct co *)arg;
-    t->func(t->name);
-    return NULL;
-}
+// static inline void *wrapper_(void *arg) {
+//     struct co *t = (struct co *)arg;
+//     t->func(t->name);
+//     return NULL;
+// }
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
 
     struct co* new_co= (struct co*)malloc(sizeof(struct co));
+    new_co->status = CO_NEW;
     strcpy(new_co->name, name);
     new_co->func = func;
     new_co->arg = arg;
-    new_co->status = CO_NEW;
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
 
