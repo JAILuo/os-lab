@@ -101,7 +101,7 @@ static inline void *wrapper_(void *arg) {
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
 
-    struct co *new_co = co_list[co_num];
+    struct co* new_co= (struct co*)malloc(sizeof(struct co));
     strcpy(new_co->name, name);
     new_co->func = func;
     new_co->arg = arg;
@@ -109,7 +109,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
 
-    co_num++;
+    co_list[co_num++] = new_co;
     return new_co;
 }
 
