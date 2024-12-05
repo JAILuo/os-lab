@@ -161,6 +161,12 @@ struct co *switch_to_co() {
 }
 
 void co_yield(void) {
+    if (current == NULL) // init main
+	{
+		current = (struct co *)malloc(sizeof(struct co));
+		current->status = CO_RUNNING;
+		strcpy(current->name, "main");
+	}
     assert(current != NULL);
 
     printf("co_list[0]->name: %s\n", co_list[0]->name);
