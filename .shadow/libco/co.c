@@ -165,13 +165,10 @@ void co_yield(void) {
         case CO_NEW:
             ((struct co volatile *)current)->status = CO_RUNNING;
 	asm volatile(
-        "movq %%rsp, -0x10(%0); leaq -0x10(%0), %%rsp; movq %2, %%rdi; call *%1"
-        :
-        : "b"((uintptr_t)next_co->stack[STACK_SIZE - 1]), "d"((uintptr_t)next_co->func), "a"((uintptr_t)next_co->arg)
-		// "movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
-		// :
-		// : "b"((uintptr_t)next_co->stack[STACK_SIZE - 1]), "d"(next_co->func), "a"(next_co->arg)
-		// : "memory"
+		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
+		:
+		: "b"((uintptr_t)next_co->stack[STACK_SIZE - 1]), "d"(next_co->func), "a"(next_co->arg)
+		: "memory"
 	);
             //stack_switch_call(&(current->stack[STACK_SIZE - 1]), current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
