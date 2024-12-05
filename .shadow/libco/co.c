@@ -21,13 +21,13 @@ enum co_status {
 };
 
 struct co {
-    __attribute__((aligned(16)))char name[20];
+    __attribute__((aligned(16))) char name[20];
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
     enum co_status status;  // 协程的状态
     struct co *    waiter;  // 是否有其他协程在等待当前协程
-    jmp_buf context; // 寄存器现场
+    jmp_buf context;        // 寄存器现场
     uint8_t        stack[STACK_SIZE]; // 协程的堆栈
 };
 
@@ -36,6 +36,7 @@ static struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
 __attribute__((constructor)) void co_init() {
+    printf("test: %zu\n", sizeof(struct co));
     struct co* main = (struct co*)malloc(sizeof(struct co));
     strcpy(main->name, "main");
     main->status = CO_RUNNING;
