@@ -171,7 +171,7 @@ void co_yield(void) {
 
         switch (next_co->status) {
         case CO_NEW:
-            ((struct co volatile *)current)->status = CO_RUNNING;
+            ((struct co volatile *)next_co)->status = CO_RUNNING;
 	asm volatile(
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
@@ -183,7 +183,7 @@ void co_yield(void) {
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
             // So it should be CO_DEAD? TODO: test
-            ((struct co volatile *)current)->status = CO_DEAD;
+            ((struct co volatile *)next_co)->status = CO_DEAD;
 
             if (current->waiter) {
                 current = current->waiter;
