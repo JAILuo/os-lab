@@ -174,7 +174,7 @@ void co_yield(void) {
     printf("co_list[2]->name: %s\n", co_list[2]->name);
     int val = setjmp(current->context);
     if (val == 0) {
-        struct co *next_co = co_list[1];
+        struct co *next_co = switch_to_co();
         current = next_co;
 
         switch (next_co->status) {
