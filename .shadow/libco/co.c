@@ -27,7 +27,7 @@ struct co {
     __attribute__((aligned(16)))uint8_t        stack[STACK_SIZE]; // 协程的堆栈
 };
 
-static struct co *current = NULL;
+struct co *current = NULL;
 static struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
