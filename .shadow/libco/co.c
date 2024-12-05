@@ -55,42 +55,25 @@ __attribute__((destructor)) void co_exit() {
     }
 }
 
-static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
-{
-	asm volatile(
+static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
+    asm volatile (
 #if __x86_64__
-		"movq %%rsp,-0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
-		:
-		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-		: "memory"
+                  "movq %0, %%rsp;"
+                  "movq %2, %%rdi;"
+                  "call *%1"
+                  :
+                  : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+                  : "memory"
 #else
-		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
-		:
-		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-		: "memory"
+                  "movl %0, %%esp;"
+                  "movl %2, 4(%0);"
+                  "call *%1"
+                  :
+                  : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
+                  : "memory"
 #endif
-	);
+    );
 }
-
-// static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
-//     asm volatile (
-// #if __x86_64__
-//                   "movq %0, %%rsp;"
-//                   "movq %2, %%rdi;"
-//                   "call *%1"
-//                   :
-//                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-//                   : "memory"
-// #else
-//                   "movl %0, %%esp;"
-//                   "movl %2, 4(%0);"
-//                   "call *%1"
-//                   :
-//                   : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
-//                   : "memory"
-// #endif
-//     );
-// }
 
 static inline void *wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
@@ -114,7 +97,6 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 }
 
 void co_wait(struct co *co) {
-    printf("co_wait...\n");
     assert(co != NULL);
     co->waiter = current;
     current->status = CO_WAITING;
@@ -163,7 +145,6 @@ void co_yield(void) {
 
     int val = setjmp(current->context);
     if (val == 0) {
-        printf("co_yield\n");
         struct co *next_co = switch_to_co();
         current = next_co;
 
