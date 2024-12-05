@@ -92,11 +92,11 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 //     );
 // }
 
-// static inline void *wrapper_(void *arg) {
-//     struct co *t = (struct co *)arg;
-//     t->func(t->name);
-//     return NULL;
-// }
+//static inline void *wrapper_(void *arg) {
+//    struct co *t = (struct co *)arg;
+//    t->func(t->name);
+//    return NULL;
+//}
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
