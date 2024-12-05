@@ -9,10 +9,6 @@
 #define CO_AMOUNT  256
 #define STACK_SIZE 1024
 
-struct context {
-
-};
-
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
     CO_RUNNING, // 已经执行过
@@ -35,25 +31,25 @@ static struct co *current = NULL;
 static struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
-__attribute__((constructor)) void co_init() {
-    struct co* main = (struct co*)malloc(sizeof(struct co));
-    strcpy(main->name, "main");
-    main->status = CO_RUNNING;
-    main->waiter = NULL;
-    main->func = (void (*)(void *))main;
-    memset(main->stack, 0, STACK_SIZE);
-
-    current = main;
-    memset(co_list, 0, sizeof(co_list));
-    co_list[co_num++] = main;
-}
-
-__attribute__((destructor)) void co_exit() {
-    if (current && strcmp(current->name, "main") == 0) {
-        free(current);
-        current = NULL;
-    }
-}
+// __attribute__((constructor)) void co_init() {
+//     struct co* main = (struct co*)malloc(sizeof(struct co));
+//     strcpy(main->name, "main");
+//     main->status = CO_RUNNING;
+//     main->waiter = NULL;
+//     main->func = (void (*)(void *))main;
+//     memset(main->stack, 0, STACK_SIZE);
+// 
+//     current = main;
+//     memset(co_list, 0, sizeof(co_list));
+//     co_list[co_num++] = main;
+// }
+// 
+// __attribute__((destructor)) void co_exit() {
+//     if (current && strcmp(current->name, "main") == 0) {
+//         free(current);
+//         current = NULL;
+//     }
+// }
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 {
@@ -171,7 +167,7 @@ void co_yield(void) {
 	asm volatile(
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
-		: "b"((uintptr_t)current->stack[STACK_SIZE - 1]), "d"(current->func), "a"(current->arg)
+		: "b"((uintptr_t)next_co->stack[STACK_SIZE - 1]), "d"(next_co->func), "a"(next_co->arg)
 		: "memory"
 	);
             //stack_switch_call(&(current->stack[STACK_SIZE - 1]), current->func, (uintptr_t)(current->arg));
