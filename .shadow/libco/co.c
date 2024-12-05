@@ -174,13 +174,7 @@ void co_yield(void) {
         switch (next_co->status) {
         case CO_NEW:
             ((struct co volatile *)next_co)->status = CO_RUNNING;
-	asm volatile(
-		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
-		:
-		: "b"((next_co->stack[STACK_SIZE - 32])), "d"(next_co->func), "a"(next_co->arg)
-		: "memory"
-	);
-            //stack_switch_call(&(current->stack[STACK_SIZE - 1]), current->func, (uintptr_t)(current->arg));
+            stack_switch_call(&(current->stack[STACK_SIZE - 1]), current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
