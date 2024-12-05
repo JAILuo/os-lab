@@ -167,7 +167,7 @@ void co_yield(void) {
 
         switch (next_co->status) {
         case CO_NEW:
-            next_co->status = CO_RUNNING;
+            ((struct co volatile *)current)->status = CO_RUNNING;
 	asm volatile(
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
