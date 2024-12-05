@@ -21,8 +21,7 @@ enum co_status {
 };
 
 struct co {
-    __attribute__((aligned(16))) char name[30];
-    //char name[30];
+    __attribute__((aligned(16))) char name[50];
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
