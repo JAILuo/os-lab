@@ -56,25 +56,42 @@ __attribute__((destructor)) void co_exit() {
     }
 }
 
-static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
-    asm volatile (
+static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
+{
+	asm volatile(
 #if __x86_64__
-                  "movq %0, %%rsp;"
-                  "movq %2, %%rdi;"
-                  "call *%1"
-                  :
-                  : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-                  : "memory"
+		"movq %%rsp,-0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
+		:
+		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+		: "memory"
 #else
-                  "movl %0, %%esp;"
-                  "movl %2, 4(%0);"
-                  "call *%1"
-                  :
-                  : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
-                  : "memory"
+		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
+		:
+		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+		: "memory"
 #endif
-    );
+	);
 }
+
+// static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
+//     asm volatile (
+// #if __x86_64__
+//                   "movq %0, %%rsp;"
+//                   "movq %2, %%rdi;"
+//                   "call *%1"
+//                   :
+//                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+//                   : "memory"
+// #else
+//                   "movl %0, %%esp;"
+//                   "movl %2, 4(%0);"
+//                   "call *%1"
+//                   :
+//                   : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
+//                   : "memory"
+// #endif
+//     );
+// }
 
 static inline void *wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
@@ -125,17 +142,17 @@ struct co *switch_to_co() {
     for (int i = 0; i < co_num; ++i) {
         assert(co_list[i]);
         if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
-        ++count;
+            ++count;
         }
     }
 
-    int id = rand() % count, i = 0;
+    int idx = rand() % count, i = 0;
     for (i = 0; i < co_num; ++i) {
         if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
-            if (id == 0) {
+            if (idx == 0) {
                 break;
             }
-        --id;
+        --idx;
         }
     }
     return co_list[i];
