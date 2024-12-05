@@ -159,11 +159,11 @@ struct co *switch_to_co() {
 }
 
 void co_yield(void) {
-    printf("co_yield");
     assert(current != NULL);
 
     int val = setjmp(current->context);
     if (val == 0) {
+        printf("co_yield\n");
         struct co *next_co = switch_to_co();
         current = next_co;
 
