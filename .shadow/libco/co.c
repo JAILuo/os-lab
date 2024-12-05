@@ -174,16 +174,7 @@ void co_yield(void) {
         switch (next_co->status) {
         case CO_NEW:
             ((struct co volatile *)next_co)->status = CO_RUNNING;
-            next_co->stack[1] = 99;
-            printf("stack 0: %d\n", next_co->stack[0]);
-            printf("stack 1: %d\n", next_co->stack[1]);
-            printf("stack 2: %d\n", next_co->stack[2]);
-            printf("stack 3: %d\n", next_co->stack[3]);
             // ...
-            printf("stack 1020: %d\n", next_co->stack[1020]);
-            printf("stack 1021: %d\n", next_co->stack[1021]);
-            printf("stack 1022: %d\n", next_co->stack[1022]);
-            printf("stack 1023: %d\n", next_co->stack[1023]);
 	asm volatile(
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
