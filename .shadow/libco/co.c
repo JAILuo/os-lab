@@ -56,23 +56,23 @@ __attribute__((destructor)) void co_exit() {
 }
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
-    asm volatile (
-#if __x86_64__
-                  "movq %0, %%rsp;"
-                  "movq %2, %%rdi;"
-                  "call *%1"
-                  :
-                  : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-                  : "memory"
-#else
-                  "movl %0, %%esp;"
-                  "movl %2, 4(%0);"
-                  "call *%1"
-                  :
-                  : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
-                  : "memory"
-#endif
-    );
+//     asm volatile (
+// #if __x86_64__
+//                   "movq %0, %%rsp;"
+//                   "movq %2, %%rdi;"
+//                   "call *%1"
+//                   :
+//                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+//                   : "memory"
+// #else
+//                   "movl %0, %%esp;"
+//                   "movl %2, 4(%0);"
+//                   "call *%1"
+//                   :
+//                   : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
+//                   : "memory"
+// #endif
+//     );
 }
 
 static inline void *wrapper_(void *arg) {
@@ -145,19 +145,46 @@ void co_yield(void) {
 
     int val = setjmp(current->context);
     if (val == 0) {
-        struct co *next_co = switch_to_co();
-        current = next_co;
+        struct co *next = switch_to_co();
+        current = next;
 
-        switch (next_co->status) {
+        switch (next->status) {
         case CO_NEW:
             printf("dapodco_yield\n");
-            next_co->status = CO_RUNNING;
-            stack_switch_call(current->stack + STACK_SIZE, current->func, (uintptr_t)(current->arg));
+            next->status = CO_RUNNING;
+            asm volatile(
+      #if __x86_64__
+                "movq %%rdi, (%0); movq %0, %%rsp; movq %2, %%rdi; call *%1"
+                :
+                : "b"((uintptr_t)(next->stack + sizeof(next->stack))), "d"(next->func), "a"((uintptr_t)(next->arg))
+                : "memory"
+      #else
+                "movl %%esp, 0x8(%0); movl %%ecx, 0x4(%0); movl %0, %%esp; movl %2, (%0); call *%1"
+                :
+                : "b"((uintptr_t)(next->stack + sizeof(next->stack) - 8)), "d"(next->func), "a"((uintptr_t)(next->arg))
+                : "memory"
+      #endif
+      );
+
+      asm volatile(
+      #if __x86_64__
+                "movq (%0), %%rdi"
+                :
+                : "b"((uintptr_t)(next->stack + sizeof(next->stack)))
+                : "memory"
+      #else
+                "movl 0x8(%0), %%esp; movl 0x4(%0), %%ecx"
+                :
+                : "b"((uintptr_t)(next->stack + sizeof(next->stack) - 8))
+                : "memory"
+      #endif
+      );
+            //stack_switch_call(current->stack + STACK_SIZE, current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
             // So it should be CO_DEAD? TODO: test
-            next_co->status = CO_DEAD;
+            next->status = CO_DEAD;
 
             if (current->waiter) {
                 current = current->waiter;
