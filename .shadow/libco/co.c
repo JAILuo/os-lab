@@ -165,7 +165,7 @@ void co_yield(void) {
 
     int val = setjmp(current->context);
     if (val == 0) {
-        struct co *next_co = co_list[2];
+        struct co *next_co = co_list[1];
         current = next_co;
         printf("e0193j01\n");
         printf("next_co->status:%d\n", next_co->status);
