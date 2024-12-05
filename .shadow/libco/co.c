@@ -148,16 +148,16 @@ void co_yield(void) {
         struct co *next_co = switch_to_co();
         current = next_co;
 
-        switch (current->status) {
+        switch (next_co->status) {
         case CO_NEW:
             printf("dapodco_yield\n");
-            current->status = CO_RUNNING;
+            next_co->status = CO_RUNNING;
             stack_switch_call(current->stack + STACK_SIZE, current->func, (uintptr_t)(current->arg));
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
             // So it should be CO_DEAD? TODO: test
-            current->status = CO_DEAD;
+            next_co->status = CO_DEAD;
 
             if (current->waiter) {
                 current = current->waiter;
