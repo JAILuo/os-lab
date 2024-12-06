@@ -51,42 +51,25 @@ static int co_num = 0;
 //     }
 // }
 
+
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 {
-    asm volatile(
+	asm volatile(
 #if __x86_64__
-        // 保存旧的 rsp 到协程栈的顶部
-        "movq %%rsp, -0x10(%0);"          // 将当前 rsp 保存到协程栈顶
-        // 计算新的 rsp 并确保栈对齐
-        "leaq -0x20(%0), %%rsp;"           // 将 rsp 指向协程栈的底部，预留空间
-        "andq $0xFFFFFFFFFFFFFFF0, %%rsp;" // 确保栈对齐到16字节边界
-        // 准备函数调用
-        "movq %2, %%rdi;"                  // 将参数移动到 rdi
-        "callq *%1;"                       // 调用函数
-        // 恢复旧的 rsp
-        "movq -0x10(%0), %%rsp;"           // 从协程栈顶恢复 rsp
+		"movq %%rsp, -0x10(%0); leaq -0x20(%0),"
+        "%%rsp; andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
+        "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
+		:
+		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+		: "memory"
 #else
+		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
+		:
+		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+		: "memory"
 #endif
-    );
+	);
 }
-
-// static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
-// {
-// 	asm volatile(
-// #if __x86_64__
-// 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
-//         "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
-// 		:
-// 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-// 		: "memory"
-// #else
-// 		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
-// 		:
-// 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-// 		: "memory"
-// #endif
-// 	);
-// }
 
 // static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 //     asm volatile (
