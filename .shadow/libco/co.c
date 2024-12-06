@@ -51,23 +51,49 @@ static int co_num = 0;
 //     }
 // }
 
-static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
-{
-	asm volatile(
+static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
+    asm volatile (
 #if __x86_64__
-		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
-        "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
-		:
-		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-		: "memory"
+        "movq %0,%%rsp\n\t"
+        "movq %2,%%rdi\n\t"
+        "andq $-16, %%rsp\n\t"  // Ensure stack is 16-byte aligned
+        "call *%1\n\t"
+          :
+          : "r"(sp),
+            "r"(entry),
+            "r"(arg)
+          : "memory"
 #else
-		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
-		:
-		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-		: "memory"
+        "movl %0, %%esp\n\t"
+        "andl $-16, %%esp\n\t"
+        "pushl %2\n\t"  // Ensure stack is 16-byte aligned
+        "call *%1\n\t"
+          :
+          : "b"((__uint32_t)sp),
+            "d"(entry),
+            "a"(arg)
+          : "memory"
 #endif
-	);
+    );
 }
+
+// static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
+// {
+// 	asm volatile(
+// #if __x86_64__
+// 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp; andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
+//         "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
+// 		:
+// 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+// 		: "memory"
+// #else
+// 		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
+// 		:
+// 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
+// 		: "memory"
+// #endif
+// 	);
+// }
 
 // static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 //     asm volatile (
