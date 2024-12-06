@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 4 * 8
+#define STACK_SIZE 256 * 4 * 8
 //#define STACK_SIZE 1024
 
 enum co_status {
@@ -58,7 +58,7 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 	asm volatile(
 #if __x86_64__
 		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp;"
-        //"andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
+        "andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
         "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
