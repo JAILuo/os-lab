@@ -25,7 +25,6 @@ static void work_loop(void *arg) {
 }
 
 static void work(void *arg) {
-    printf("da901231\n");
     work_loop(arg);
 }
 
