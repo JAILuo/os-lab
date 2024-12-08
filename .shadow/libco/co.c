@@ -94,7 +94,7 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 
 static inline void wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
-    t->func(t->name);
+    t->func(t->arg);
 }
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
@@ -105,7 +105,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     strcpy(new_co->name, name);
     //new_co->func = (void (*)(void *))func;
     new_co->func = wrapper_;
-    new_co->arg = arg;
+    new_co->arg = co_list[co_num];
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
 
