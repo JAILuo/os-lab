@@ -142,11 +142,13 @@ struct co *switch_to_co() {
             ++count;
         }
     }
+    printf("count: %d\n", count);
 
     int idx = rand() % count, i = 0;
     for (i = 0; i < co_num; ++i) {
         if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
             if (idx == 0) {
+                printf("i in switch_to_co: %d\n", i);
                 break;
             }
         --idx;
