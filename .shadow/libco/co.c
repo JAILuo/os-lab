@@ -7,8 +7,8 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 8
-//#define STACK_SIZE 1024 * 4  Segmentation fault
+#define STACK_SIZE 1024 * 8   
+//#define STACK_SIZE 1024 * 4  Segmentation fault, above ok
 
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
@@ -158,9 +158,9 @@ struct co *switch_to_co() {
 void co_yield(void) {
     assert(current != NULL);
 
-    // printf("co_list[0]->name: %s\n", co_list[0]->name);
-    // printf("co_list[1]->name: %s\n", co_list[1]->name);
-    // printf("co_list[2]->name: %s\n", co_list[2]->name);
+    printf("co_list[0]->name: %s\n", co_list[0]->name);
+    printf("co_list[1]->name: %s\n", co_list[1]->name);
+    printf("co_list[2]->name: %s\n", co_list[2]->name);
     int val = setjmp(current->context);
     if (val == 0) {
         struct co *next_co = switch_to_co();
