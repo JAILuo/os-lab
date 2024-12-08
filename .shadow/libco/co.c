@@ -94,7 +94,7 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 
 static inline void *wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
-    t->func(t);
+    t->func(t->name);
     return NULL;
 }
 
