@@ -92,11 +92,11 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 //     );
 // }
 
-//static inline void *wrapper_(void *arg) {
-//    struct co *t = (struct co *)arg;
-//    t->func(t->name);
-//    return NULL;
-//}
+static inline void *wrapper_(void *arg) {
+    struct co *t = (struct co *)arg;
+    t->func(t->name);
+    return NULL;
+}
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
@@ -108,13 +108,6 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->arg = arg;
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
-    // if (current == NULL) {
-    //     current = (struct co *)malloc(sizeof(struct co));
-	// 	current->status = CO_RUNNING;
-	// 	current->waiter = NULL;
-	// 	strcpy(current->name, "main");
-    //     co_list[co_num++] = current;
-    // }
 
     co_list[co_num++] = new_co;
     return new_co;
@@ -165,12 +158,6 @@ struct co *switch_to_co() {
 }
 
 void co_yield(void) {
-    // if (current == NULL) // init main
-	// {
-	// 	current = (struct co *)malloc(sizeof(struct co));
-	// 	current->status = CO_RUNNING;
-	// 	strcpy(current->name, "main");
-	// }
     assert(current != NULL);
 
     // printf("co_list[0]->name: %s\n", co_list[0]->name);
