@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 8   
+#define STACK_SIZE 1024 * 16 
 //#define STACK_SIZE 1024 * 4  Segmentation fault, above ok
 
 enum co_status {
@@ -158,6 +158,7 @@ struct co *switch_to_co() {
 void co_yield(void) {
     assert(current != NULL);
 
+    // Why did I use this, so that only the first few X/Y can be displayed?
     printf("co_list[0]->name: %s\n", co_list[0]->name);
     printf("co_list[1]->name: %s\n", co_list[1]->name);
     printf("co_list[2]->name: %s\n", co_list[2]->name);
