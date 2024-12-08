@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 1024 * 4
+#define STACK_SIZE 1024 * 1024 * 8
 //#define STACK_SIZE 1024
 
 enum co_status {
