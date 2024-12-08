@@ -32,25 +32,25 @@ struct co *current = NULL;
 struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
-// __attribute__((constructor)) void co_init() {
-//     struct co* main = (struct co*)malloc(sizeof(struct co));
-//     strcpy(main->name, "main");
-//     main->status = CO_RUNNING;
-//     main->waiter = NULL;
-//     main->func = (void (*)(void *))main;
-//     memset(main->stack, 0, STACK_SIZE);
-// 
-//     current = main;
-//     memset(co_list, 0, sizeof(co_list));
-//     co_list[co_num++] = main;
-// }
-// 
-// __attribute__((destructor)) void co_exit() {
-//     if (current && strcmp(current->name, "main") == 0) {
-//         free(current);
-//         current = NULL;
-//     }
-// }
+__attribute__((constructor)) void co_init() {
+    struct co* main = (struct co*)malloc(sizeof(struct co));
+    strcpy(main->name, "main");
+    main->status = CO_RUNNING;
+    main->waiter = NULL;
+    main->func = (void (*)(void *))main;
+    memset(main->stack, 0, STACK_SIZE);
+
+    current = main;
+    memset(co_list, 0, sizeof(co_list));
+    co_list[co_num++] = main;
+}
+
+__attribute__((destructor)) void co_exit() {
+    if (current && strcmp(current->name, "main") == 0) {
+        free(current);
+        current = NULL;
+    }
+}
 
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
@@ -108,13 +108,13 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->arg = arg;
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
-    if (current == NULL) {
-        current = (struct co *)malloc(sizeof(struct co));
-		current->status = CO_RUNNING;
-		current->waiter = NULL;
-		strcpy(current->name, "main");
-        co_list[co_num++] = current;
-    }
+    // if (current == NULL) {
+    //     current = (struct co *)malloc(sizeof(struct co));
+	// 	current->status = CO_RUNNING;
+	// 	current->waiter = NULL;
+	// 	strcpy(current->name, "main");
+    //     co_list[co_num++] = current;
+    // }
 
     co_list[co_num++] = new_co;
     return new_co;
@@ -165,12 +165,12 @@ struct co *switch_to_co() {
 }
 
 void co_yield(void) {
-    if (current == NULL) // init main
-	{
-		current = (struct co *)malloc(sizeof(struct co));
-		current->status = CO_RUNNING;
-		strcpy(current->name, "main");
-	}
+    // if (current == NULL) // init main
+	// {
+	// 	current = (struct co *)malloc(sizeof(struct co));
+	// 	current->status = CO_RUNNING;
+	// 	strcpy(current->name, "main");
+	// }
     assert(current != NULL);
 
     // printf("co_list[0]->name: %s\n", co_list[0]->name);
