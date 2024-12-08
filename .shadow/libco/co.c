@@ -7,8 +7,8 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 4
-//#define STACK_SIZE 1024
+#define STACK_SIZE 1024 * 8
+//#define STACK_SIZE 1024 * 4  Segmentation fault
 
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
