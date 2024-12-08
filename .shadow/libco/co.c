@@ -158,7 +158,8 @@ struct co *switch_to_co() {
 void co_yield(void) {
     assert(current != NULL);
 
-    // Why did I use this, so that only the first few X/Y can be displayed?
+    // Why do I use this, so that you can only display the first few X/Y?
+    // result: change stack larger size
     printf("co_list[0]->name: %s\n", co_list[0]->name);
     printf("co_list[1]->name: %s\n", co_list[1]->name);
     printf("co_list[2]->name: %s\n", co_list[2]->name);
