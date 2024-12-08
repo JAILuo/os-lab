@@ -103,8 +103,8 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     struct co* new_co= (struct co*)malloc(sizeof(struct co));
     new_co->status = CO_NEW;
     strcpy(new_co->name, name);
-    //new_co->func = (void (*)(void *))func;
-    new_co->func = wrapper_;
+    new_co->func = (void (*)(void *))func;
+    //new_co->func = wrapper_;
     new_co->arg = co_list[co_num];
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
