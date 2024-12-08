@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 8 * 16
+#define STACK_SIZE 1024 * 8 * 32
 //#define STACK_SIZE 1024
 
 enum co_status {
@@ -51,7 +51,6 @@ __attribute__((destructor)) void co_exit() {
         current = NULL;
     }
 }
-
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 {
