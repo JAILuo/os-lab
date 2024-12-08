@@ -160,9 +160,9 @@ void co_yield(void) {
 
     // Why do I use this, so that you can only display the first few X/Y?
     // result: change stack larger size
-    printf("co_list[0]->name: %s\n", co_list[0]->name);
-    printf("co_list[1]->name: %s\n", co_list[1]->name);
-    printf("co_list[2]->name: %s\n", co_list[2]->name);
+    //printf("co_list[0]->name: %s\n", co_list[0]->name);
+    //printf("co_list[1]->name: %s\n", co_list[1]->name);
+    //printf("co_list[2]->name: %s\n", co_list[2]->name);
     int val = setjmp(current->context);
     if (val == 0) {
         struct co *next_co = switch_to_co();
