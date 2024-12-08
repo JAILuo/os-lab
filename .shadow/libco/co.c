@@ -56,7 +56,7 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 {
 	asm volatile(
 #if __x86_64__
-		"movq %%rsp, -0x10(%0); leaq -0x20(%0), %%rsp;"
+		"movq %%rsp, -0x10(%0); leaq -0x10(%0), %%rsp;"
         "andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
         "movq %2, %%rdi ; call *%1; movq -0x10(%0) ,%%rsp;"
 		:
@@ -70,26 +70,6 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 #endif
 	);
 }
-
-// static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
-//     asm volatile (
-// #if __x86_64__
-//                   "movq %0, %%rsp;"
-//                   "movq %2, %%rdi;"
-//                   "call *%1"
-//                   :
-//                   : "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-//                   : "memory"
-// #else
-//                   "movl %0, %%esp;"
-//                   "movl %2, 4(%0);"
-//                   "call *%1"
-//                   :
-//                   : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
-//                   : "memory"
-// #endif
-//     );
-// }
 
 static inline void wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
@@ -134,6 +114,7 @@ void co_wait(struct co *co) {
 }
 
 
+// learn by GPT, random select
 struct co *switch_to_co() {
     int count = 0;
     for (int i = 0; i < co_num; ++i) {
@@ -142,13 +123,13 @@ struct co *switch_to_co() {
             ++count;
         }
     }
-    printf("count: %d\n", count);
+    //printf("count: %d\n", count);
 
     int idx = rand() % count, i = 0;
     for (i = 0; i < co_num; ++i) {
         if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
             if (idx == 0) {
-                printf("i in switch_to_co: %d\n", i);
+                //printf("i in switch_to_co: %d\n", i);
                 break;
             }
         --idx;
