@@ -4,4 +4,4 @@
 !Makefile
 !*.c
 !*.h
-./.shadow
+.shadow/
