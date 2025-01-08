@@ -6,9 +6,25 @@
 #include <setjmp.h>
 #include <assert.h>
 
+#define IF_VERISON
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 16 
-//#define STACK_SIZE 1024 * 4  Segmentation fault, above ok
+#define STACK_SIZE 1024 * 8
+
+// The following bugs are on 64-bit machines, not considering 32-bit.
+//
+// #define STACK_SIZE 1024 * 4 Segmentation fault, 
+// but is it okay to adjust it to something greater than 4KB(and I choose 16KB)?
+// the size of stack maybe too small?
+// However, after changing the size of the large stack, 
+// it is only improved to be able to output X/Y190 before segmentation fault...
+
+// further, add printf after switch_to_co in co_yield func, 
+// then it was able to pass all the tests! It's weird!
+//
+// // Besides, the size of stack something wrong, and the above 8kb is expired, 9KB is ok(choose 16KB)...
+// // stack size again?
+
+
 
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
@@ -17,15 +33,16 @@ enum co_status {
     CO_DEAD,    // 已经结束，但还未释放资源
 };
 
-struct co {
-    __attribute__((aligned(16))) char name[30];
+struct __attribute__((aligned(16))) co {
+    char name[30]__attribute__((aligned(16)));
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
 
     enum co_status status;  // 协程的状态
     struct co *    waiter;  // 是否有其他协程在等待当前协程
     jmp_buf context;        // 寄存器现场
-    uint8_t        stack[STACK_SIZE]; // 协程的堆栈
+    //uint8_t        stack[STACK_SIZE]; // 协程的堆栈
+    uint8_t        stack[STACK_SIZE]__attribute__((aligned(16))); // 协程的堆栈
 };
 
 struct co *current = NULL;
@@ -52,21 +69,29 @@ __attribute__((destructor)) void co_exit() {
     }
 }
 
-static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
-{
+static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 	asm volatile(
 #if __x86_64__
-		"movq %%rsp, -0x10(%0);"
-        "leaq -0x20(%0), %%rsp;"
-        "andq $-16, %%rsp;"  // Ensure stack is 16-byte aligned"
-        "movq %2, %%rdi ;"
-        "call *%1;"
-        "movq -0x10(%0) ,%%rsp;"
+        "movq %%rdi, (%0)\n"
+		"movq %%rsp, -0x10(%0)\n"   // save current rsp
+        "leaq -0x20(%0), %%rsp\n"   // switch to new stack
+        "andq $-16, %%rsp\n"        // Ensure stack is 16-byte aligned"
+        "movq %2, %%rdi\n"          // set parameter
+        "call *%1\n"                // call function(entry)
+        "movq -0x10(%0) ,%%rsp\n"   // restore the original rsp
+        "movq (%0), %%rdi\n"        // restore the original parameter
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
-		: "memory"
+		: "cc", "memory"
 #else
-		"movl %%esp, -0x8(%0); leal -0xC(%0), %%esp; movl %2, -0xC(%0); call *%1;movl -0x8(%0), %%esp"
+        // The IA32 parameters are passed in the stack,
+        // so I just need to save the esp?
+		"movl %%esp, -0x8(%0);\n"
+        "leal -0xC(%0), %%esp\n"
+        "andl $-4, %%esp\n"  // Ensure stack is 4-byte aligned
+        "movl %2, -0xC(%0)\n"
+        "call *%1\n"
+        "movl -0x8(%0), %%esp"
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
 		: "memory"
@@ -74,15 +99,22 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 	);
 }
 
+// some bugs with wrapper_
+// while using this func, Segmentation fault...
 static inline void wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
-    t->func(t);
+    t->func(t->name);
 }
+// Where is the entry of the thread function without wrapper, 
+// and where is it after returning
+// co_wait->co_yield->stack_switch_call
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
 
-    struct co* new_co= (struct co*)malloc(sizeof(struct co));
+    struct co* new_co = (struct co*)malloc(sizeof(struct co));
+    memset(new_co, 0, sizeof(struct co));
+
     new_co->status = CO_NEW;
     strcpy(new_co->name, name);
     new_co->func = func;
@@ -96,12 +128,14 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 
 void co_wait(struct co *co) {
     assert(co != NULL);
+
     co->waiter = current;
     current->status = CO_WAITING;
     while (co->status != CO_DEAD) {
         co_yield();
     }
     free(co);
+
     int id = 0;
     for (id = 0; id < co_num; ++id) {
         if (co_list[id] == co) {
@@ -126,13 +160,12 @@ struct co *switch_to_co() {
             ++count;
         }
     }
-    //printf("count: %d\n", count);
 
     int idx = rand() % count, i = 0;
     for (i = 0; i < co_num; ++i) {
         if (co_list[i]->status == CO_NEW || co_list[i]->status == CO_RUNNING) {
             if (idx == 0) {
-                //printf("i in switch_to_co: %d\n", i);
+                // printf("i in switch_to_co: %d\n", i);
                 break;
             }
         --idx;
@@ -144,40 +177,58 @@ struct co *switch_to_co() {
 void co_yield(void) {
     assert(current != NULL);
 
-    // Why do I use this, so that you can only display the first few X/Y?
-    // result: change stack larger size
-    //printf("co_list[0]->name: %s\n", co_list[0]->name);
-    //printf("co_list[1]->name: %s\n", co_list[1]->name);
-    //printf("co_list[2]->name: %s\n", co_list[2]->name);
     int val = setjmp(current->context);
     if (val == 0) {
         struct co *next_co = switch_to_co();
         current = next_co;
 
+#ifdef IF_VERISON
+        if (next_co->status == CO_NEW) {
+            next_co->status = CO_RUNNING;
+
+            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->func, (uintptr_t)(next_co->arg));
+
+            ((struct co volatile *)next_co)->status = CO_DEAD;
+            if (current->waiter) {
+                current = current->waiter;
+                longjmp(current->context, 1);
+            }
+            co_yield();
+        } else if(next_co->status == CO_RUNNING) {
+            longjmp(next_co->context, 1);
+        } else {
+            assert(0);
+        }
+
+#else // SWITCH_VERSION
         switch (next_co->status) {
         case CO_NEW:
             ((struct co volatile *)next_co)->status = CO_RUNNING;
-            //printf("next_co: %p next_co->stack: %p\n" ,next_co, next_co->stack);
+
             stack_switch_call(&(next_co->stack[STACK_SIZE - 1]), next_co->func, (uintptr_t)(next_co->arg));
+
             // If co is here, what should it be in state? need thinking...
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
-            // So it should be CO_DEAD? TODO: test
+            // So it should be CO_DEAD? yes.
             ((struct co volatile *)next_co)->status = CO_DEAD;
 
             if (current->waiter) {
                 current = current->waiter;
                 longjmp(current->context, 1);
             }
+            co_yield();
             break;
         case CO_RUNNING:
             longjmp(current->context, 1);
             break;
         default:
             printf("now status is %d\n", current->status);
+            assert(0);
             break;
         }
+#endif
     } else { // longjmp return 1...
-        return;
     }
 }
+
