@@ -6,10 +6,6 @@
 #include <setjmp.h>
 #include <assert.h>
 
-#define IF_VERISON
-#define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 8
-
 // The following bugs are on 64-bit machines, not considering 32-bit.
 //
 // #define STACK_SIZE 1024 * 4 Segmentation fault, 
@@ -23,7 +19,13 @@
 //
 // // Besides, the size of stack something wrong, and the above 8kb is expired, 9KB is ok(choose 16KB)...
 // // stack size again?
+//
+// Update: 
+// so strange, use canary to check serval times and pass?!!
+// even if and switch version all paseed!
 
+#define CO_AMOUNT  256
+#define STACK_SIZE 1024 * 16
 
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
@@ -36,6 +38,8 @@ struct __attribute__((aligned(16))) co {
     char name[30]__attribute__((aligned(16)));
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
+    void (*entry)(void *); // co_start 指定的入口地址和参数
+    void *entry_arg;
 
     enum co_status status;  // 协程的状态
     struct co *    waiter;  // 是否有其他协程在等待当前协程
@@ -43,10 +47,47 @@ struct __attribute__((aligned(16))) co {
     //uint8_t        stack[STACK_SIZE]; // 协程的堆栈
     uint8_t        stack[STACK_SIZE]__attribute__((aligned(16))); // 协程的堆栈
 };
-
 struct co *current = NULL;
 struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
+
+// learn from jyy's OS course: https://jyywiki.cn/OS/2024/lect13.md
+#define CANARY_CHECK
+#define CANARY_SZ 4
+#define MAGIC 0x55555555
+#define BOTTOM (STACK_SIZE / sizeof(uint32_t) - 1)
+
+#define STRINGIFY(s)        #s
+#define TOSTRING(s)         STRINGIFY(s)
+#define panic_on(cond, s) \
+  ({ if (cond) { \
+      printf("Panic: "); printf(s); \
+      printf(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
+      assert(0); \
+    } })
+
+#ifdef CANARY_CHECK
+void canary_init(uint8_t stack[]) {
+    uint32_t *ptr = (uint32_t *)stack;
+    for (int i = 0; i < CANARY_SZ; i++)
+        ptr[BOTTOM - i] = ptr[i] = MAGIC;
+}
+
+void canary_check(struct co *co) {
+    uint32_t *ptr = (uint32_t *)(co->stack);
+    for (int i = 0; i < CANARY_SZ; i++) {
+        // printf("in canary_check, co->name: %s\n", co->name);
+        panic_on(ptr[BOTTOM - i] != MAGIC, "underflow");
+        panic_on(ptr[i] != MAGIC, "overflow");
+    }
+}
+#else
+void canary_init(uint8_t stack[]) {
+}
+
+void canary_check(struct co *co) {
+}
+#endif
 
 __attribute__((constructor)) void co_init() {
     struct co* main = (struct co*)malloc(sizeof(struct co));
@@ -55,6 +96,7 @@ __attribute__((constructor)) void co_init() {
     main->waiter = NULL;
     main->func = (void (*)(void *))main;
     memset(main->stack, 0, STACK_SIZE);
+    canary_init(main->stack);
 
     current = main;
     memset(co_list, 0, sizeof(co_list));
@@ -75,7 +117,7 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 		"movq %%rsp, -0x10(%0)\n"   // save current rsp
         "leaq -0x20(%0), %%rsp\n"   // switch to new stack
         "andq $-16, %%rsp\n"        // Ensure stack is 16-byte aligned"
-        "movq %2, %%rdi\n"          // set parameter
+        "movq %2, %%rdi\n"          // set function parameter
         "call *%1\n"                // call function(entry)
         "movq -0x10(%0) ,%%rsp\n"   // restore the original rsp
         "movq (%0), %%rdi\n"        // restore the original parameter
@@ -84,13 +126,13 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 		: "cc", "memory"
 #else
         // The IA32 parameters are passed in the stack,
-        // so I just need to save the esp?
-		"movl %%esp, -0x8(%0);\n"
-        "leal -0xC(%0), %%esp\n"
+        // so just need to save the esp.
+		"movl %%esp, (%0);\n"
+        "leal -0x4(%0), %%esp\n"
         "andl $-4, %%esp\n"  // Ensure stack is 4-byte aligned
-        "movl %2, -0xC(%0)\n"
+        "movl %2, -0x4(%0)\n"
         "call *%1\n"
-        "movl -0x8(%0), %%esp"
+        "movl (%0), %%esp\n"
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
 		: "memory"
@@ -100,13 +142,29 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 
 // some bugs with wrapper_
 // while using this func, Segmentation fault...
+// maybe need to add more members
 static inline void wrapper_(void *arg) {
     struct co *t = (struct co *)arg;
     t->func(t->name);
 }
-// Where is the entry of the thread function without wrapper, 
-// and where is it after returning
-// co_wait->co_yield->stack_switch_call
+
+// The function afrer co->func will not be excuted.
+// co will return where it call the co_wait.
+// It's not like OS create thread with wrapper function in a PA?
+static inline void co_wrapper(void *arg) {
+    struct co *co = (struct co *)arg;
+
+    // 调用协程的主函数
+    co->func(co->arg);
+
+    // // 协程结束的清理操作
+    // co->status = CO_DEAD;
+    // free(co);
+}
+
+// Where is the entry of the thread function without wrapper?
+// And where is the end?
+// main -> co_wait -> co_yield -> stack_switch_call
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
@@ -120,6 +178,11 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->arg = arg;
     new_co->waiter = NULL;
     memset(new_co->stack, 0, STACK_SIZE);
+    canary_init(new_co->stack);
+
+    // 设置包裹函数为协程的入口函数
+    new_co->entry = co_wrapper;
+    new_co->entry_arg = new_co;
 
     co_list[co_num++] = new_co;
     return new_co;
@@ -131,6 +194,7 @@ void co_wait(struct co *co) {
     co->waiter = current;
     current->status = CO_WAITING;
     while (co->status != CO_DEAD) {
+        canary_check(current);
         co_yield();
     }
     free(co);
@@ -185,7 +249,9 @@ void co_yield(void) {
         if (next_co->status == CO_NEW) {
             next_co->status = CO_RUNNING;
 
-            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->func, (uintptr_t)(next_co->arg));
+            canary_check(next_co);
+            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->entry, (uintptr_t)(next_co->entry_arg));
+            //stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->func, (uintptr_t)(next_co->arg));
 
             ((struct co volatile *)next_co)->status = CO_DEAD;
             if (current->waiter) {
@@ -204,9 +270,12 @@ void co_yield(void) {
         case CO_NEW:
             ((struct co volatile *)next_co)->status = CO_RUNNING;
 
-            stack_switch_call(&(next_co->stack[STACK_SIZE - 1]), next_co->func, (uintptr_t)(next_co->arg));
+            canary_check(next_co);
 
-            // If co is here, what should it be in state? need thinking...
+            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->entry, (uintptr_t)(next_co->entry_arg));
+            //stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->func, (uintptr_t)(next_co->arg));
+
+            // If co is here, what should it be in state?
             // In stack_switch_call, the excute flow will switch to current->func until finish task.
             // it return here, which mean the end of task? 
             // So it should be CO_DEAD? yes.
@@ -222,7 +291,6 @@ void co_yield(void) {
             longjmp(current->context, 1);
             break;
         default:
-            printf("now status is %d\n", current->status);
             assert(0);
             break;
         }
