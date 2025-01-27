@@ -58,7 +58,7 @@ struct __attribute__((aligned(16))) co {
     char name[30]__attribute__((aligned(16)));
 
     int released ;
-    void (*func)(void *); // co_start 指定的入口地址和参数
+    void (*func)(void *); // 真正的函数入口
     void *arg;
     void (*entry)(void *); // co_start 指定的入口地址和参数
     void *entry_arg;
@@ -267,7 +267,6 @@ struct co *switch_to_co() {
     return co_list[i];
 }
 
-#define IF_VERISON
 void co_yield(void) {
     assert(current != NULL);
 
@@ -276,7 +275,6 @@ void co_yield(void) {
         struct co *next_co = switch_to_co();
         current = next_co;
 
-#ifdef IF_VERISON
         if (next_co->status == CO_NEW) {
             next_co->status = CO_RUNNING;
 
@@ -295,37 +293,6 @@ void co_yield(void) {
         } else {
             assert(0);
         }
-
-#else // SWITCH_VERSION
-        switch (next_co->status) {
-        case CO_NEW:
-            ((struct co volatile *)next_co)->status = CO_RUNNING;
-
-            canary_check(next_co);
-
-            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->entry, (uintptr_t)(next_co->entry_arg));
-            //stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->func, (uintptr_t)(next_co->arg));
-
-            // If co is here, what should it be in state?
-            // In stack_switch_call, the excute flow will switch to current->func until finish task.
-            // it return here, which mean the end of task? 
-            // So it should be CO_DEAD? yes.
-            ((struct co volatile *)next_co)->status = CO_DEAD;
-
-            if (current->waiter) {
-                current = current->waiter;
-                longjmp(current->context, 1);
-            }
-            co_yield();
-            break;
-        case CO_RUNNING:
-            longjmp(current->context, 1);
-            break;
-        default:
-            assert(0);
-            break;
-        }
-#endif
     } else { // longjmp return 1...
     }
 }
