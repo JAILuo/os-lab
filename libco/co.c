@@ -23,6 +23,9 @@
 // Update: 
 // so strange, use canary to check serval times and pass?!!
 // even if and switch version all paseed!
+//
+// Update2:
+//   Use the released flag to manage resource release.
 
 #define CO_AMOUNT  256
 #define STACK_SIZE 1024 * 16
@@ -34,8 +37,27 @@ enum co_status {
     CO_DEAD,    // 已经结束，但还未释放资源
 };
 
+/*
+ * Notice!!!
+ * The location of the struct members, 
+ * which needs to fllow the alignment requirements of the ISA
+ * 
+ * @note: released
+ *  It's okay under 64 bits, 
+ *  but it can only pass under 32 bits if you put it here, 
+ *  otherwise segmentation fault?
+ *  Update: 
+ *    The reason is that both the co_wait and the co_wrapper 
+ *    have carried out resource recycling, and even accessed
+ *    the relevant heap area after free.
+ *    correct: 
+ *      co_warpper only set the released flag, 
+ *      and the release of specific resources was deferred to the co_wait.
+ */
 struct __attribute__((aligned(16))) co {
     char name[30]__attribute__((aligned(16)));
+
+    int released ;
     void (*func)(void *); // co_start 指定的入口地址和参数
     void *arg;
     void (*entry)(void *); // co_start 指定的入口地址和参数
@@ -43,8 +65,8 @@ struct __attribute__((aligned(16))) co {
 
     enum co_status status;  // 协程的状态
     struct co *    waiter;  // 是否有其他协程在等待当前协程
+
     jmp_buf context;        // 寄存器现场
-    //uint8_t        stack[STACK_SIZE]; // 协程的堆栈
     uint8_t        stack[STACK_SIZE]__attribute__((aligned(16))); // 协程的堆栈
 };
 struct co *current = NULL;
@@ -52,7 +74,7 @@ struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
 // learn from jyy's OS course: https://jyywiki.cn/OS/2024/lect13.md
-#define CANARY_CHECK
+//#define CANARY_CHECK
 #define CANARY_SZ 4
 #define MAGIC 0x55555555
 #define BOTTOM (STACK_SIZE / sizeof(uint32_t) - 1)
@@ -140,32 +162,31 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 	);
 }
 
-// some bugs with wrapper_
-// while using this func, Segmentation fault...
-// maybe need to add more members
-static inline void wrapper_(void *arg) {
-    struct co *t = (struct co *)arg;
-    t->func(t->name);
-}
-
-// The function afrer co->func will not be excuted.
-// co will return where it call the co_wait.
-// It's not like OS create thread with wrapper function in a PA?
 static inline void co_wrapper(void *arg) {
     struct co *co = (struct co *)arg;
 
-    // 调用协程的主函数
     co->func(co->arg);
 
-    // // 协程结束的清理操作
-    // co->status = CO_DEAD;
-    // free(co);
+    co->status = CO_DEAD;
+    co->released = 1;
 }
 
-// Where is the entry of the thread function without wrapper?
-// And where is the end?
-// main -> co_wait -> co_yield -> stack_switch_call
-
+/*
+ * Where is the entry of the thread function without wrapper?
+ * And where is the end?
+ *  main ->
+ *    co_wait -> 
+ *      co_yield -> 
+ *        stack_switch_call -> 
+ *          co_wrapper ->
+ *            ...co running...
+ *          co_wrapper ->
+ *            free(co) ->
+ *        stack_switch_call ->
+ *          co_yield ->
+ *      co_wait ->
+ *        free(co) -> !!!
+ */
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     assert(co_num < CO_AMOUNT);
 
@@ -177,6 +198,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     new_co->func = func;
     new_co->arg = arg;
     new_co->waiter = NULL;
+    new_co->released = 0;
     memset(new_co->stack, 0, STACK_SIZE);
     canary_init(new_co->stack);
 
@@ -197,8 +219,8 @@ void co_wait(struct co *co) {
         canary_check(current);
         co_yield();
     }
-    free(co);
 
+    // Removes the exited coroutine from the list of coroutines.
     int id = 0;
     for (id = 0; id < co_num; ++id) {
         if (co_list[id] == co) {
@@ -211,6 +233,14 @@ void co_wait(struct co *co) {
     }
     --co_num;
     co_list[co_num] = NULL;
+
+    // recycle resources
+    if (co->released) {
+        co->released = 0;
+        free(co);
+        co = NULL;
+    }
+
 }
 
 
@@ -237,6 +267,7 @@ struct co *switch_to_co() {
     return co_list[i];
 }
 
+#define IF_VERISON
 void co_yield(void) {
     assert(current != NULL);
 
