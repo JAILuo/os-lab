@@ -44,7 +44,6 @@ enum co_status {
  * Notice!!!
  * The location of the struct members, 
  * which needs to follow the alignment requirements of the ISA
- * 
  */
 struct __attribute__((aligned(16))) co {
     char name[30]__attribute__((aligned(16)));
@@ -59,7 +58,7 @@ struct __attribute__((aligned(16))) co {
     struct co *    waiter;  // 是否有其他协程在等待当前协程
 
     jmp_buf context;        // 寄存器现场
-    uint8_t        stack[STACK_SIZE]__attribute__((aligned(16))); // 协程的堆栈
+    uint8_t        stack[STACK_SIZE]__attribute__((aligned(16)));
 };
 struct co *current = NULL;
 struct co *co_list[CO_AMOUNT];;
@@ -68,7 +67,6 @@ static int co_num = 0;
 // learn from jyy's OS course: https://jyywiki.cn/OS/2024/lect13.md
 //#define CANARY_CHECK
 
-#ifdef CANARY_CHECK
 #define CANARY_SZ 4
 #define MAGIC 0x55555555
 #define BOTTOM (STACK_SIZE / sizeof(uint32_t) - 1)
@@ -81,6 +79,7 @@ static int co_num = 0;
       printf(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
       assert(0); \
     } })
+#ifdef CANARY_CHECK
 void canary_init(uint8_t stack[]) {
     uint32_t *ptr = (uint32_t *)stack;
     for (int i = 0; i < CANARY_SZ; i++)
@@ -162,10 +161,10 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 void co_free(struct co *co) {
     if (!co) return;
 
-    co->ref_count--;
-    printf("2/3  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
+    assert(co->ref_count > 0);
+    //printf("2/3  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
 
-    assert(co->ref_count >= 0);
+    co->ref_count--;
     if (co->ref_count == 0 && co->status == CO_DEAD) {
         int id = 0;
         for (id = 0; id < co_num; ++id) {
@@ -186,12 +185,46 @@ void co_free(struct co *co) {
     }
 }
 
-static inline void co_wrapper(void *arg) {
-    struct co *co = (struct co *)arg;
+
+void co_wait(struct co *co) {
+    if (!co || co->status == CO_DEAD) {
+        co_free(co);
+        return;
+    }
+
+    //printf("1  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
+
+    co->ref_count++;
+    co->waiter = current;
+    current->status = CO_WAITING;
+
+    while (co->status != CO_DEAD) {
+        canary_check(co);
+        co_yield();
+    }
+
+    //printf("4  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
+    // asymmetry, always feeling wrong
+    co->ref_count--;
+    co_free(co);
+}
+
+/**
+ * Due to my lack of skills, the code written has:
+ * - Memory leaks (critical resource retention)
+ * - Undefined behavior (possible segmentation faults)
+ * and the idea of automatic resource recycling is temporarily abandoned. 
+ *
+ * maybe require all applications to use co_wait to recycle resources?
+ *
+ */
+static void co_wrapper(void *arg) {
+    struct co *co = arg;
     co->func(co->arg);
     co->status = CO_DEAD;
-    canary_check(co); // 确保栈空间完整
-    co_free(co);
+
+    //TODO: maybe future...
+    //co_free(co);
 }
 
 /**
@@ -231,47 +264,17 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     return new_co;
 }
 
-void co_wait(struct co *co) {
-    if (!co || co->status == CO_DEAD) {
-        //co_free(co);
-        return;
-    }
-
-    printf("1  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
-
-    co->ref_count++;
-    co->waiter = current;
-    current->status = CO_WAITING;
-
-    while (co->status != CO_DEAD) {
-        canary_check(co);
-        co_yield();
-    }
-
-    printf("4  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
-    // 总感觉不对称的这里是错的。
-    //co->ref_count--;
-    co_free(co);
-}
-
 // polling
-struct co *switch_to_co() {
-    static int last_idx = 0;
-    int start = last_idx;
-    do {
-        last_idx = (last_idx + 1) % co_num;
-        struct co *co = co_list[last_idx];
-        if (co->status == CO_NEW || co->status == CO_RUNNING) {
+static struct co *switch_to_co() {
+    static int last = 0;
+    for (int i = 0; i < co_num; i++) {
+        last = (last + 1) % co_num;
+        struct co *co = co_list[last];
+        if (co && (co->status == CO_NEW || co->status == CO_RUNNING)) {
             return co;
         }
-    } while (last_idx != start);
-
-    for (int i = 0; i < co_num; ++i) {
-        if (strcmp(co_list[i]->name, "main") == 0)
-            return co_list[i];
     }
-    assert(0);
-    return NULL;
+    return co_list[0];  // fallback to main
 }
 
 void co_yield(void) {
@@ -286,7 +289,9 @@ void co_yield(void) {
             next_co->status = CO_RUNNING;
 
             canary_check(next_co);
-            stack_switch_call(next_co->stack + sizeof(next_co->stack), next_co->entry, (uintptr_t)(next_co->entry_arg));
+            stack_switch_call(next_co->stack + sizeof(next_co->stack),
+                              next_co->entry, 
+                              (uintptr_t)(next_co->entry_arg));
 
             if (current->waiter) {
                 current = current->waiter;
