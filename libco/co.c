@@ -185,7 +185,6 @@ void co_free(struct co *co) {
     }
 }
 
-
 void co_wait(struct co *co) {
     if (!co || co->status == CO_DEAD) {
         co_free(co);
@@ -216,6 +215,9 @@ void co_wait(struct co *co) {
  * and the idea of automatic resource recycling is temporarily abandoned. 
  *
  * maybe require all applications to use co_wait to recycle resources?
+ * 
+ * I'm still working through my understanding of coroutines,
+ * these are just preliminary thoughts.
  *
  */
 static void co_wrapper(void *arg) {
