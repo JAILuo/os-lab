@@ -31,7 +31,7 @@
 //   Use ref_count to replace released.
 
 #define CO_AMOUNT  256
-#define STACK_SIZE 1024 * 16
+#define STACK_SIZE 1024 * 32  // 32KB stack per coroutine
 
 enum co_status {
     CO_NEW = 1, // 新创建，还未执行过
@@ -65,7 +65,7 @@ struct co *co_list[CO_AMOUNT];;
 static int co_num = 0;
 
 // learn from jyy's OS course: https://jyywiki.cn/OS/2024/lect13.md
-//#define CANARY_CHECK
+#define CANARY_CHECK
 
 #define CANARY_SZ 4
 #define MAGIC 0x55555555
@@ -89,7 +89,12 @@ void canary_init(uint8_t stack[]) {
 void canary_check(struct co *co) {
     uint32_t *ptr = (uint32_t *)(co->stack);
     for (int i = 0; i < CANARY_SZ; i++) {
-        // printf("in canary_check, co->name: %s\n", co->name);
+        // printf("STACK_SIZE: %d, co->stack: %p  co->stack[STACK_SIZE - 1]: %p\n"
+        //        "BOTTOM: %zu\n ptr[BOTTOM - %d]: 0x%x(addr: %p)\n\n", 
+        //        STACK_SIZE, &co->stack, &co->stack[STACK_SIZE],
+        //        BOTTOM, i, ptr[BOTTOM - i], &ptr[BOTTOM - i]
+        //        );
+        // printf("ptr[BOTTOM - %d]: 0x%x\n", i, ptr[BOTTOM - i]);
         panic_on(ptr[BOTTOM - i] != MAGIC, "underflow");
         panic_on(ptr[i] != MAGIC, "overflow");
     }
@@ -131,26 +136,58 @@ __attribute__((destructor)) void co_exit() {
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
 	asm volatile(
 #if __x86_64__
-        "movq %%rdi, (%0)\n"
-		"movq %%rsp, -0x10(%0)\n"   // save current rsp
+        // begin from stack + sizeof(stack) - 0x18，the ahead of 0x10 for canary_check
+        //
+        // Stack layout considerations:
+        // The original rdi register (caller-saved) is saved 
+        // and restored because it is used to pass the first argument.
+        // Only rdi is saved/restored here 
+        // since the coroutine entry function takes only one parameter.
+        // If more caller-saved registers are needed in the future, 
+        // they should be saved and restored accordingly.
+        
+        // "movq %%rax, -0x18(%0)\n"
+        // "movq %%rcx, -0x20(%0)\n"
+        // "movq %%rdx, -0x28(%0)\n"
+        // "movq %%rsi, -0x30(%0)\n"
+        // "movq %%rdi, -0x38(%0)\n"
+        // "movq %%r8,  -0x40(%0)\n"
+        // "movq %%r9,  -0x48(%0)\n"
+        // "movq %%r10, -0x50(%0)\n"
+        // "movq %%r11, -0x58(%0)\n"
+
+        "movq %%rdi, -0x18(%0)\n"   // save original rdi
+                                    // Because rdi is used to pass the first argument
+		"movq %%rsp, -0x20(%0)\n"   // save current rsp
         "leaq -0x20(%0), %%rsp\n"   // switch to new stack
-        "andq $-16, %%rsp\n"        // Ensure stack is 16-byte aligned"
+        "andq $-16, %%rsp\n"        // Ensure stack is 16-byte aligned
         "movq %2, %%rdi\n"          // set function parameter
         "call *%1\n"                // call function(entry)
-        "movq -0x10(%0) ,%%rsp\n"   // restore the original rsp
-        "movq (%0), %%rdi\n"        // restore the original parameter
+        "movq -0x20(%0), %%rsp\n"   // restore the original rsp
+        "movq -0x18(%0), %%rdi\n"   // restore rdi
+
+        // "movq -0x18(%0), %%rax\n"
+        // "movq -0x20(%0), %%rcx\n"
+        // "movq -0x28(%0), %%rdx\n"
+        // "movq -0x30(%0), %%rsi\n"
+        // "movq -0x38(%0), %%rdi\n"
+        // "movq -0x40(%0), %%r8\n" 
+        // "movq -0x48(%0), %%r9\n" 
+        // "movq -0x50(%0), %%10\n" 
+        // "movq -0x58(%0), %%11\n" 
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
 		: "cc", "memory"
 #else
         // The IA32 parameters are passed in the stack,
         // so just need to save the esp.
-		"movl %%esp, (%0);\n"
-        "leal -0x4(%0), %%esp\n"
-        "andl $-4, %%esp\n"  // Ensure stack is 4-byte aligned
-        "movl %2, -0x4(%0)\n"
-        "call *%1\n"
-        "movl (%0), %%esp\n"
+		"movl %%esp, -0x14(%0);\n"  // Save the original esp (stack pointer)
+        "leal -0x18(%0), %%esp\n"   // Switch to the new stack
+        "andl $-4, %%esp\n"         // Ensure stack is 4-byte aligned
+        "movl %2, -0x18(%0)\n"      // Store the function argument on the new stack
+                                    //  (same offset with leal...)
+        "call *%1\n"                // call function (entry)
+        "movl -0x14(%0), %%esp\n"   // Restore the original esp
 		:
 		: "b"((uintptr_t)sp), "d"(entry), "a"(arg)
 		: "memory"
@@ -185,7 +222,6 @@ void co_free(struct co *co) {
     }
 }
 
-
 void co_wait(struct co *co) {
     if (!co || co->status == CO_DEAD) {
         co_free(co);
@@ -216,6 +252,9 @@ void co_wait(struct co *co) {
  * and the idea of automatic resource recycling is temporarily abandoned. 
  *
  * maybe require all applications to use co_wait to recycle resources?
+ * 
+ * I'm still working through my understanding of coroutines,
+ * these are just preliminary thoughts.
  *
  */
 static void co_wrapper(void *arg) {
@@ -223,8 +262,9 @@ static void co_wrapper(void *arg) {
     co->func(co->arg);
     co->status = CO_DEAD;
 
-    //TODO: maybe future...
-    //co_free(co);
+    // TODO: Future improvement: Safe automatic cleanup
+    // co_free(co);
+
 }
 
 /**
