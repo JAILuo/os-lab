@@ -223,27 +223,57 @@ void co_free(struct co *co) {
 }
 
 void co_wait(struct co *co) {
-    if (!co || co->status == CO_DEAD) {
-        co_free(co);
+    if (!co) return;
+
+    // 增加引用计数
+    co->ref_count++;
+
+    // 若协程已结束，减少引用计数并检查释放
+    if (co->status == CO_DEAD) {
+        co->ref_count--;
+        if (co->ref_count == 1) {
+            co_free(co);
+        }
         return;
     }
 
-    //printf("1  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
-
-    co->ref_count++;
+    // 等待协程结束
     co->waiter = current;
     current->status = CO_WAITING;
 
     while (co->status != CO_DEAD) {
-        canary_check(co);
         co_yield();
     }
 
-    //printf("4  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
-    // asymmetry, always feeling wrong
+    // 减少引用计数，若无人引用则释放
     co->ref_count--;
-    co_free(co);
+    if (co->ref_count == 1) {
+        co_free(co);
+    }
 }
+
+// void co_wait(struct co *co) {
+//     if (!co || co->status == CO_DEAD) {
+//         co_free(co);
+//         return;
+//     }
+// 
+//     //printf("1  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
+// 
+//     co->ref_count++;
+//     co->waiter = current;
+//     current->status = CO_WAITING;
+// 
+//     while (co->status != CO_DEAD) {
+//         canary_check(co);
+//         co_yield();
+//     }
+// 
+//     //printf("4  co->ref_count: %d co->name: %s\n", co->ref_count, co->name);
+//     // asymmetry, always feeling wrong
+//     co->ref_count--;
+//     co_free(co);
+// }
 
 /**
  * Due to my lack of skills, the code written has:
@@ -262,9 +292,10 @@ static void co_wrapper(void *arg) {
     co->func(co->arg);
     co->status = CO_DEAD;
 
-    // TODO: Future improvement: Safe automatic cleanup
-    // co_free(co);
-
+    // Automatically recycled without threaded waiting
+    if (co->waiter == NULL) {
+        co_free(co);
+    }
 }
 
 /**
