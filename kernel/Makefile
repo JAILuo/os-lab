@@ -17,4 +17,5 @@ log:
 
 include $(AM_HOME)/Makefile
 include ../oslabs.mk
-image: git
+
+#image: git

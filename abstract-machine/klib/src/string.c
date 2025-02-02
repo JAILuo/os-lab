@@ -108,7 +108,6 @@ void *memcpy(void *out, const void *in, size_t n) {
 
 void *memmove(void *dst, const void *src, size_t n) {
     return memcpy(dst, src, n);
-    //panic("memmove no implemented");
 }
 
 // bug?: it should compare all type, but not only string.
