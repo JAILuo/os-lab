@@ -16,8 +16,8 @@ typedef struct {
         .status = UNLOCKED, \
         .cpu = NULL, \
     })
-void spin_lock(spinlock_t *lk);
-void spin_unlock(spinlock_t *lk);
+// void spin_lock(spinlock_t *lk);
+// void spin_unlock(spinlock_t *lk);
 
 
 #endif
