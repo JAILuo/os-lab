@@ -11,12 +11,6 @@ ifeq ($(ARCH),)
 export ARCH    := x86_64-qemu
 endif
 
-test:
-	@gcc $(shell find src/pmm.c)  \
-		$(shell find test/ -name "*.c") \
-		-Iframework -I../abstract-machine/klib/include -lpthread -g\
-		-o build/test
-
 log:
 	make -nB \
 		| grep -ve '^\(\#\|echo\|mkdir\|make\)' \

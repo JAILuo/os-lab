@@ -160,9 +160,8 @@ static void os_run() {
     // printf("%d*n = %d\n", T * 10, T * 10L * N);
 
 
-    test_kalloc_stress();
-    printf("test_kalloc completed.\n");
-    test_pmm();
+    // test_kalloc_stress();
+    // test_pmm();
 
     while (1) ;
 }

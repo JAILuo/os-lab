@@ -1,16 +1,15 @@
-#include <common.h>
 #include <stdint.h>
-#include <spinlock.h>
 #include <stddef.h>
+
+#include <common.h>
+#include <spinlock.h>
+#include <list.h>
 
 #define PMMLOCKED 1
 #define PMMUNLOCKED 0
 
-#define PAGE_SIZE 4096
-#define THRESHOLD (4 * 1024) // 示例阈值，可根据需要调整
-#define ALIGNMENT 64
-
 typedef int lock_t;
+lock_t big_lock;
 
 void lockinit(int *lock) {
     atomic_xchg(lock, PMMUNLOCKED);
@@ -23,176 +22,192 @@ void spin_lock(int *lock) {
 void spin_unlock(int *lock) {
     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
 }
+/*----------------------------------------*/
 
-typedef struct header {
-    size_t size;
-    bool is_page;
-} header_t;
+#define DEBUG
+#ifdef DEBUG
+#define debug_pf(fmt, args...) printf(fmt, ##args)
+#else
+#define debug_pf(fmt, args...) 
+#endif
 
-typedef struct freeblock {
-    uintptr_t start;
-    uintptr_t end;
-    struct freeblock *next;
-    bool is_used;
-    bool is_page; // 标记是否为页块
-} freeblock_t;
 
-static freeblock_t *free_list = NULL;
-lock_t big_lock;
+#define MAX_ORDER (10 + 1)
+#define PAGESIZE (4 * 1024)
+#define MAX_PAGESIZE ((1 << (MAX_ORDER - 1)) * PAGESIZE)
 
-static inline size_t align_up(size_t size, size_t alignment) {
-    return (size + alignment - 1) & ~(alignment - 1);
+#define PFN_ALIGN(x)	(((unsigned long)(x) + (PAGE_SIZE - 1)) & PAGE_MASK)
+#define PFN_UP(x)	(((x) + PAGE_SIZE-1) >> PAGE_SHIFT)
+#define PFN_DOWN(x)	((x) >> PAGE_SHIFT)
+// #define PFN_PHYS(x)	((phys_addr_t)(x) << PAGE_SHIFT)
+// #define PHYS_PFN(x)	((unsigned long)((x) >> PAGE_SHIFT))
+
+#define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1))
+#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz) - 1))
+
+#define HEAP_SIZE (((uintptr_t)heap.end) - ((uintptr_t)heap.start))
+
+struct page {
+    unsigned int order : 4;     // 块阶数（0~10）
+    bool used;                  // 是否被使用
+};
+
+struct free_area {
+    struct list_head *head;
+    unsigned long nr_free;
+};
+
+struct free_area free_lists[MAX_ORDER];
+
+static size_t calculate_alignment(size_t size){
+    return SIZE_MAX;
 }
 
-static size_t calculate_alignment(size_t size) {
-    if (size == 0) {
-        return 1; 
-    }
-
-    size_t alignment = 1;
-    while (alignment < size) {
-        alignment <<= 1;
-    }
-    return alignment;
-}
-
-
-static void *kalloc(size_t size) {
-    panic_on(size >= 16 * 1024 * 1024, "Allocations over 16MiB are not supported");
-
-    spin_lock(&big_lock);
-
-    size_t align_size;
-    bool is_page = false;
-    size_t total_size;
-
-    // 事实上，我这里区分是没什么意义的
-    // 我应该使用的是别的页分配器，而上面的是别的内存块分配器
-    // 我这里使用的还是最简陋的纯块分配（可大可小的块几Byte 到4KB往上）
-    // 所以is_page 这里没意义
-    // 就当作为之后的 buddy system 和 slab 实现开个头。
-    if (size <= THRESHOLD - sizeof(header_t)) {
-        align_size = size;
-        total_size = calculate_alignment(align_size + sizeof(header_t));
-    } else {
-        align_size = size;
-        total_size = align_size + sizeof(header_t);
-        total_size = align_up(total_size, PAGE_SIZE);
-        is_page = true;
-    }
-
-    freeblock_t *curr = free_list;
-    freeblock_t *prev = NULL;
-
-    // first fit strategy
-    freeblock_t *choosed = NULL;
-    freeblock_t *choosed_prev = NULL;
-    // size_t choosed_fit = SIZE_MAX;
-    while (curr != NULL) {
-
-        uintptr_t alloc_start = curr->start;
-        uintptr_t alloc_end = alloc_start + total_size;
-        size_t remaining_size = curr->end - curr->start;
-
-        // 修正条件判断：块已使用 或 无法容纳请求时跳过
-        if (curr->is_used || alloc_end > curr->end || remaining_size < total_size) {
-            prev = curr;
-            curr = curr->next;
-            continue;
-        }
-
-        // 确保当前块足够大，否则应已跳过
-        if (alloc_end > curr->end) {
-            printf("alloc_start: 0x%x alloc_end: 0x%x "
-                   "curr->start: 0x%x curr->end: 0x%x "
-                   "remaining_size: 0x%x\n",
-                   alloc_start, alloc_end, curr->start,
-                   curr->end, remaining_size);
-            panic("allocation logic error: block size mismatch");
-        }
-
-        // size_t remaining = curr->end - alloc_end;
-        // if (remaining < choosed_fit) {
-            //choosed_fit = remaining;
-            choosed = curr;
-            choosed_prev = prev;
-        // }
-        break;
-    }
-
-    if (choosed != NULL) {
-        uintptr_t alloc_start = choosed->start;
-        uintptr_t alloc_end = alloc_start + total_size;
-
-        // set header info
-        header_t *hptr = (header_t*)alloc_start;
-        hptr->is_page = is_page;
-        hptr->size = total_size;
-
-        choosed->is_used = true;
-
-        // handle remaining free space, update free_list
-        if (alloc_end < choosed->end) {
-            freeblock_t *remaining = (freeblock_t *)(alloc_end);
-            remaining->start = alloc_end;
-            remaining->end = choosed->end;
-            //remaining->end = curr->end;
-            remaining->is_used = false;
-            remaining->next = choosed->next;
-
-            if (choosed_prev)
-                choosed_prev->next = remaining;
-            else
-                free_list = remaining;
-        } else {
-            // 移除当前块
-            if (choosed_prev)
-                choosed_prev->next = choosed->next;
-            else
-                free_list = choosed->next;
-        }
-        spin_unlock(&big_lock);
-        return (void *)(alloc_start + sizeof(header_t));
-    }
-    
-    spin_unlock(&big_lock);
-    panic("no......");
+void *buddy_alloc(size_t size) {
     return NULL;
 }
 
-static void kfree(void *ptr) {
-    if (!ptr) return;
-
-    spin_lock(&big_lock);
-    header_t *hdr = (header_t *)((uintptr_t)ptr - sizeof(header_t));
-    uintptr_t start = (uintptr_t)hdr;
-    uintptr_t end = start + sizeof(header_t) + hdr->size;
-
-    // 创建新空闲块并标记类型
-    freeblock_t *block = (freeblock_t *)start;
-    block->start = start;
-    block->end = end;
-    block->is_page = hdr->is_page;
-    block->is_used = false;
-    block->next = free_list;
-    free_list = block;
-
-    // 合并相邻块
-    // freeblock_t *curr = free_list;
-    // while (curr) {
-    //     printf("ddddddddddddddd\n");
-    //     freeblock_t *next = curr->next;
-    //     if (next && curr->end == next->start && curr->is_page == next->is_page) {
-    //         curr->end = next->end;
-    //         curr->next = next->next;
-    //         // 继续检查以合并更多块
-    //     } else {
-    //         curr = curr->next;
-    //     }
-    // }
-
-    spin_unlock(&big_lock);
+void *slab_alloc(size_t size) {
+    return NULL;
 }
+
+static void *kalloc(size_t size) {
+    if (size > 16 * 1024 * 1024) return NULL; // Allocations over 16MiB are not supported
+
+    size_t align_size = calculate_alignment(size);
+
+    //panic_on(align_size > MAX_SIZE, "Allocations over 16MiB are not supported");
+
+    void *res = align_size > PAGESIZE ?
+        buddy_alloc(align_size) : slab_alloc(align_size);
+
+    return res;
+
+}
+
+static void kfree(void *ptr) {
+
+}
+
+
+// uintptr_t jump_pages_meta(uintptr_t max_page_num) {
+//     uintptr_t pmsize = (
+//         (uintptr_t)heap.end - (uintptr_t)heap.start
+//     );
+// 
+//     // round up
+//     max_page_num = pmsize / MAX_PAGESIZE;
+// 
+//     printf("heap_size: 0x%x  MAX_PAGESIZE: 0x%x\n", pmsize, MAX_PAGESIZE);
+//     printf("pages_meta: [0x%x, 0x%x), max_page_num: 0x%x(%d)\n", 
+//            (uint64_t)(uintptr_t)heap.start, 
+//            (uint64_t)(uintptr_t)(heap.start + max_page_num),
+//            (uintptr_t)max_page_num, (uint64_t)max_page_num);
+// 
+//     uintptr_t pages_meta_size = max_page_num * sizeof(struct pagemeta);
+// 
+//     uintptr_t buddy_start = align_up((uintptr_t)heap.start + pages_meta_size, PAGESIZE);
+// 
+//     max_page_num = ((uintptr_t)heap.end - buddy_start) / MAX_PAGESIZE;
+//     panic_on(buddy_start < (uintptr_t)heap.start, "maybe overwrite page metadata");
+//     printf("now, for use, heap_size: 0x%x heap.start: 0x%x, max_page_num: %d\n", 
+//            (uintptr_t)heap.end - buddy_start, buddy_start, max_page_num);
+// 
+//     return buddy_start;
+// }
+
+void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
+    if (start_pfn > end_pfn) panic("start_pfn and end_pfn error");
+
+    unsigned long total_pages = end_pfn - start_pfn + 1;
+    unsigned long remaining_pages = total_pages;
+
+    for (int order = MAX_ORDER - 1; order >= 0; order--) {
+        unsigned long block_size = 1UL << order; // 2^order
+        while (remaining_pages >= block_size) {
+            // allocte from back to front
+            struct list_head *free_block = (struct list_head *)(start_pfn + remaining_pages - block_size);
+            INIT_LIST_HEAD(free_block);
+            // debug_pf("now order: %d  start_pfn: 0x%x  end_pfn: 0x%x(%d) remaining_pages: 0x%x block_size: 0x%x\n",
+            //          order, start_pfn, end_pfn, end_pfn, remaining_pages, block_size);
+
+            list_add(free_block, free_lists[order].head);
+            free_lists[order].nr_free++;
+
+            // 更新剩余页数
+            remaining_pages -= block_size;
+            debug_pf("now order: %d  start_pfn: 0x%x  end_pfn: 0x%x(%d)  "
+                     "remaining_pages: 0x%x  block_size: 0x%x(%d)\n",
+                     order, start_pfn, end_pfn, end_pfn,
+                     remaining_pages, block_size, block_size);
+        }
+    }
+}
+
+// 初始化页元数据
+void init_pages() {
+    uintptr_t total_pages = HEAP_SIZE / PAGESIZE;
+    unsigned long start_pfn = 0, end_pfn = HEAP_SIZE / PAGESIZE - 1;
+    debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", start_pfn, end_pfn, end_pfn);
+
+    // 计算元数据区大小及所占页数
+    size_t pagedata_size = total_pages * sizeof(struct page);
+    size_t pagedata_pages = (pagedata_size + PAGESIZE - 1) / PAGESIZE;
+    debug_pf("metadata_size: 0x%x  metadata_pages: 0x%x\n", pagedata_size, pagedata_pages);
+    start_pfn += pagedata_pages;
+    debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", start_pfn, end_pfn, end_pfn);
+    
+
+    // 假设元数据区位于物理内存起始处（page_meta 指向物理地址 0）
+    struct page *page_meta = (struct page *)heap.start;
+    
+    // 初始化元数据区：标记为已使用
+    for (size_t pfn = 0; pfn < total_pages; pfn++) {
+        page_meta[pfn].used = (pfn < pagedata_pages);
+        page_meta[pfn].order = false;
+    }
+    
+    // 记录这个时候page_meta 用了多大的内存，然后对齐4KB
+    // 接着存储空闲链表
+
+    uintptr_t free_list_addr = (uintptr_t)heap.start + pagedata_size;
+    debug_pf("free_list_addr: 0x%x\n", free_list_addr);
+    unsigned long free_lists_size = MAX_ORDER * sizeof(struct free_area);
+    unsigned long free_lists_pages = (free_lists_size + PAGESIZE - 1) / PAGESIZE;
+    start_pfn += free_lists_pages;
+    debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", start_pfn, end_pfn, end_pfn);
+
+    struct free_area *area = (struct free_area *)free_list_addr;
+    for (size_t i = 0; i < MAX_ORDER; i++) {
+        INIT_LIST_HEAD(free_lists[i].head);
+        free_lists[i].nr_free = 0;
+        area[i] = free_lists[i];
+        debug_pf("area: 0x%x\n", &area[i]);
+        // 应该初始化空闲链表了，但是应该用哪个？动态初始化还是静态初始化？
+        // 静态：LIST_HEAD_INIT
+        // 动态：INIT_LIST_HEAD
+    }
+
+    uintptr_t start_used =  free_list_addr + sizeof(free_lists);
+    debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
+             start_used, start_pfn, end_pfn);
+
+    // 开始计算放入到空闲链表的各阶的空闲块数量、大小
+    init_free_block(start_pfn, end_pfn);
+}
+
+void init_freelist() {
+   // 将整个池加入空闲链表
+    for (int i = 0; i < MAX_ORDER; i++) {
+        INIT_LIST_HEAD(free_lists[i].head);
+    }
+    list_add(free_lists[MAX_ORDER - 1].head, (struct list_head *)heap.start);
+}
+
+void init_buddy() {
+    init_pages();
+}
+
 
 static void pmm_init() {
     lockinit(&big_lock);
@@ -201,17 +216,12 @@ static void pmm_init() {
         (uintptr_t)heap.end - (uintptr_t)heap.start
     );
 
-    freeblock_t *block = (freeblock_t *)heap.start;
-    block->start = (uintptr_t)heap.start;
-    block->end = (uintptr_t)heap.end;
-    block->is_used = false;
-    block->next = NULL;
-    free_list = block;
-
     printf(
         "Got %d MiB heap: [%p, %p)\n",
         pmsize >> 20, heap.start, heap.end
     );
+
+    init_buddy();
 }
 
 MODULE_DEF(pmm) = {

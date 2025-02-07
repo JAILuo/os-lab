@@ -10,8 +10,15 @@ typedef struct header {
     bool is_page;       // 是否为页分配
 } header_t;
 
+#define MAX_ORDER (10 + 1)
+#define PAGESIZE (4 * 1024)
+#define MAX_PAGESIZE ((2 << (MAX_ORDER - 1)) * PAGESIZE)
+
 
 int main() {
+    printf("MAX_PAGESIZE: 0x%x\n", MAX_PAGESIZE);
+
+
     void *ptr = malloc(100);
     header_t *hptr1 = (header_t *) ptr - 1;
     header_t *hptr2 = (header_t *)((uintptr_t)ptr - sizeof(header_t));
