@@ -14,6 +14,18 @@ typedef struct header {
 #define PAGESIZE (4 * 1024)
 #define MAX_PAGESIZE ((2 << (MAX_ORDER - 1)) * PAGESIZE)
 
+struct list_head {
+    struct list_head *next, *prev;
+};
+
+
+struct page {
+    struct list_head buddy_list;
+    unsigned int order;         // 块阶数（0~10）
+    bool used;                  // 是否被使用
+    bool is_slab;
+    struct page *compound_head;
+};
 
 int main() {
     printf("MAX_PAGESIZE: 0x%x\n", MAX_PAGESIZE);
@@ -25,5 +37,8 @@ int main() {
 
     printf("==ptr: %p==\n", ptr);
     printf("hptr1: %p   hptr2: %p\n", hptr1, hptr2);
+
+    printf("sizeof(struct page): %zu\n", sizeof(struct page));
+
     return 0;
 }
