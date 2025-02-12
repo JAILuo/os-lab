@@ -30,6 +30,9 @@ struct page {
 int main() {
     printf("MAX_PAGESIZE: 0x%x\n", MAX_PAGESIZE);
 
+    int alloc_sizes[] = {1024, 4096, 8192, 32768};
+    int size_count = sizeof(alloc_sizes)/sizeof(int);
+    printf("size_count: %d", size_count);
 
     void *ptr = malloc(100);
     header_t *hptr1 = (header_t *) ptr - 1;
@@ -38,7 +41,12 @@ int main() {
     printf("==ptr: %p==\n", ptr);
     printf("hptr1: %p   hptr2: %p\n", hptr1, hptr2);
 
+    struct page test;
     printf("sizeof(struct page): %zu\n", sizeof(struct page));
+    printf("struct page test addr: %p\n", &test);
+    printf("test.buddy_list: %p  order: %p  used: %p  \n"
+           "is_slab: %p  compound_head: %p\n",
+           &test.buddy_list, &test.order, &test.used, &test.is_slab, &test.compound_head);
 
     return 0;
 }

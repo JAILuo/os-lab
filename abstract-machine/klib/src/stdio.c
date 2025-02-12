@@ -202,7 +202,7 @@ int sprintf(char *out, const char *fmt, ...) {
 int printf(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  char buf[1];
+  char buf[100];
   int result = vsnprintf_(putter_out_, buf, (size_t)-1, fmt, args);
   va_end(args);
   return result;

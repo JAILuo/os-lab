@@ -1,5 +1,11 @@
+#include "list.h"
+#include <stdint.h>
 #include <buddy.h>
 #include <common.h>
+
+//struct free_area free_lists[MAX_ORDER];
+struct free_area *free_lists = NULL;
+uintptr_t start_used = 0;
 
 // void debug_free_list(struct free_area *free_lists, int order) {
 //     struct page *page;
@@ -30,8 +36,10 @@
 //     }
 // }
 
-static void init_free_block(struct free_area *free_lists,
-                     unsigned long start_pfn, unsigned long end_pfn) {
+
+// 改进，free_lists[order].head 作哨兵结点，不存储数据
+//static void init_free_block(struct free_area *free_lists,
+static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
     if (start_pfn > end_pfn) panic("Invalid PFN range");
     unsigned long remaining_pages = end_pfn - start_pfn + 1;
 
@@ -42,6 +50,7 @@ static void init_free_block(struct free_area *free_lists,
         while (remaining_pages >= block_size) {
             unsigned long head_pfn = start_pfn + remaining_pages - block_size;
             struct page *head_page = pfn_to_page(head_pfn);
+            unsigned long pfn = page_to_pfn(head_page);
 
             debug_pf("head_pfn: 0x%x  head_page: 0x%x\n",
                      head_pfn, head_page);
@@ -50,9 +59,10 @@ static void init_free_block(struct free_area *free_lists,
             head_page->order = order;
             head_page->compound_head = head_page;  // 头页指向自身
             
-            debug_pf("head_page->compound_head: 0x%x\n", head_page->compound_head);
+            // debug_pf("head_page->compound_head: 0x%x\n", head_page->compound_head);
 
             // 问题应该在这里，free_lists->head_page->buddy_list
+
 
             // 初始化尾页元数据
             for (unsigned long pfn = head_pfn + 1; pfn < head_pfn + block_size; pfn++) {
@@ -60,7 +70,6 @@ static void init_free_block(struct free_area *free_lists,
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
                 tail_page->compound_head = head_page; // 尾页指向头页
-                INIT_LIST_HEAD(&tail_page->buddy_list);
                 list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
                 //list_add(&tail_page->buddy_list, &head_page->buddy_list);
             }
@@ -73,53 +82,74 @@ static void init_free_block(struct free_area *free_lists,
             // 加上自己想低阶/各阶首个空闲块地址是从小到大
             // 应该用list_add
 
-            // 关键的这一句，一直没想明白是怎么回事
-            // 别忘了free_lists[order].head这个也是一个struct page
-                
-            if (free_lists[order].head == NULL) {
-                debug_pf("now order: %d\n", order);
-                free_lists[order].head = (struct list_head *)(&(head_page->buddy_list)); 
-                INIT_LIST_HEAD(free_lists[order].head);
-            } else {
-                debug_pf("now order: %d head_page: 0x%x\n", order, head_page);
-                list_add_tail(&head_page->buddy_list, free_lists[order].head);
+            // debug_pf("now order is :%d  head_page: 0x%x\n",
+            //          order, head_page);
+            // debug_pf("& bellow:buddy_list is: 0x%x\n", &head_page->buddy_list);
+            // debug_pf("add: compound_head: 0x%x  order: 0x%x  is_slab: 0x%x\n",
+            //          &head_page->compound_head, &head_page->order, &head_page->is_slab);
+            // debug_pf("add: used: 0x%x\n", &head_page->used);
+
+            // debug_pf("* bellow:buddy_list is: 0x%x\n", head_page->buddy_list);
+            // debug_pf("add: compound_head: 0x%x  order: 0x%x  is_slab: 0x%x\n",
+            //          head_page->compound_head, head_page->order, head_page->is_slab);
+            // debug_pf("add: used: 0x%x\n", head_page->used);
+
+            // debug_pf("and now free_lists[%d].head is ; 0x%x\n",
+            //          order, free_lists[order].head);
+            // debug_pf("and now free_lists[%d].head's addr is ; 0x%x\n",
+            //          order, &free_lists[order].head);
+
+            if (free_lists[order].nr_free == 0) {
+                debug_pf("free_lists[%d].head: next=0x%x prev=0x%x  pfn=%d\n", 
+                         order, free_lists[order].head.next, 
+                        free_lists[order].head.prev, pfn);
+                panic_on(free_lists[order].head.next != free_lists[order].head.prev,
+                         "error!!!!!! should same!!");
             }
+
+            // 还真的是这个问题！！！是自己指针用的不到位。。。。
+            //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
+            //这里如果直接用head_page->buddy_list的话，连的是这个头页的写一个页，注意指针。
+            //list_add((struct list_head *)head_page, (struct list_head *)(free_lists[order].head));
+            //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
+            list_add(&head_page->buddy_list, &free_lists[order].head);
             free_lists[order].nr_free++;
 
             remaining_pages -= block_size;
 
-            // TODO 学习，linux遍历链表的API
-            // struct page *current_page;
-            // list_for_each_entry(current_page, free_lists[order].head, buddy_list) {
-            //     debug_pf("Node in free_lists[%d]: 0x%x free_lists[%d].nr_free: %d\n", 
-            //              order, current_page, order, free_lists[order].nr_free);
-            // }
-
-            unsigned long pfn = page_to_pfn(head_page);
-            debug_pf("free_lists[%d].nr_free: %d  free_list[%d].head: 0x%x  "
-                     "free_lists[%d].head: next=0x%x prev=0x%x  pfn=%d\n", 
+            debug_pf("free_lists[%d].nr_free: %d  free_list[%d].head: 0x%x\n",
                      order, free_lists[order].nr_free,
-                     order, free_lists[order].head,
-                     order, free_lists[order].head->next, 
-                            free_lists[order].head->prev, pfn);
-
-            debug_pf("now order: %d  start_pfn: 0x%x  end_pfn: 0x%x(%d)  "
-                     "remaining_pages: 0x%x  block_size: 0x%x(%d)\n\n",
-                     order, start_pfn, end_pfn, end_pfn,
-                     remaining_pages, block_size, block_size);
+                     order, free_lists[order].head);
+            debug_pf("free_lists[%d].head: next=0x%x prev=0x%x  pfn=%d\n", 
+                     order, free_lists[order].head.next, 
+                    free_lists[order].head.prev, pfn);
+        
+//             if (order != 0)  {
+//                 if (free_lists[order].head->next == NULL) goto test;
+//                 debug_pf("now order is %d\n", order);
+//                 debug_pf("free_lists[order]'s addr: 0x%x  0's addr: 0x%x\n",
+//                          free_lists[order].head->next, free_lists[0].head->next);
+//                 debug_pf("order's head addr: 0x%x  0's addr: 0x%x\n",
+//                          &free_lists[order].head, &free_lists[0].head);
+//                 panic_on(((struct free_area *)(0x3fa0a0))->head->next == 
+//                     ((struct free_area *)(0x3fa000))->head->next, 
+//                     "different order next should not be same!!\n");
+//                 //panic_on(free_lists[order].head->next == free_lists[0].head->next,
+//             }
+// test:
+// 
+            debug_pf("=============\n\n\n");
+            // debug_pf("now order: %d  start_pfn: 0x%x  end_pfn: 0x%x(%d)  "
+            //          "remaining_pages: 0x%x  block_size: 0x%x(%d)\n\n",
+            //          order, start_pfn, end_pfn, end_pfn,
+            //          remaining_pages, block_size, block_size);
         }
-            debug_pf("free_lists[%d].nr_free: %d  free_list[%d].head: 0x%x  "
-                     "free_lists[%d].head: next=0x%x prev=0x%x  end current_order\n", 
-                     order, free_lists[order].nr_free,
-                     order, free_lists[order].head,
-                     order, free_lists[order].head->next, 
-                            free_lists[order].head->prev);
     }
 
-    for (int i = MAX_ORDER - 1; i >= 0; i--) {
-        debug_pf("free_lists[%d].nr_free: 0x%x(%d)\n",
-                 i, free_lists[i].nr_free, free_lists[i].nr_free);
-    }
+    // for (int i = MAX_ORDER - 1; i >= 0; i--) {
+    //     debug_pf("free_lists[%d].nr_free: 0x%x(%d)\n",
+    //              i, free_lists[i].nr_free, free_lists[i].nr_free);
+    // }
 }
 
 static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_pfn) {
@@ -147,43 +177,46 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
     return pagedata_size;
 }
 
-static struct free_area *init_free_lists(unsigned long *start_pfn, 
-                     unsigned long *end_pfn,
-                     struct free_area *free_list_addr) {
-    struct free_area *free_lists_tmp = (struct free_area *)free_list_addr;
-
-    // for (int i = MAX_ORDER - 1; i >= 0; i--) {
-    //     debug_pf("free_lists[%d].nr_free: 0x%x(%d)  ",
-    //              i, free_lists[i].nr_free, free_lists[i].nr_free);
-    //     debug_pf("now free_lists addr: 0x%x\n", &free_lists[i]);
-    // }
-    // 静态：LIST_HEAD_INIT
-    // 动态：INIT_LIST_HEAD
+static void init_free_lists(unsigned long *start_pfn, 
+                     unsigned long *end_pfn) {
     for (int i = 0; i < MAX_ORDER; i++) {
-        INIT_LIST_HEAD(free_lists_tmp[i].head);
-        free_lists_tmp[i].nr_free = 0;
+        debug_pf("free_lists[%d].head: 0x%x  &free_lists[%d].head: 0x%x\n",
+                 i, free_lists[i].head, i, &free_lists[i].head);
+        INIT_LIST_HEAD((struct list_head *)&free_lists[i].head);
+        free_lists[i].nr_free = 0;
 
-        debug_pf("====sizoeof(free_lists): 0x%x\n", sizeof(struct free_area) * MAX_ORDER);
-        debug_pf("====&free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: 0x%x\n",
-                 i, &free_lists_tmp[i],
-                 i, &free_lists_tmp[i].head,
-                 i, &free_lists_tmp[i].nr_free);
+        // 这里：
+        // ====sizoeof(free_lists): 0xb0
+        // ====&free_lists[5]: 0x3fa050  &free_lists[5].head: 0x3fa050  &free_lists[0x5].nr_free: 0x3fa058
+        // .....free_lists[5]: 0x0  free_lists[0].head: 0x5  free_lists[0x0].nr_free: 0x5
+        // free_lists[6].head: 0x0  &free_lists[6].head: 0x3fa060
 
-        // struct free_area **area = (struct free_area **)free_list_addr;
-        // area[i] = &free_lists[i];
-        // 问题似乎在这一句？出现了nr_free 被覆写的情况
-        // 将free_lists的地址再次赋给area，但是我复现不出来了！！
-        //debug_pf("area[%d]: 0x%x   free_lists[%d]'s addr: 0x%x\n", i, area[i], i, &free_lists[i]);
-        // debug_pf("free_list[%d].head: 0x%x\n", i, free_lists[i].head);
+        debug_pf("now nr_free is: %d  and order is: %d\n",
+                 free_lists[i].nr_free, i);
+        debug_pf("====sizoeof(free_lists) * MAX_ORDER: 0x%x, sizoeof(free_lists): 0x%x\n",
+                 sizeof(struct free_area) * MAX_ORDER,
+                 sizeof(struct free_area));
+        //debug_pf("====&free_lists[%d]: 0x%x  &free_lists[%d].head: 0x%x  &free_lists[%d].nr_free: 0x%x\n",
+        //debug_pf(".....free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: %d\n",
+        // 上面那样写在一起就输出错的，应该是自己写的printf的bug，分开来写成下面这样就对的？
+        debug_pf("====&free_lists[%d]: 0x%x\n",
+                 i, &free_lists[i]);
+        debug_pf("====&free_lists[%d].head: 0x%x\n",
+                 i, &free_lists[i].head);
+        debug_pf("====&free_lists[%d].nr_free: 0x%x\n",
+                 i, &free_lists[i].nr_free);
+
+        //debug_pf(".....free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: %d\n",
+        debug_pf(".....free_lists[%d]: 0x%x\n",
+                 i, free_lists[i]);
+        debug_pf(".....free_lists[%d].head: 0x%x\n",
+                 i, free_lists[i].head);
+        debug_pf(".....free_lists[%d].nr_free: %d\n",
+                 i, free_lists[i].nr_free);
+
+        debug_pf("free_list[%d].nr_free is %d\n", i, free_lists[i].nr_free);
     }
     
-    // for (int i = MAX_ORDER - 1; i >= 0; i--) {
-    //     panic_on(free_lists[i].nr_free != 0, "nr_free error");
-    //     debug_pf("free_lists[%d].nr_free: 0x%x(%d)  ",
-    //              i, free_lists[i].nr_free, free_lists[i].nr_free);
-    //     debug_pf("now free_lists addr: 0x%x\n", &free_lists[i]);
-    // }
-
     unsigned long free_lists_size = MAX_ORDER * sizeof(struct free_area);
     unsigned long free_lists_pages = (free_lists_size + PAGESIZE - 1) / PAGESIZE;
     debug_pf("free_lists_size: 0x%x  free_lists_pages: 0x%x(%d)\n", 
@@ -191,13 +224,7 @@ static struct free_area *init_free_lists(unsigned long *start_pfn,
     *start_pfn += free_lists_pages;
     debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
 
-    uintptr_t start_used = ROUNDUP(free_list_addr + MAX_ORDER * sizeof(struct free_area), PAGESIZE);
-    debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
-             start_used, *start_pfn, *end_pfn);
-
     debug_pf("==============\n");
-
-    return free_lists_tmp;
 }
 
 // 初始化页元数据
@@ -206,15 +233,20 @@ void init_pages() {
 
     size_t pagedata_size = init_page_meta_data(&start_pfn, &end_pfn);
 
-    // 接着存储空闲链表
-
-    struct free_area *free_list_addr = (struct free_area *)((uintptr_t)heap.start + pagedata_size);
-    free_lists = (struct free_area *)free_list_addr;
+    //struct free_area *free_list_addr = (struct free_area *)((uintptr_t)heap.start + pagedata_size);
+    uintptr_t free_list_addr = ((uintptr_t)heap.start + pagedata_size);
     debug_pf("free_list_addr: 0x%x\n", free_list_addr);
+    free_lists = (struct free_area *)free_list_addr;
+    debug_pf("free_lists: 0x%x\n", free_lists);
 
-    struct free_area *free_list = init_free_lists(&start_pfn, &end_pfn, free_list_addr);
+    init_free_lists(&start_pfn, &end_pfn);
+    start_used = ROUNDUP(free_list_addr + MAX_ORDER * sizeof(struct free_area), PAGESIZE);
+    debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
+             start_used, start_pfn, end_pfn);
+    debug_pf("==============\n");
 
-    init_free_block(free_list, start_pfn, end_pfn);
+    //init_free_block(free_list, start_pfn, end_pfn);
+    init_free_block(start_pfn, end_pfn);
 }
 
 

@@ -21,18 +21,26 @@ struct page {
 };
 
 struct free_area {
-    struct list_head *head;
+    //struct list_head *head;
+    struct list_head head;
     unsigned long nr_free;
 };
 
 extern struct free_area *free_lists;
+//extern struct free_area free_lists[MAX_ORDER];
+extern uintptr_t start_used;
 
+#define pages_base ((struct page *)(heap.start))
 
-static inline struct page *pfn_to_page(unsigned long pfn) {
-    // return (struct page *)heap.start + pfn;
-    return (struct page *)((uintptr_t)heap.start + pfn * sizeof(struct page));
-}
+// 假设 page 结构体数组起始地址为 pages_base
+//#define page_to_pfn(page) ((unsigned long)((page) - pages_base))
+#define pfn_to_page(pfn) (&pages_base[(pfn)])
 
+// static inline struct page *pfn_to_page(unsigned long pfn) {
+//     // return (struct page *)heap.start + pfn;
+//     return (struct page *)((uintptr_t)heap.start + pfn * sizeof(struct page));
+// }
+// 
 static inline unsigned long page_to_pfn(struct page *page) {
     return ((unsigned long)((uintptr_t)page - (uintptr_t)heap.start) / sizeof(struct page));
 }

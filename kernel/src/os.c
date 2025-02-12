@@ -1,86 +1,3 @@
-// #include <common.h>
-// static void os_init()
-// {
-// 	pmm->init();
-// }
-// 
-// static void os_run()
-// {
-// 	for (const char *s = "Hello World from CPU #*\n"; *s; s++)
-// 	{
-// #ifndef TEST
-// 		putch(*s == '*' ? '0' + cpu_current() : *s);
-// #else
-// 		static size_t cpucnt = 0;
-// 		putchar(*s == '*' ? '0' + cpucnt++ : *s);
-// #endif
-// 	}
-// 	void *add1 = pmm->alloc(1020);
-// 	if (add1 == NULL)
-// 	{
-// 		printf("add is NULL");
-// 		halt(1);
-// 	}
-// 	else
-// 		printf("add1: %x\n", add1);
-// 	
-//     int *add1_int=(int *)add1;
-// 	*add1_int=9876;
-// 	*(add1_int+(1020-4)/4)=114514;
-//     printf("add1_int: 0x%x  *add1_int: 0x%x\n"
-//            "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
-//            add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
-// 
-// 	void *add2 = pmm->alloc(20);
-// 	if (add2 == NULL)
-// 	{
-// 		printf("add2 is NULL");
-// 		halt(1);
-// 	}
-// 	else
-// 		printf("add2: %x\n", add2);
-// 
-// 	void *add3 = pmm->alloc(512);
-// 	if (add3 == NULL)
-// 	{
-// 		printf("add3 is NULL");
-// 		halt(1);
-// 	}
-// 	else
-// 		printf("add3: %x\n", add3);
-// 
-// 	int *add3_int=(int *)add3;
-// 	*add3_int=543210;
-// 	*(add3_int+(512-4)/4)=114514;
-// 
-// 	pmm->free(add2);
-//     printf("add1_int: 0x%x  *add1_int: 0x%x\n"
-//            "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
-//            add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
-//     printf("add3_int: 0x%x  *add3_int: 0x%x\n", add3_int, *add3_int);
-// 
-// 	assert(*add1_int==9876);
-// 	assert(*(add1_int+(1020-4)/4)==114514);
-// 	assert(*add3_int==543210);
-// 	assert(*(add3_int+(512-4)/4)==114514);
-// 
-// 	pmm->free(add1);
-// 
-// 	assert(*add3_int==543210);
-// 	assert(*(add3_int+(512-4)/4)==114514);
-// 
-// 	pmm->free(add3);
-// 
-// 	while(true);
-// }
-// 
-// MODULE_DEF(os) = {
-// 	.init = os_init,
-// 	.run = os_run,
-// };
-
-
-
 #include <common.h>
 
 typedef int lock_t;
@@ -92,6 +9,30 @@ void spin_unlock(int *lock);
 
 #define MAGIC (0x55)
 #define TEST_NUM (128)
+
+// long volatile sum = 0;
+// #define T        3
+// #define N  100000
+// 
+// 
+// void T_sum(int tid) {
+//     for (int i = 0; i < N; i++) {
+//         spin_lock(&big_lock);
+// 
+//         // This critical section is even longer; but
+//         // it should be safe--the world is stopped.
+//         // We also marked sum as volatile to make
+//         // sure it is loaded and stored in each
+//         // loop iteration.
+//         for (int _ = 0; _ < 10; _++) {
+//             sum++;
+//         }
+// 
+//         spin_unlock(&big_lock);
+//     }
+// 
+//     printf("Thread %d: sum = %d\n", tid, sum);
+// }
 
 // for test buddy
 static int choose_memory_block(void) {
@@ -203,13 +144,17 @@ void test_kfree(char *array[], int array_size[]) {
 
 void test_kalloc_stress() {
     for (int i = 0; i < 10; i++) {
-        void *ptr = pmm->alloc((i+ 1) * 1024); // 分配 128 字节
-       if (ptr == NULL) {
+        void *ptr = pmm->alloc((i + 1) * 512); // 分配 128 字节
+        if (ptr == NULL) {
             printf("Allocation failed at iteration %d\n", i);
             break;
         }
         pmm->free(ptr); // 释放内存
     }
+    printf("\n=======================================\n");
+    printf("test_kalloc_stress paseed\n");
+    printf("=======================================\n\n");
+
 }
 
 void test_pmm() {
@@ -226,29 +171,61 @@ void test_pmm() {
     }
 }
 
-// long volatile sum = 0;
-// #define T        3
-// #define N  100000
-// 
-// 
-// void T_sum(int tid) {
-//     for (int i = 0; i < N; i++) {
-//         spin_lock(&big_lock);
-// 
-//         // This critical section is even longer; but
-//         // it should be safe--the world is stopped.
-//         // We also marked sum as volatile to make
-//         // sure it is loaded and stored in each
-//         // loop iteration.
-//         for (int _ = 0; _ < 10; _++) {
-//             sum++;
-//         }
-// 
-//         spin_unlock(&big_lock);
-//     }
-// 
-//     printf("Thread %d: sum = %d\n", tid, sum);
-// }
+void test_kalloc_other() {
+    void *add1 = pmm->alloc(1020);
+    if (add1 == NULL) {
+        printf("add is NULL");
+        halt(1);
+    } else
+        printf("add1: %x\n", add1);
+
+      int *add1_int=(int *)add1;
+      *add1_int=9876;
+      *(add1_int+(1020-4)/4)=114514;
+      printf("add1_int: 0x%x  *add1_int: 0x%x\n"
+             "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
+             add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
+
+    void *add2 = pmm->alloc(20);
+    if (add2 == NULL) {
+        printf("add2 is NULL");
+        halt(1);
+    } else
+        printf("add2: %x\n", add2);
+
+    void *add3 = pmm->alloc(512);
+    if (add3 == NULL) {
+        printf("add3 is NULL");
+        halt(1);
+    } else
+        printf("add3: %x\n", add3);
+
+    int *add3_int=(int *)add3;
+    *add3_int=543210;
+    *(add3_int+(512-4)/4)=114514;
+
+    pmm->free(add2);
+    printf("add1_int: 0x%x  *add1_int: 0x%x\n"
+           "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
+           add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
+    printf("add3_int: 0x%x  *add3_int: 0x%x\n", add3_int, *add3_int);
+
+    assert(*add1_int==9876);
+    assert(*(add1_int+(1020-4)/4)==114514);
+    assert(*add3_int==543210);
+    assert(*(add3_int+(512-4)/4)==114514);
+
+    pmm->free(add1);
+
+    assert(*add3_int==543210);
+    assert(*(add3_int+(512-4)/4)==114514);
+
+    pmm->free(add3);
+
+    printf("\n=======================================\n");
+    printf("other test paseed\n");
+    printf("=======================================\n\n");
+}
 
 // 简单的分配和释放测试
 void test_kalloc_simple() {
@@ -267,12 +244,17 @@ void test_kalloc_simple() {
     // 测试释放指针后
     pmm->free(p1);
     pmm->free(p3);
+
+    printf("\n=======================================\n");
+    printf("test_kalloc_simple paseed\n");
+    printf("=======================================\n\n");
 }
 
 // 多次分配和释放，测试Buddy系统的稳定性
 void test_kalloc_pressure() {
     int alloc_sizes[] = {1024, 4096, 8192, 32768};
     int size_count = sizeof(alloc_sizes)/sizeof(int);
+
     int rounds = 100;
 
     struct MemBlock {
@@ -295,7 +277,9 @@ void test_kalloc_pressure() {
     //     pmm->free(blocks[i].ptr);
     // }
 
+    printf("\n=======================================\n");
     printf("Pressure test passed!\n");
+    printf("=======================================\n\n");
 }
 
 
@@ -357,6 +341,11 @@ void test_kfree_unallocated() {
 
 static void os_init() {
     pmm->init();
+    // test_kalloc_other();
+    // test_kalloc_simple();
+    // test_kalloc_stress();
+    // test_kalloc_pressure();
+    // test_pmm();
 }
 
 static void os_run() {
@@ -369,10 +358,11 @@ static void os_run() {
     // printf("sum  = %d\n", sum);
     // printf("%d*n = %d\n", T * 10, T * 10L * N);
 
-    //test_kalloc_stress();
+    //test_kalloc_other();
     //test_kalloc_simple();
-    test_kalloc_pressure();
-    //test_pmm();
+    test_kalloc_stress();
+    //test_kalloc_pressure();
+    // test_pmm();
 
     while (1) ;
 }

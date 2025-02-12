@@ -26,8 +26,6 @@ void spin_unlock(int *lock) {
 }
 /*----------------------------------------*/
 
-struct free_area *free_lists = NULL;
-
 void *slab_alloc(size_t size) {
     return NULL;
 }
