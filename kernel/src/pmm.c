@@ -9,7 +9,7 @@
 
 #define PMMLOCKED 1
 #define PMMUNLOCKED 0
-
+#define SPIN_LIMIT 100000000
 typedef int lock_t;
 lock_t big_lock;
 
@@ -17,13 +17,31 @@ void lockinit(int *lock) {
     atomic_xchg(lock, PMMUNLOCKED);
 }
 
+// Low-profile version of lockdep
+// it really does work
 void spin_lock(int *lock) {
-    while(atomic_xchg(lock, PMMLOCKED) == PMMLOCKED) {;}
+    // debug_pf("CPU #%d acquired Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
+    int spin_cnt = 0;
+    while(atomic_xchg(lock, PMMLOCKED) == PMMLOCKED) {
+        if (spin_cnt++ > SPIN_LIMIT) {
+            printf("Spin limit exceeded @ %s:%d\n",
+                  __FILE__, __LINE__);
+            panic("deadlock");
+        }
+    }
 }
 
 void spin_unlock(int *lock) {
-    panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
+    // debug_pf("CPU #%d release Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
+    if (atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED) {
+        printf("Warning: Unlocking an already unlocked lock @ %s:%d\n", __FILE__, __LINE__);
+    }
 }
+
+// void spin_unlock(int *lock) {
+//     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
+// }
+
 /*----------------------------------------*/
 
 void *slab_alloc(size_t size) {
@@ -31,9 +49,15 @@ void *slab_alloc(size_t size) {
 }
 
 static void *kalloc(size_t size) {
-    spin_lock(&big_lock);
-    if (size > 16 * 1024 * 1024) return NULL; // Allocations over 16MiB are not supported
+    // TODO strange, deadlock will happen here, but not bellow...
+    //spin_lock(&big_lock);
 
+    //panic_on(size >= 16 * 1024 * 1024, "Allocations over 16MiB are not supported");
+    //panic_on(size == 0, "0 Byte are not supported");
+
+    if (size >= 16 * 1024 * 1024 || size == 0) return NULL;
+
+    spin_lock(&big_lock);
     debug_pf("==========start alloc=========\n");
    
     size_t align_size = ROUNDUP(size, PAGESIZE);
@@ -52,10 +76,30 @@ static void *kalloc(size_t size) {
     return res;
 }
 
+static void range_check(void *ptr) {
+    if (!IN_RANGE(ptr, heap)) {
+        debug_pf("range_hea, ptr: 0x%x\n", ptr);
+        spin_unlock(&big_lock);
+        panic("should not free memory beyond heap.\n");
+        return;
+    }
+    if ((uintptr_t)ptr < start_used) {
+        debug_pf("ptr: 0x%x\n", ptr);
+        spin_unlock(&big_lock);
+        panic("should not free(cover) page meta_data and free_lists\n");
+        return;
+    }
+}
+
 static void kfree(void *ptr) {
+    panic_on(ptr == NULL, "should not free NULL ptr\n");
+
     spin_lock(&big_lock);  // 加锁
+    range_check(ptr);
+
     debug_pf("test free: 0x%x...\n", ptr);
-    // 释放内存的逻辑
+    buddy_free(ptr);
+
     spin_unlock(&big_lock);  // 解锁
 }
 

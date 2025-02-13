@@ -1,4 +1,5 @@
 #include "list.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <buddy.h>
 #include <common.h>
@@ -50,12 +51,12 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
         while (remaining_pages >= block_size) {
             unsigned long head_pfn = start_pfn + remaining_pages - block_size;
             struct page *head_page = pfn_to_page(head_pfn);
-            unsigned long pfn = page_to_pfn(head_page);
 
             debug_pf("head_pfn: 0x%x  head_page: 0x%x\n",
                      head_pfn, head_page);
 
             head_page->used = false;
+            head_page->is_slab = false;
             head_page->order = order;
             head_page->compound_head = head_page;  // 头页指向自身
             
@@ -69,18 +70,12 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
                 struct page *tail_page = pfn_to_page(pfn);
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
-                tail_page->compound_head = head_page; // 尾页指向头页
+                tail_page->compound_head = NULL; // 尾页指向头页
                 list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
                 //list_add(&tail_page->buddy_list, &head_page->buddy_list);
             }
 
             // 将头页的buddy_list加入free_lists[order].head
-            
-            // 这里搞晕了，一直不明白为什么head->next一直都不变
-            // 其实用的list_add_tail，插到尾部，肯定头不变啊
-            // 不过再想想，因为我是从后向前分配页的，
-            // 加上自己想低阶/各阶首个空闲块地址是从小到大
-            // 应该用list_add
 
             // debug_pf("now order is :%d  head_page: 0x%x\n",
             //          order, head_page);
@@ -99,14 +94,6 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
             // debug_pf("and now free_lists[%d].head's addr is ; 0x%x\n",
             //          order, &free_lists[order].head);
 
-            if (free_lists[order].nr_free == 0) {
-                debug_pf("free_lists[%d].head: next=0x%x prev=0x%x  pfn=%d\n", 
-                         order, free_lists[order].head.next, 
-                        free_lists[order].head.prev, pfn);
-                panic_on(free_lists[order].head.next != free_lists[order].head.prev,
-                         "error!!!!!! should same!!");
-            }
-
             // 还真的是这个问题！！！是自己指针用的不到位。。。。
             //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
             //这里如果直接用head_page->buddy_list的话，连的是这个头页的写一个页，注意指针。
@@ -120,49 +107,25 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
             debug_pf("free_lists[%d].nr_free: %d  free_list[%d].head: 0x%x\n",
                      order, free_lists[order].nr_free,
                      order, free_lists[order].head);
-            debug_pf("free_lists[%d].head: next=0x%x prev=0x%x  pfn=%d\n", 
+            debug_pf("free_lists[%d].head: next=0x%x prev=0x%x\n", 
                      order, free_lists[order].head.next, 
-                    free_lists[order].head.prev, pfn);
+                    free_lists[order].head.prev);
         
-//             if (order != 0)  {
-//                 if (free_lists[order].head->next == NULL) goto test;
-//                 debug_pf("now order is %d\n", order);
-//                 debug_pf("free_lists[order]'s addr: 0x%x  0's addr: 0x%x\n",
-//                          free_lists[order].head->next, free_lists[0].head->next);
-//                 debug_pf("order's head addr: 0x%x  0's addr: 0x%x\n",
-//                          &free_lists[order].head, &free_lists[0].head);
-//                 panic_on(((struct free_area *)(0x3fa0a0))->head->next == 
-//                     ((struct free_area *)(0x3fa000))->head->next, 
-//                     "different order next should not be same!!\n");
-//                 //panic_on(free_lists[order].head->next == free_lists[0].head->next,
-//             }
-// test:
-// 
             debug_pf("=============\n\n\n");
-            // debug_pf("now order: %d  start_pfn: 0x%x  end_pfn: 0x%x(%d)  "
-            //          "remaining_pages: 0x%x  block_size: 0x%x(%d)\n\n",
-            //          order, start_pfn, end_pfn, end_pfn,
-            //          remaining_pages, block_size, block_size);
         }
     }
-
-    // for (int i = MAX_ORDER - 1; i >= 0; i--) {
-    //     debug_pf("free_lists[%d].nr_free: 0x%x(%d)\n",
-    //              i, free_lists[i].nr_free, free_lists[i].nr_free);
-    // }
 }
 
 static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_pfn) {
-    uintptr_t total_pages = HEAP_SIZE / PAGESIZE;
-    debug_pf("total_pages: 0x%x\n", total_pages);
+    debug_pf("total_pages: 0x%x\n", TOTAL_PAGES);
     debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
 
     // 计算元数据区大小及所占页数
-    size_t pagedata_size = total_pages * sizeof(struct page);
+    size_t pagedata_size = TOTAL_PAGES  * sizeof(struct page);
     unsigned long pagedata_pages = (pagedata_size + PAGESIZE - 1) / PAGESIZE;
 
     struct page *page_meta = (struct page *)heap.start;
-    for (size_t pfn = 0; pfn < total_pages; pfn++) {
+    for (size_t pfn = 0; pfn < TOTAL_PAGES; pfn++) {
         page_meta[pfn].used = (pfn < pagedata_pages);
         page_meta[pfn].is_slab = false;
         page_meta[pfn].order = 0;
@@ -180,9 +143,7 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
 static void init_free_lists(unsigned long *start_pfn, 
                      unsigned long *end_pfn) {
     for (int i = 0; i < MAX_ORDER; i++) {
-        debug_pf("free_lists[%d].head: 0x%x  &free_lists[%d].head: 0x%x\n",
-                 i, free_lists[i].head, i, &free_lists[i].head);
-        INIT_LIST_HEAD((struct list_head *)&free_lists[i].head);
+        INIT_LIST_HEAD(&free_lists[i].head);
         free_lists[i].nr_free = 0;
 
         // 这里：
@@ -196,6 +157,7 @@ static void init_free_lists(unsigned long *start_pfn,
         debug_pf("====sizoeof(free_lists) * MAX_ORDER: 0x%x, sizoeof(free_lists): 0x%x\n",
                  sizeof(struct free_area) * MAX_ORDER,
                  sizeof(struct free_area));
+
         //debug_pf("====&free_lists[%d]: 0x%x  &free_lists[%d].head: 0x%x  &free_lists[%d].nr_free: 0x%x\n",
         //debug_pf(".....free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: %d\n",
         // 上面那样写在一起就输出错的，应该是自己写的printf的bug，分开来写成下面这样就对的？
@@ -240,6 +202,7 @@ void init_pages() {
     debug_pf("free_lists: 0x%x\n", free_lists);
 
     init_free_lists(&start_pfn, &end_pfn);
+
     start_used = ROUNDUP(free_list_addr + MAX_ORDER * sizeof(struct free_area), PAGESIZE);
     debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
              start_used, start_pfn, end_pfn);

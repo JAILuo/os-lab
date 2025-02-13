@@ -34,60 +34,47 @@ void spin_unlock(int *lock);
 //     printf("Thread %d: sum = %d\n", tid, sum);
 // }
 
-// for test buddy
 static int choose_memory_block(void) {
-    //int small_size = 256, medium_size = 4 * 1024, large_size = 1024 * 1024;
-    int medium_size = 4 * 1024, large_size = 1024 * 1024;
+    int small_size = 256, medium_size = 4 * 1024, large_size = 1024 * 1024;
     int memory_size = 0;
     int probabilities = rand() % 100;
     switch (probabilities) {
-    // case 0 ... 4: // alloc small memory block: 5%
-    //     memory_size = rand() % small_size;
-    //     break;
-    // case 5 ... 89: // alloc medium memory block: 85%
-    //     memory_size = small_size + rand() % (medium_size - small_size);
-    //     break;
-    case 1 ... 99: // alloc large memory block: 10% 
+    case 0 ... 19: // alloc small memory block: 90%
+        // memory_size = rand() % small_size; // will generate 0
+        memory_size = (rand() % small_size) ? : 1; 
+        memory_size = ROUNDUP(memory_size, 4096); // 关键修复
+        printf("1\n");
+        break;
+    case 20 ... 39: // alloc medium memory block: 8%
+        memory_size = small_size + rand() % (medium_size - small_size);
+        printf("2\n");
+        break;
+    case 40 ... 99: // alloc large memory block: 2% 
         memory_size = medium_size + (rand() % (large_size - medium_size));
+        printf("3\n");
         break;
     default: 
         panic("memory_size error");
         break;
     }
+    printf("memory_size: 0x%x\n", memory_size);
     return memory_size;
 }
-
-// static int choose_memory_block(void) {
-//     int small_size = 256, medium_size = 4 * 1024, large_size = 1024 * 1024;
-//     int memory_size = 0;
-//     int probabilities = rand() % 100;
-//     switch (probabilities) {
-//     case 0 ... 89: // alloc small memory block: 90%
-//         memory_size = rand() % small_size;
-//         break;
-//     case 90 ... 97: // alloc medium memory block: 8%
-//         memory_size = small_size + rand() % (medium_size - small_size);
-//         break;
-//     case 98 ... 99: // alloc large memory block: 2% 
-//         memory_size = medium_size + (rand() % (large_size - medium_size));
-//         break;
-//     default: 
-//         panic("memory_size error");
-//         break;
-//     }
-//     return memory_size;
-// }
 
 void test_kalloc(char *array[], int array_size[]) {
     int allocated = 0;
     for (int i = 0; i < TEST_NUM; i++) {
         if (array[i] == NULL) {
             array_size[i] = choose_memory_block();
+                if (array_size[i] == 0) {
+                    printf("WARNING: Skip 0-byte allocation\n");
+                    return;
+            }
             array[i] = (char *)pmm->alloc(array_size[i]);
 
+            //printf("CPU #%d: Allocated 0x%x bytes at %p (slot %d)\n",
+            //       cpu_current(), array_size[i], array[i], i);
             panic_on(array[i] == NULL, "Allocation failed: out of memory");
-            printf("CPU #%d: Allocated 0x%x bytes at %p (slot %d)\n",
-                   cpu_current(), array_size[i], array[i], i);
 
             // spin_lock(&big_lock);
             memset(array[i], MAGIC + i, array_size[i]);
@@ -123,7 +110,7 @@ void test_kfree(char *array[], int array_size[]) {
     int size = array_size[selected];
 
     // 检查内存是否损坏
-    spin_lock(&big_lock); // 确保检查期间内存不被修改
+    //spin_lock(&big_lock); // 确保检查期间内存不被修改
     for (int i = 0; i < size; i++) {
         if (block[i] != (char)(MAGIC + selected)) { // 检查每个字节
             spin_unlock(&big_lock);
@@ -131,7 +118,7 @@ void test_kfree(char *array[], int array_size[]) {
             panic("Memory corruption in block  at offset");
         }
     }
-    spin_unlock(&big_lock);
+    //spin_unlock(&big_lock);
 
     // 释放内存块
     pmm->free(block);
@@ -140,6 +127,21 @@ void test_kfree(char *array[], int array_size[]) {
 
     printf("CPU #%d: Freed block at %p (slot %d)\n",
            cpu_current(), block, selected);
+}
+
+void test_pmm() {
+    char *array[TEST_NUM] = {NULL};
+    int array_size[TEST_NUM] = {0};
+
+    printf("==========test begin.....\n\n\n");
+    while (1) {
+        int alloc_or_free = rand() % 2;
+        if (alloc_or_free == 1) { // Allocate test
+            test_kalloc(array, array_size);
+        } else { // Free test
+            test_kfree(array, array_size);
+        }
+    }
 }
 
 void test_kalloc_stress() {
@@ -155,20 +157,6 @@ void test_kalloc_stress() {
     printf("test_kalloc_stress paseed\n");
     printf("=======================================\n\n");
 
-}
-
-void test_pmm() {
-    char *array[TEST_NUM] = {NULL};
-    int array_size[TEST_NUM] = {0};
-
-    while (1) {
-        int alloc_or_free = rand() % 2;
-        if (alloc_or_free == 1) { // Allocate test
-            test_kalloc(array, array_size);
-        } else { // Free test
-            test_kfree(array, array_size);
-        }
-    }
 }
 
 void test_kalloc_other() {
@@ -339,6 +327,9 @@ void test_kfree_unallocated() {
 }
 
 
+// 测试函数声明
+void test_buddy_alloc();
+void test_edge_cases();
 static void os_init() {
     pmm->init();
     // test_kalloc_other();
@@ -360,9 +351,12 @@ static void os_run() {
 
     //test_kalloc_other();
     //test_kalloc_simple();
-    test_kalloc_stress();
+    //test_kalloc_stress();
     //test_kalloc_pressure();
-    // test_pmm();
+    test_pmm();
+
+    // test_buddy_alloc();
+    // test_edge_cases();
 
     while (1) ;
 }

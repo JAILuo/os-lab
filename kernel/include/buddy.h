@@ -11,6 +11,7 @@
 #define MAX_PAGESIZE ((1 << (MAX_ORDER - 1)) * PAGESIZE)
 
 #define HEAP_SIZE (((uintptr_t)heap.end) - ((uintptr_t)heap.start))
+#define TOTAL_PAGES (HEAP_SIZE / PAGESIZE)
 
 struct page {
     struct list_head buddy_list;
@@ -33,7 +34,7 @@ extern uintptr_t start_used;
 #define pages_base ((struct page *)(heap.start))
 
 // 假设 page 结构体数组起始地址为 pages_base
-//#define page_to_pfn(page) ((unsigned long)((page) - pages_base))
+#define page_to_pfn(page) ((unsigned long)((page) - pages_base))
 #define pfn_to_page(pfn) (&pages_base[(pfn)])
 
 // static inline struct page *pfn_to_page(unsigned long pfn) {
@@ -41,8 +42,12 @@ extern uintptr_t start_used;
 //     return (struct page *)((uintptr_t)heap.start + pfn * sizeof(struct page));
 // }
 // 
-static inline unsigned long page_to_pfn(struct page *page) {
-    return ((unsigned long)((uintptr_t)page - (uintptr_t)heap.start) / sizeof(struct page));
+// static inline unsigned long page_to_pfn(struct page *page) {
+//     return ((unsigned long)((uintptr_t)page - (uintptr_t)heap.start) / sizeof(struct page));
+// }
+
+static inline unsigned long ptr_to_pfn(void *ptr) {
+    return ((uintptr_t) ptr - (uintptr_t) heap.start) / PAGESIZE;
 }
 
 static inline int get_order(size_t size) {
@@ -52,5 +57,6 @@ static inline int get_order(size_t size) {
 }
 
 void *buddy_alloc(size_t size);
+void buddy_free(void *ptr);
 
 #endif
