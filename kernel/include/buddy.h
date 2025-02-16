@@ -15,11 +15,12 @@
 
 struct page {
     struct list_head buddy_list;
+    struct page *compound_head;
     unsigned int order;         // 块阶数（0~10）
     bool used;                  // 是否被使用
     bool is_slab;
-    struct page *compound_head;
-};
+    // uint64_t padding;
+}__attribute__((aligned(32)));
 
 struct free_area {
     //struct list_head *head;
@@ -28,27 +29,32 @@ struct free_area {
 };
 
 extern struct free_area *free_lists;
-//extern struct free_area free_lists[MAX_ORDER];
 extern uintptr_t start_used;
 
 #define pages_base ((struct page *)(heap.start))
 
 // 假设 page 结构体数组起始地址为 pages_base
-#define page_to_pfn(page) ((unsigned long)((page) - pages_base))
-#define pfn_to_page(pfn) (&pages_base[(pfn)])
+//#define page_to_pfn(page) ((unsigned long)((page) - pages_base))
+//#define pfn_to_page(pfn) (&pages_base[(pfn)])
 
-// static inline struct page *pfn_to_page(unsigned long pfn) {
-//     // return (struct page *)heap.start + pfn;
-//     return (struct page *)((uintptr_t)heap.start + pfn * sizeof(struct page));
-// }
-// 
-// static inline unsigned long page_to_pfn(struct page *page) {
-//     return ((unsigned long)((uintptr_t)page - (uintptr_t)heap.start) / sizeof(struct page));
-// }
+static inline struct page *pfn_to_page(unsigned long pfn) {
+    // return (struct page *)heap.start + pfn;
+    return (struct page *)((uintptr_t)heap.start + pfn * sizeof(struct page));
+}
+ 
+static inline unsigned long page_to_pfn(struct page *page) {
+    // return (unsigned long)(page - (struct page *)heap.start);
+    return ((unsigned long)((uintptr_t)page - (uintptr_t)heap.start) / sizeof(struct page));
+}
 
 static inline unsigned long ptr_to_pfn(void *ptr) {
     return ((uintptr_t) ptr - (uintptr_t) heap.start) / PAGESIZE;
 }
+
+static inline void *pfn_to_ptr(unsigned long pfn) {
+    return (void *)((uintptr_t)heap.start + pfn * PAGESIZE);
+}
+
 
 static inline int get_order(size_t size) {
     int order = 0;

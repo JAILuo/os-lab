@@ -19,16 +19,23 @@ static void remove_from_free_list(struct free_area *area, struct page *page) {
 }
 
 struct page *get_page_from_free_area(int order) {
-    // debug_pf("\n\ninssssssssssssssssssssssssss nr_free: %d\n", free_lists[order].nr_free);
-    // debug_pf("head: 0x%x\n", free_lists[order].head);
-    // debug_pf("&head: 0x%x\n", &free_lists[order].head);
-    // debug_pf("head->prev: 0x%x\n", free_lists[order].head.prev);
-    // debug_pf("head->next: 0x%x\n", free_lists[order].head.next);
+    // 被覆写了？？
+    debug_pf("\nnowxxxxxxxxxxxxfree_lists[%d].nr_free: %d\n", order, free_lists[order].nr_free);
+    debug_pf("head: 0x%x\n", free_lists[order].head);
+    debug_pf("&head: 0x%x\n", &free_lists[order].head);
+    debug_pf("head->prev: 0x%x\n", free_lists[order].head.prev);
+    debug_pf("head->next: 0x%x\n", free_lists[order].head.next);
 
-    // debug_pf("page->next to page, and order is 0x%x\n",
-    //          ((struct page *)(free_lists[order].head.next))->order);
-    // debug_pf("page->next to page, and buddy_list is 0x%x\n", 
-    //          ((struct page *)(free_lists[order].head.next))->buddy_list);
+    debug_pf("page->next to page, and order is 0x%x\n",
+             ((struct page *)(free_lists[order].head.next))->order);
+    debug_pf("page->next to page, and &order is 0x%x\n",
+             &(((struct page *)(free_lists[order].head.next))->order));
+
+    debug_pf("page->next to page, and buddy_list is 0x%x\n", 
+             ((struct page *)(free_lists[order].head.next))->buddy_list);
+
+    debug_pf("page->next to page, and buddy_list is 0x%x\n", 
+             &(((struct page *)(free_lists[order].head.next))->buddy_list));
 
 	return list_first_entry_or_null(&free_lists[order].head,
 					struct page, buddy_list);
@@ -37,10 +44,20 @@ struct page *get_page_from_free_area(int order) {
 static void *allocate_block(int order) {
     struct free_area *area = &free_lists[order];
 
-    // print_free_lists_nr_free();
+    print_free_lists_nr_free();
 
     struct page *block_page = get_page_from_free_area(order);
-    if (block_page == NULL || area->nr_free == 0) return NULL; 
+    unsigned long pfn = page_to_pfn(block_page);
+    uintptr_t ptr = (uintptr_t)pfn_to_ptr(pfn);
+
+    if (block_page == NULL || area->nr_free == 0) return NULL;
+    // || block_page->used == true || ptr < start_used) return NULL;
+    // 既然在free_lists中取出来的，那就不应该是used。
+    // 另外，该阶的 nr_free 也必须不为0
+
+    panic_on(block_page->used == true, "block in free_area should not be used");
+    panic_on(area->nr_free == 0, "free_area should have block");
+    panic_on(ptr < start_used, "addr should not less than start_used");
 
     //if (block_page->is_slab == true) return NULL;
 
@@ -58,13 +75,17 @@ static void add_buddy_to_freelist(struct page *buddy_page, int order) {
     area->nr_free++; // 增加空闲块的数量
 }
 
+static inline unsigned long find_buddy_pfn(unsigned long page_pfn, unsigned int order) {
+    return page_pfn ^ (1 << order);
+}
+
 static void split_block(struct page *block_page,
                  int *current_order,
                  int target_order) {
     panic_on(block_page == NULL, "block_page should not NULL");
 
     unsigned long block_pfn = page_to_pfn(block_page);
-    debug_pf("block_page: 0x%x  block_pfn: %u\n", block_page, block_pfn);
+    debug_pf("block_page: 0x%x  block_pfn: %d\n", block_page, block_pfn);
     debug_pf("*current_order: %d  target_order: %d\n", *current_order, target_order);
 
     while (*current_order > target_order) {
@@ -72,15 +93,17 @@ static void split_block(struct page *block_page,
         (*current_order)--;
         
         // 计算伙伴块的PFN（异或操作是伙伴系统的核心）
-        unsigned long buddy_pfn = block_pfn ^ (1UL << *current_order);
+        //unsigned long buddy_pfn = block_pfn ^ (1UL << *current_order);
+        unsigned long buddy_pfn = find_buddy_pfn(block_pfn, *current_order);
         struct page *buddy_page = pfn_to_page(buddy_pfn);
 
-
+        debug_pf("now order: %d\n", *current_order);
         debug_pf("buddy_pfn: %u  buddy_page: 0x%x\n", buddy_pfn, buddy_page);
 
-        buddy_page->compound_head = buddy_page;
         buddy_page->order = *current_order;
         buddy_page->used = false;
+        buddy_page->compound_head = buddy_page->compound_head;
+        //buddy_page->compound_head = buddy_page;
 
         add_buddy_to_freelist(buddy_page, *current_order);
         
@@ -98,19 +121,24 @@ void *buddy_alloc(size_t size) {
     int current_order = 0;
     for (current_order = order; current_order < MAX_ORDER; current_order++) {
         struct page *block_page = allocate_block(current_order);
+
         if (!block_page) continue;
 
-        //int original_order = current_order;
+        int original_order = current_order;
         split_block(block_page, &current_order, order);
 
         debug_pf("Allocated block 0x%x at pfn %u (order %d->%d)\n",
                block_page, page_to_pfn(block_page), original_order, current_order);
 
+        void *return_addr = (void *)((uintptr_t)heap.start+ PAGESIZE * page_to_pfn(block_page));
         debug_pf("start_used: 0x%x  pfn: %d\n", 
                  start_used, page_to_pfn(block_page));
-        debug_pf("return block addr: 0x%x\n", 
-                 (uintptr_t)heap.start + PAGESIZE * page_to_pfn(block_page));
-        return (void *)((uintptr_t)heap.start+ PAGESIZE * page_to_pfn(block_page));
+        debug_pf("return block addr: 0x%x\n", return_addr);
+        panic_on((uintptr_t)return_addr < start_used, 
+                 "addr should not less than start_used");
+
+        //return (void *)((uintptr_t)heap.start+ PAGESIZE * page_to_pfn(block_page));
+        return return_addr;
     }
 
     debug_pf("No available blocks for order %d current_order: %d\n", 
@@ -171,12 +199,17 @@ void buddy_free(void *ptr) {
     panic_on(ptr == NULL, "should not free NULL ptr\n");
 
     unsigned long pfn = ptr_to_pfn(ptr);
-    debug_pf("freeomg pfn: %d\n", pfn);
+    debug_pf("freeing pfn: %d\n", pfn);
+    debug_pf("Allocated: 0x%x  freeing pfn: %d\n", ptr, pfn);
     panic_on(pfn >= TOTAL_PAGES, "pfn should not exceed TOTAL_PAGES");
 
     struct page *page = pfn_to_page(pfn);
+    printf("page addr: 0x%x\n", page);
+    printf("buddy_list: 0x%x compound_head: 0x%x\n", page->buddy_list, page->compound_head);
+    printf("order: %d is_slab: %d use: %d\n", page->order, page->is_slab, page->used);
+
     panic_on(page->used == false, "should not free unused memory.\n");
-    panic_on(page->is_slab == true, "should not use slab");
+    panic_on(page->is_slab == true, "slab should not be true");
     panic_on(page->order >= MAX_ORDER, "InvalIid order when freeing");
     if (page->order != get_order(PAGESIZE * (1 << page->order))) {
         panic("Order mismatch detected during free!");

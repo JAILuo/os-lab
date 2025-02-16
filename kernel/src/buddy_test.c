@@ -38,6 +38,9 @@ void test_buddy_alloc() {
             printf("Allocated 0x%x bytes at address %p\n", size, ptr);
         }
     }
+    printf("\n=======================================\n");
+    printf("test_buddy_alloc paseed\n");
+    printf("=======================================\n\n");
 }
 
 void test_edge_cases() {

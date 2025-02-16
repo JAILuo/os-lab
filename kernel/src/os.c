@@ -1,11 +1,7 @@
 #include <common.h>
+#include <spinlock.h>
 
 typedef int lock_t;
-
-extern lock_t big_lock;
-void lockinit(int *lock);
-void spin_lock(int *lock);
-void spin_unlock(int *lock);
 
 #define MAGIC (0x55)
 #define TEST_NUM (128)
@@ -35,6 +31,7 @@ void spin_unlock(int *lock);
 // }
 
 static int choose_memory_block(void) {
+    spin_lock(&big_lock);
     int small_size = 256, medium_size = 4 * 1024, large_size = 1024 * 1024;
     int memory_size = 0;
     int probabilities = rand() % 100;
@@ -54,10 +51,11 @@ static int choose_memory_block(void) {
         printf("3\n");
         break;
     default: 
+        spin_unlock(&big_lock);
         panic("memory_size error");
         break;
     }
-    printf("memory_size: 0x%x\n", memory_size);
+    spin_unlock(&big_lock);
     return memory_size;
 }
 
@@ -70,15 +68,14 @@ void test_kalloc(char *array[], int array_size[]) {
                     printf("WARNING: Skip 0-byte allocation\n");
                     return;
             }
+                printf("allocated size: 0x%x\n", array_size[i]);
             array[i] = (char *)pmm->alloc(array_size[i]);
 
-            //printf("CPU #%d: Allocated 0x%x bytes at %p (slot %d)\n",
-            //       cpu_current(), array_size[i], array[i], i);
+            printf("CPU #%d: Allocated 0x%x bytes at %p (slot %d)\n",
+                   cpu_current(), array_size[i], array[i], i);
             panic_on(array[i] == NULL, "Allocation failed: out of memory");
 
-            // spin_lock(&big_lock);
             memset(array[i], MAGIC + i, array_size[i]);
-            // spin_unlock(&big_lock);
 
             allocated = 1;
             break;
@@ -113,12 +110,10 @@ void test_kfree(char *array[], int array_size[]) {
     //spin_lock(&big_lock); // 确保检查期间内存不被修改
     for (int i = 0; i < size; i++) {
         if (block[i] != (char)(MAGIC + selected)) { // 检查每个字节
-            spin_unlock(&big_lock);
             printf("Memory corruption in block %d at offset %d\n", selected, i);
             panic("Memory corruption in block  at offset");
         }
     }
-    //spin_unlock(&big_lock);
 
     // 释放内存块
     pmm->free(block);
@@ -332,11 +327,6 @@ void test_buddy_alloc();
 void test_edge_cases();
 static void os_init() {
     pmm->init();
-    // test_kalloc_other();
-    // test_kalloc_simple();
-    // test_kalloc_stress();
-    // test_kalloc_pressure();
-    // test_pmm();
 }
 
 static void os_run() {
@@ -349,14 +339,14 @@ static void os_run() {
     // printf("sum  = %d\n", sum);
     // printf("%d*n = %d\n", T * 10, T * 10L * N);
 
-    //test_kalloc_other();
-    //test_kalloc_simple();
-    //test_kalloc_stress();
-    //test_kalloc_pressure();
-    test_pmm();
-
+    // test_kalloc_other();
+    // test_kalloc_simple();
+    // test_kalloc_stress();
+    test_kalloc_pressure();
     // test_buddy_alloc();
     // test_edge_cases();
+
+    // test_pmm();
 
     while (1) ;
 }

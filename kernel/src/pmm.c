@@ -7,36 +7,7 @@
 #include <list.h>
 #include <buddy.h>
 
-#define PMMLOCKED 1
-#define PMMUNLOCKED 0
-#define SPIN_LIMIT 100000000
-typedef int lock_t;
 lock_t big_lock;
-
-void lockinit(int *lock) {
-    atomic_xchg(lock, PMMUNLOCKED);
-}
-
-// Low-profile version of lockdep
-// it really does work
-void spin_lock(int *lock) {
-    // debug_pf("CPU #%d acquired Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
-    int spin_cnt = 0;
-    while(atomic_xchg(lock, PMMLOCKED) == PMMLOCKED) {
-        if (spin_cnt++ > SPIN_LIMIT) {
-            printf("Spin limit exceeded @ %s:%d\n",
-                  __FILE__, __LINE__);
-            panic("deadlock");
-        }
-    }
-}
-
-void spin_unlock(int *lock) {
-    // debug_pf("CPU #%d release Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
-    if (atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED) {
-        printf("Warning: Unlocking an already unlocked lock @ %s:%d\n", __FILE__, __LINE__);
-    }
-}
 
 // void spin_unlock(int *lock) {
 //     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
@@ -57,7 +28,6 @@ static void *kalloc(size_t size) {
 
     if (size >= 16 * 1024 * 1024 || size == 0) return NULL;
 
-    spin_lock(&big_lock);
     debug_pf("==========start alloc=========\n");
    
     size_t align_size = ROUNDUP(size, PAGESIZE);
@@ -68,11 +38,12 @@ static void *kalloc(size_t size) {
 
     // now for test, only >= 4KB
     // condititon should be > 4KB
+    spin_lock(&big_lock);
     void *res = align_size >= PAGESIZE ?
         buddy_alloc(align_size) : slab_alloc(align_size);
+    spin_unlock(&big_lock);
 
     debug_pf("==========finish alloc=========\n");
-    spin_unlock(&big_lock);
     return res;
 }
 
@@ -94,13 +65,15 @@ static void range_check(void *ptr) {
 static void kfree(void *ptr) {
     panic_on(ptr == NULL, "should not free NULL ptr\n");
 
-    spin_lock(&big_lock);  // 加锁
+    debug_pf("==========start free=========\n");
     range_check(ptr);
-
     debug_pf("test free: 0x%x...\n", ptr);
-    buddy_free(ptr);
 
+    spin_lock(&big_lock);  // 加锁
+    buddy_free(ptr);
     spin_unlock(&big_lock);  // 解锁
+
+    debug_pf("==========end free=========\n");
 }
 
 void init_pages();

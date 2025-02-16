@@ -1,8 +1,10 @@
-#include "list.h"
 #include <stdbool.h>
 #include <stdint.h>
+
 #include <buddy.h>
 #include <common.h>
+#include <list.h>
+#include <spinlock.h>
 
 //struct free_area free_lists[MAX_ORDER];
 struct free_area *free_lists = NULL;
@@ -64,13 +66,13 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
 
             // 问题应该在这里，free_lists->head_page->buddy_list
 
-
             // 初始化尾页元数据
             for (unsigned long pfn = head_pfn + 1; pfn < head_pfn + block_size; pfn++) {
                 struct page *tail_page = pfn_to_page(pfn);
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
-                tail_page->compound_head = NULL; // 尾页指向头页
+                //tail_page->compound_head = head_page; // 尾页指向头页
+                //tail_page->compound_head = NULL; // 尾页指向头页
                 list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
                 //list_add(&tail_page->buddy_list, &head_page->buddy_list);
             }
@@ -104,21 +106,33 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
 
             remaining_pages -= block_size;
 
-            debug_pf("free_lists[%d].nr_free: %d  free_list[%d].head: 0x%x\n",
+            debug_pf("free_lists[%d].nr_free: %d  &free_list[%d].head: 0x%x\n",
                      order, free_lists[order].nr_free,
-                     order, free_lists[order].head);
+                     order, &free_lists[order].head);
             debug_pf("free_lists[%d].head: next=0x%x prev=0x%x\n", 
-                     order, free_lists[order].head.next, 
-                    free_lists[order].head.prev);
+                     order, 
+                     free_lists[order].head.next, 
+                     free_lists[order].head.prev);
+            debug_pf("test: head->prev->next: 0x%x\n", free_lists[order].head.prev->next);
         
             debug_pf("=============\n\n\n");
         }
     }
 }
 
+// static inline bool pfn_range(unsigned long pfn) {
+//     panic_on(pfn < )
+// }
+
 static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_pfn) {
     debug_pf("total_pages: 0x%x\n", TOTAL_PAGES);
     debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
+    debug_pf("sizeof(struct page): 0x%x\n", sizeof(struct page));
+    printf("offsetof(page, buddy_list) = %u\n", offsetof(struct page, buddy_list));
+    printf("offsetof(page, order) = %u\n", offsetof(struct page, order));
+    printf("offsetof(page, used) = %u\n", offsetof(struct page, used));
+    printf("offsetof(page, is_slab) = %u\n", offsetof(struct page, is_slab));
+    printf("offsetof(page, compound_head) = %u\n", offsetof(struct page, compound_head));
 
     // 计算元数据区大小及所占页数
     size_t pagedata_size = TOTAL_PAGES  * sizeof(struct page);
@@ -126,9 +140,9 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
 
     struct page *page_meta = (struct page *)heap.start;
     for (size_t pfn = 0; pfn < TOTAL_PAGES; pfn++) {
-        page_meta[pfn].used = (pfn < pagedata_pages);
-        page_meta[pfn].is_slab = false;
-        page_meta[pfn].order = 0;
+        page_meta[pfn].used = (pfn < pagedata_pages); // 正确标记元数据页
+        page_meta[pfn].is_slab = false;               // 显式设置 is_slab
+        page_meta[pfn].order = -1;                    // 初始化为无效值
         INIT_LIST_HEAD(&page_meta[pfn].buddy_list);
     }
 
@@ -142,25 +156,16 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
 
 static void init_free_lists(unsigned long *start_pfn, 
                      unsigned long *end_pfn) {
+    debug_pf("====sizoeof(free_lists) * MAX_ORDER: 0x%x, sizoeof(free_lists): 0x%x\n",
+             sizeof(struct free_area) * MAX_ORDER,
+             sizeof(struct free_area));
     for (int i = 0; i < MAX_ORDER; i++) {
         INIT_LIST_HEAD(&free_lists[i].head);
         free_lists[i].nr_free = 0;
 
-        // 这里：
-        // ====sizoeof(free_lists): 0xb0
-        // ====&free_lists[5]: 0x3fa050  &free_lists[5].head: 0x3fa050  &free_lists[0x5].nr_free: 0x3fa058
-        // .....free_lists[5]: 0x0  free_lists[0].head: 0x5  free_lists[0x0].nr_free: 0x5
-        // free_lists[6].head: 0x0  &free_lists[6].head: 0x3fa060
-
         debug_pf("now nr_free is: %d  and order is: %d\n",
                  free_lists[i].nr_free, i);
-        debug_pf("====sizoeof(free_lists) * MAX_ORDER: 0x%x, sizoeof(free_lists): 0x%x\n",
-                 sizeof(struct free_area) * MAX_ORDER,
-                 sizeof(struct free_area));
 
-        //debug_pf("====&free_lists[%d]: 0x%x  &free_lists[%d].head: 0x%x  &free_lists[%d].nr_free: 0x%x\n",
-        //debug_pf(".....free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: %d\n",
-        // 上面那样写在一起就输出错的，应该是自己写的printf的bug，分开来写成下面这样就对的？
         debug_pf("====&free_lists[%d]: 0x%x\n",
                  i, &free_lists[i]);
         debug_pf("====&free_lists[%d].head: 0x%x\n",
@@ -168,7 +173,6 @@ static void init_free_lists(unsigned long *start_pfn,
         debug_pf("====&free_lists[%d].nr_free: 0x%x\n",
                  i, &free_lists[i].nr_free);
 
-        //debug_pf(".....free_lists[%d]: 0x%x  free_lists[%d].head: 0x%x  free_lists[%d].nr_free: %d\n",
         debug_pf(".....free_lists[%d]: 0x%x\n",
                  i, free_lists[i]);
         debug_pf(".....free_lists[%d].head: 0x%x\n",
@@ -180,36 +184,53 @@ static void init_free_lists(unsigned long *start_pfn,
     }
     
     unsigned long free_lists_size = MAX_ORDER * sizeof(struct free_area);
-    unsigned long free_lists_pages = (free_lists_size + PAGESIZE - 1) / PAGESIZE;
+    unsigned long free_lists_page_number = (free_lists_size + PAGESIZE - 1) / PAGESIZE;
     debug_pf("free_lists_size: 0x%x  free_lists_pages: 0x%x(%d)\n", 
-             free_lists_size, free_lists_pages, free_lists_pages);
-    *start_pfn += free_lists_pages;
-    debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
+             free_lists_size, free_lists_page_number, free_lists_page_number);
 
+    struct page *free_lists_page = pfn_to_page(*start_pfn);
+    free_lists_page->order = -1;
+    free_lists_page->used = true;
+    free_lists_page->is_slab = false;
+    free_lists_page->compound_head = NULL;
+
+    *start_pfn += free_lists_page_number;
+    debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
     debug_pf("==============\n");
 }
+
+// static inline uintptr_t compute_start_used{
+// 
+// }
 
 // 初始化页元数据
 void init_pages() {
     unsigned long start_pfn = 0, end_pfn = (HEAP_SIZE / PAGESIZE) - 1;
 
+    spin_lock(&big_lock);
     size_t pagedata_size = init_page_meta_data(&start_pfn, &end_pfn);
 
     //struct free_area *free_list_addr = (struct free_area *)((uintptr_t)heap.start + pagedata_size);
-    uintptr_t free_list_addr = ((uintptr_t)heap.start + pagedata_size);
-    debug_pf("free_list_addr: 0x%x\n", free_list_addr);
+    uintptr_t free_list_addr = ROUNDUP(((uintptr_t)heap.start + pagedata_size), PAGESIZE);
     free_lists = (struct free_area *)free_list_addr;
     debug_pf("free_lists: 0x%x\n", free_lists);
 
     init_free_lists(&start_pfn, &end_pfn);
 
-    start_used = ROUNDUP(free_list_addr + MAX_ORDER * sizeof(struct free_area), PAGESIZE);
+    start_used = ROUNDUP(
+        (uintptr_t)heap.start +
+        (TOTAL_PAGES * sizeof(struct page)) +  // struct page 数组大小
+        (MAX_ORDER * sizeof(struct free_area)), // free_lists 大小
+        PAGESIZE
+    );
+
     debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
              start_used, start_pfn, end_pfn);
     debug_pf("==============\n");
 
     //init_free_block(free_list, start_pfn, end_pfn);
     init_free_block(start_pfn, end_pfn);
+    spin_unlock(&big_lock);
 }
 
 
