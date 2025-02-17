@@ -340,12 +340,12 @@ static void os_run() {
     // printf("sum  = %d\n", sum);
     // printf("%d*n = %d\n", T * 10, T * 10L * N);
 
-    // test_kalloc_other();
-    // test_kalloc_simple();
-    // test_kalloc_stress();
+    test_kalloc_other();
+    test_kalloc_simple();
+    test_kalloc_stress();
     test_kalloc_pressure();
-    // test_buddy_alloc();
-    // test_edge_cases();
+    test_buddy_alloc();
+    test_edge_cases();
 
     // test_pmm();
 

@@ -219,7 +219,8 @@ static void split_block(struct page *block_page,
 
     unsigned long block_pfn = page_to_pfn(block_page);
     debug_pf("block_page: 0x%x  block_pfn: %d\n", block_page, block_pfn);
-    debug_pf("*current_order: %d  target_order: %d\n", *current_order, target_order);
+    debug_pf("*current_order: %d  target_order: %d\n", 
+             *current_order, target_order);
     panic_on(block_pfn < pfn_start, "pfn error");
 
     uintptr_t block_addr = (uintptr_t)pfn_to_ptr(block_pfn);
@@ -276,23 +277,27 @@ void *buddy_alloc(size_t size) {
     for (current_order = order; current_order < MAX_ORDER; current_order++) {
         struct page *block_page = allocate_block(current_order);
         if (!block_page) continue;
-        //debug_pf("block_page->padding: 0x%x line: %d\n", block_page->padding, __LINE__);
-        //panic_on(block_page->padding != MAGIC, "MAGIC error");
+        // debug_pf("block_page->padding: 0x%x line: %d\n",
+        //          block_page->padding, __LINE__);
+        // panic_on(block_page->padding != MAGIC, "MAGIC error");
 
-        //int original_order = current_order;
         split_block(block_page, &current_order, order);
 
-        // debug_pf("Allocated block 0x%x at pfn %u (order %d->%d)\n",
-        //        block_page, page_to_pfn(block_page), original_order, current_order);
+#ifdef DEBUG
+        int original_order = current_order;
+        debug_pf("Allocated block 0x%x at pfn %u (order %d->%d)\n",
+               block_page, page_to_pfn(block_page), 
+               original_order, current_order);
+#endif
 
-        void *return_addr = (void *)((uintptr_t)heap.start+ PAGESIZE * page_to_pfn(block_page));
+        void *return_addr = (void *)((uintptr_t)heap.start + 
+                                     PAGESIZE * page_to_pfn(block_page));
         debug_pf("start_used: 0x%x  pfn: %d\n", 
                  start_used, page_to_pfn(block_page));
         debug_pf("return block addr: 0x%x\n", return_addr);
         panic_on((uintptr_t)return_addr < start_used, 
                  "addr should not less than start_used");
 
-        //return (void *)((uintptr_t)heap.start+ PAGESIZE * page_to_pfn(block_page));
         return return_addr;
     }
 
@@ -302,155 +307,6 @@ void *buddy_alloc(size_t size) {
 }
 
 //------------free------------
-// static struct page *get_buddy_page(struct page *page, int order) { unsigned long page_pfn = page_to_pfn(page);
-//     unsigned long buddy_pfn = page_pfn ^ (1UL << order);
-//     panic_on(page_pfn >= TOTAL_PAGES, "page_pfn should not exceed TOTAL_PAGES");
-//     return pfn_to_page(buddy_pfn);
-// }
-
-// static void try_merge_buddies(struct page *page, int order) {
-//     struct page *current_page = page;
-//     while (order < MAX_ORDER - 1) {
-//         unsigned long current_pfn = page_to_pfn(current_page);
-//         unsigned long buddy_pfn = current_pfn ^ (1UL << order);
-//         struct page *buddy_page = pfn_to_page(buddy_pfn);
-// 
-//         debug_pf("current_pfn %d  buddy_pfn: %d\n", current_pfn, buddy_pfn);
-//         debug_pf("buddy: 0x%x\n", buddy_page);
-// 
-//         // 检查伙伴是否空闲、同阶且未被使用
-//         // 伙伴块是否是头
-//         if (!buddy_page || buddy_page->used || buddy_page->order != order
-//             || (buddy_page->compound_head != current_page)
-//             || (current_page->compound_head != current_page)) break;
-// 
-//         struct page *main = current_pfn < buddy_pfn ? 
-//                                 current_page : buddy_page;
-//         struct page *secondary = current_pfn < buddy_pfn ? 
-//                                 buddy_page : current_page;
-//         main->order = order + 1;
-//         main->compound_head = main;
-//         main->used = false;
-//         secondary->order = order + 1;
-//         secondary->compound_head = main;
-//         secondary->used = false;
-// 
-//         print_free_lists_nr_free();
-// 
-//         debug_pf("now main page is 0x%x\n", main);
-//         debug_pf("main->used: %d order: %d\n", main->used, main->order);
-//         debug_pf("now secondary page is 0x%x\n", secondary);
-//         debug_pf("secondary->used: %d\n", secondary->used);
-// 
-//         // 确定合并后的头块（取PFN较小的）
-//         remove_from_free_list(&free_lists[order], main);
-//         remove_from_free_list(&free_lists[order], secondary);
-// 
-//         // 将合并后的块作为新基准，继续尝试合并
-//         current_page = main;
-//         order++;
-//     }
-// 
-//     debug_pf("now order: %d\n", order);
-//     current_page->order = order;
-// 
-//     // 将最终合并的块加入空闲链表
-//     add_buddy_to_freelist(current_page, order);
-// }
-// 
-// void buddy_free(void *ptr) {
-//     panic_on(ptr == NULL, "should not free NULL ptr\n");
-// 
-//     unsigned long pfn = ptr_to_pfn(ptr);
-//     debug_pf("freeing pfn: %d\n", pfn);
-//     debug_pf("Allocated: 0x%x  freeing pfn: %d\n", ptr, pfn);
-//     panic_on(pfn >= TOTAL_PAGES, "pfn should not exceed TOTAL_PAGES");
-// 
-//     struct page *page = pfn_to_page(pfn);
-//     printf("page addr: 0x%x\n", page);
-//     printf("buddy_list: 0x%x compound_head: 0x%x\n", page->buddy_list, page->compound_head);
-//     printf("order: %d is_slab: %d use: %d\n", page->order, page->is_slab, page->used);
-// 
-//     panic_on(page->used == false, "should not free unused memory.\n");
-//     panic_on(page->is_slab == true, "slab should not be true");
-//     panic_on(page->order >= MAX_ORDER, "InvalIid order when freeing");
-//     if (page->order != get_order(PAGESIZE * (1 << page->order))) {
-//         panic("Order mismatch detected during free!");
-//     }
-// 
-//     struct page *current_page = (page->compound_head) ? 
-//                                 page->compound_head : page;
-//     // 标记为未使用并获取原始阶数
-//     current_page->used = false;
-// 
-//     int order = current_page->order;
-//     // add_buddy_to_freelist(current_page, order);
-//     remove_from_free_list(&free_lists[order], current_page);
-// 
-//     // 尝试合并伙伴块
-//     try_merge_buddies(current_page, order);
-// }
-
-// 功能：合并两个相邻的块
-// static void merge_pages(struct page *current_page, int current_order) {
-//     unsigned long current_pfn = page_to_pfn(current_page);
-//     unsigned long buddy_pfn = current_pfn ^ (1UL << current_order); // 计算伙伴块的 PFN
-//     struct page *buddy_page = pfn_to_page(buddy_pfn);
-// 
-//     // 检查是否越界
-//     if (buddy_pfn >= (heap.end - heap.start) / PAGESIZE) {
-//         debug_pf("Buddy page out of range: pfn=%u\n", buddy_pfn);
-//         return;
-//     }
-// 
-//     // 检查伙伴块是否空闲
-//     if (buddy_page->used) {
-//         debug_pf("Buddy page is still in use: pfn=%u\n", buddy_pfn);
-//         return;
-//     }
-// 
-//     // 检查伙伴块的阶数是否匹配
-//     if (buddy_page->order != current_order) {
-//         debug_pf("Buddy page order mismatch: expected %d, found %d\n", current_order, buddy_page->order);
-//         return;
-//     }
-// 
-//     // 检查伙伴块是否是主块
-//     if (buddy_page->compound_head != buddy_page || current_page->compound_head != current_page) {
-//         debug_pf("Only main blocks can be merged\n");
-//         return;
-//     }
-// 
-//     // 合并两个块
-//     struct page *main_page, *secondary_page;
-//     if (current_pfn < buddy_pfn) {
-//         main_page = current_page;
-//         secondary_page = buddy_page;
-//     } else {
-//         main_page = buddy_page;
-//         secondary_page = current_page;
-//     }
-// 
-//     debug_pf("Merging page %u (order %d) with buddy %u\n",
-//             current_pfn, current_order, buddy_pfn);
-// 
-//     // 更新元数据
-//     main_page->order = current_order + 1;
-//     main_page->compound_head = main_page;
-//     secondary_page->compound_head = main_page;
-// 
-//     // 删除旧的链表条目
-//     remove_from_free_list(&free_lists[current_order], main_page);
-//     remove_from_free_list(&free_lists[current_order], secondary_page);
-// 
-//     // 添加到更高阶的链表
-//     add_buddy_to_freelist(main_page, current_order + 1);
-// 
-//     // 继续尝试合并更高阶的块
-//     merge_pages(main_page, current_order + 1);
-// }
-
-
 static struct page *merge_pages(struct page *current_page, int current_order) {
     if (current_page->order == (MAX_ORDER - 1)) return NULL;
     debug_pf("enter order: %d\n", current_order);
