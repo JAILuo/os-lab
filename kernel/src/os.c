@@ -343,11 +343,11 @@ static void os_run() {
     // test_kalloc_other();
     // test_kalloc_simple();
     // test_kalloc_stress();
-    // test_kalloc_pressure();
+    test_kalloc_pressure();
     // test_buddy_alloc();
     // test_edge_cases();
 
-    test_pmm();
+    // test_pmm();
 
     while (1) ;
 }

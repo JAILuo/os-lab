@@ -43,7 +43,6 @@ unsigned long pfn_start = 0;
 // free_lists[order].head 作哨兵结点，不存储数据
 static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
     if (start_pfn > end_pfn) panic("Invalid PFN range");
-
     panic_on(start_pfn < pfn_start, "pfn sssssss error.....");
 
     unsigned long remaining_pages = end_pfn - start_pfn + 1;
@@ -53,6 +52,12 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
 
         // 分配块的头页PFN（从后向前）
         while (remaining_pages >= block_size) {
+            // unsigned long aligned_start = ROUNDUP(start_pfn, block_size);
+            // if (aligned_start + block_size > start_pfn + remaining_pages) {
+            //     debug_pf("zxcvbnm\n");
+            //     break; // 对齐后超出范围，跳过
+            // }
+            // unsigned long head_pfn = aligned_start;
             unsigned long head_pfn = start_pfn + remaining_pages - block_size;
             struct page *head_page = pfn_to_page(head_pfn);
 

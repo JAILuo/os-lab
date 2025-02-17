@@ -84,7 +84,6 @@ static void *allocate_block(int order) {
     struct page *block_page = get_page_from_free_area(order);
     if (block_page == NULL) return NULL;
 
-
     unsigned long pfn = page_to_pfn(block_page);
     uintptr_t ptr = (uintptr_t)pfn_to_ptr(pfn);
     debug_pf("block_page: 0x%x\n", block_page);
@@ -116,21 +115,105 @@ static void *allocate_block(int order) {
 static void add_buddy_to_freelist(struct page *buddy_page, int order) {
     struct free_area *area = &free_lists[order];
     list_add(&buddy_page->buddy_list, (struct list_head *)&free_lists[order]);
-    area->nr_free++; // 增加空闲块的数量
-
+    area->nr_free++;
     debug_pf("in list_add  now buddy_page: 0x%x\n", buddy_page);
 }
 
-// static inline unsigned long find_buddy_pfn(unsigned long page_pfn, unsigned int order) {
-//     debug_pf("page_pfn: 0x%x  order: %d\n", page_pfn, order);
-//     return page_pfn ^ (1 << order);
-//     // return (page_pfn ^ (1 << order)) + pfn_start;
+
+static inline unsigned long find_buddy_pfn(unsigned long page_pfn, unsigned int order) {
+    //debug_pf("page_pfn: 0x%x  order: %d\n", page_pfn, order);
+    return page_pfn ^ (1 << order);
+}
+static bool page_is_buddy(struct page *page1, struct page *page2, unsigned int order) {
+    unsigned long pfn1 = page_to_pfn(page1);
+    unsigned long pfn2 = page_to_pfn(page2);
+    return (pfn1 ^ pfn2) == (1 << order) && (pfn1 & ((1 << order) - 1)) == 0;
+}
+
+static inline
+struct page *find_buddy_page(struct page *page,
+                             unsigned long pfn, unsigned int order, unsigned long *buddy_pfn) {
+    unsigned long __buddy_pfn = find_buddy_pfn(pfn, order);
+    struct page *buddy = pfn_to_page(__buddy_pfn);  // 直接使用 pfn_to_page
+
+    if (buddy_pfn) {
+        *buddy_pfn = __buddy_pfn;
+    }
+
+    if (page_is_buddy(page, buddy, order)) {
+        return buddy;
+    }
+    return NULL;
+}
+
+// static inline 
+// struct page *find_buddy_page(struct page *page, 
+//                              unsigned long pfn, unsigned int order, unsigned long *buddy_pfn) {
+//     unsigned long __buddy_pfn = find_buddy_pfn(pfn, order);
+//     struct page *buddy = pfn_to_page(__buddy_pfn);
+// 
+//     buddy = page + (__buddy_pfn - pfn);
+//     if (buddy_pfn) {
+//         *buddy_pfn = __buddy_pfn;
+//     }
+// 
+//     if (page_is_buddy(page, buddy, order)) {
+//         return buddy;
+//     }
+//     return NULL;
 // }
 
+//#define PAGE_VERSION
+#ifdef PAGE_VERSION
+static void split_block(struct page *block_page, int *current_order, int target_order) {
+    unsigned long block_pfn = page_to_pfn(block_page);
+    debug_pf("block_page: 0x%x  block_pfn: %d\n", block_page, block_pfn);
+    debug_pf("*current_order: %d  target_order: %d\n", *current_order, target_order);
+    panic_on(block_pfn < pfn_start, "pfn error");
+
+    unsigned long buddy_pfn = 0;
+
+    while (*current_order > target_order) {
+        (*current_order)--;
+        debug_pf("now order: %d\n", *current_order);
+
+       // 检查当前块的 PFN 是否对齐到 current_order
+        panic_on((block_pfn & ((1UL << *current_order) - 1)) != 0,
+                 "Block PFN not aligned to current_order");
+
+        // Check if the buddy page is valid
+        struct page *buddy_page = find_buddy_page(block_page, block_pfn, *current_order, &buddy_pfn);
+        if (!buddy_page) {
+            //panic("Invalid buddy page found");
+            debug_pf("Warning: Invalid buddy page found. Skipping split.\n");
+            //goto done;
+            continue;
+        }
+
+        debug_pf("buddy_pfn: %u  buddy_page: 0x%x\n", buddy_pfn, buddy_page);
+        panic_on(buddy_pfn < pfn_start || buddy_pfn >= 0x7d00, "Invalid buddy PFN");
+        debug_pf("buddy_pfn: %d\n", buddy_pfn);
+
+        // 更新伙伴块元数据
+        buddy_page->order = *current_order;
+        buddy_page->used = false;
+        buddy_page->compound_head = buddy_page;
+
+        add_buddy_to_freelist(buddy_page, *current_order);
+
+//done:
+        // 更新当前块元数据
+        block_page->order = *current_order;
+        block_pfn = page_to_pfn(block_page);
+    }
+}
+
+#else 
 static void split_block(struct page *block_page,
                  int *current_order,
                  int target_order) {
-    // panic_on(block_page == NULL, "block_page should not NULL");
+    panic_on(block_page == NULL, "block_page should not NULL");
+
     // debug_pf("block_page->padding: 0x%x line: %d\n", block_page->padding, __LINE__);
     // panic_on(block_page->padding != MAGIC, "MAGIC error");
 
@@ -158,10 +241,9 @@ static void split_block(struct page *block_page,
 
         unsigned long buddy_pfn = ptr_to_pfn((void *)buddy_addr);
         struct page *buddy_page = pfn_to_page(buddy_pfn);
-        
 
-        //unsigned long buddy_pfn = find_buddy_pfn(block_pfn, *current_order);
-        //struct page *buddy_page = pfn_to_page(buddy_pfn);
+        // unsigned long buddy_pfn = find_buddy_pfn(block_pfn, *current_order);
+        // struct page *buddy_page = pfn_to_page(buddy_pfn);
         // debug_pf("buddy_page->padding: 0x%x  line: %d\n", buddy_page->padding, __LINE__);
         // panic_on(buddy_page->padding != MAGIC, "MAGIC error");
 
@@ -175,7 +257,6 @@ static void split_block(struct page *block_page,
         buddy_page->order = *current_order;
         buddy_page->used = false;
         buddy_page->compound_head = buddy_page->compound_head;
-        //buddy_page->compound_head = buddy_page;
 
         add_buddy_to_freelist(buddy_page, *current_order);
         
@@ -183,6 +264,7 @@ static void split_block(struct page *block_page,
         block_page->order = *current_order;
     }
 }
+#endif
 
 void *buddy_alloc(size_t size) {
     panic_on(size < PAGESIZE, "size must be at least PAGESIZE");
@@ -226,76 +308,208 @@ void *buddy_alloc(size_t size) {
 //     return pfn_to_page(buddy_pfn);
 // }
 
-static void try_merge_buddies(struct page *page, int order) {
-    struct page *current_page = page;
-    while (order < MAX_ORDER - 1) {
-        unsigned long current_pfn = page_to_pfn(current_page);
-        unsigned long buddy_pfn = current_pfn ^ (1UL << order);
-        struct page *buddy_page = pfn_to_page(buddy_pfn);
+// static void try_merge_buddies(struct page *page, int order) {
+//     struct page *current_page = page;
+//     while (order < MAX_ORDER - 1) {
+//         unsigned long current_pfn = page_to_pfn(current_page);
+//         unsigned long buddy_pfn = current_pfn ^ (1UL << order);
+//         struct page *buddy_page = pfn_to_page(buddy_pfn);
+// 
+//         debug_pf("current_pfn %d  buddy_pfn: %d\n", current_pfn, buddy_pfn);
+//         debug_pf("buddy: 0x%x\n", buddy_page);
+// 
+//         // 检查伙伴是否空闲、同阶且未被使用
+//         // 伙伴块是否是头
+//         if (!buddy_page || buddy_page->used || buddy_page->order != order
+//             || (buddy_page->compound_head != current_page)
+//             || (current_page->compound_head != current_page)) break;
+// 
+//         struct page *main = current_pfn < buddy_pfn ? 
+//                                 current_page : buddy_page;
+//         struct page *secondary = current_pfn < buddy_pfn ? 
+//                                 buddy_page : current_page;
+//         main->order = order + 1;
+//         main->compound_head = main;
+//         main->used = false;
+//         secondary->order = order + 1;
+//         secondary->compound_head = main;
+//         secondary->used = false;
+// 
+//         print_free_lists_nr_free();
+// 
+//         debug_pf("now main page is 0x%x\n", main);
+//         debug_pf("main->used: %d order: %d\n", main->used, main->order);
+//         debug_pf("now secondary page is 0x%x\n", secondary);
+//         debug_pf("secondary->used: %d\n", secondary->used);
+// 
+//         // 确定合并后的头块（取PFN较小的）
+//         remove_from_free_list(&free_lists[order], main);
+//         remove_from_free_list(&free_lists[order], secondary);
+// 
+//         // 将合并后的块作为新基准，继续尝试合并
+//         current_page = main;
+//         order++;
+//     }
+// 
+//     debug_pf("now order: %d\n", order);
+//     current_page->order = order;
+// 
+//     // 将最终合并的块加入空闲链表
+//     add_buddy_to_freelist(current_page, order);
+// }
+// 
+// void buddy_free(void *ptr) {
+//     panic_on(ptr == NULL, "should not free NULL ptr\n");
+// 
+//     unsigned long pfn = ptr_to_pfn(ptr);
+//     debug_pf("freeing pfn: %d\n", pfn);
+//     debug_pf("Allocated: 0x%x  freeing pfn: %d\n", ptr, pfn);
+//     panic_on(pfn >= TOTAL_PAGES, "pfn should not exceed TOTAL_PAGES");
+// 
+//     struct page *page = pfn_to_page(pfn);
+//     printf("page addr: 0x%x\n", page);
+//     printf("buddy_list: 0x%x compound_head: 0x%x\n", page->buddy_list, page->compound_head);
+//     printf("order: %d is_slab: %d use: %d\n", page->order, page->is_slab, page->used);
+// 
+//     panic_on(page->used == false, "should not free unused memory.\n");
+//     panic_on(page->is_slab == true, "slab should not be true");
+//     panic_on(page->order >= MAX_ORDER, "InvalIid order when freeing");
+//     if (page->order != get_order(PAGESIZE * (1 << page->order))) {
+//         panic("Order mismatch detected during free!");
+//     }
+// 
+//     struct page *current_page = (page->compound_head) ? 
+//                                 page->compound_head : page;
+//     // 标记为未使用并获取原始阶数
+//     current_page->used = false;
+// 
+//     int order = current_page->order;
+//     // add_buddy_to_freelist(current_page, order);
+//     remove_from_free_list(&free_lists[order], current_page);
+// 
+//     // 尝试合并伙伴块
+//     try_merge_buddies(current_page, order);
+// }
 
-        debug_pf("current_pfn %d  buddy_pfn: %d\n", current_pfn, buddy_pfn);
-        debug_pf("buddy: 0x%x\n", buddy_page);
+// 功能：合并两个相邻的块
+// static void merge_pages(struct page *current_page, int current_order) {
+//     unsigned long current_pfn = page_to_pfn(current_page);
+//     unsigned long buddy_pfn = current_pfn ^ (1UL << current_order); // 计算伙伴块的 PFN
+//     struct page *buddy_page = pfn_to_page(buddy_pfn);
+// 
+//     // 检查是否越界
+//     if (buddy_pfn >= (heap.end - heap.start) / PAGESIZE) {
+//         debug_pf("Buddy page out of range: pfn=%u\n", buddy_pfn);
+//         return;
+//     }
+// 
+//     // 检查伙伴块是否空闲
+//     if (buddy_page->used) {
+//         debug_pf("Buddy page is still in use: pfn=%u\n", buddy_pfn);
+//         return;
+//     }
+// 
+//     // 检查伙伴块的阶数是否匹配
+//     if (buddy_page->order != current_order) {
+//         debug_pf("Buddy page order mismatch: expected %d, found %d\n", current_order, buddy_page->order);
+//         return;
+//     }
+// 
+//     // 检查伙伴块是否是主块
+//     if (buddy_page->compound_head != buddy_page || current_page->compound_head != current_page) {
+//         debug_pf("Only main blocks can be merged\n");
+//         return;
+//     }
+// 
+//     // 合并两个块
+//     struct page *main_page, *secondary_page;
+//     if (current_pfn < buddy_pfn) {
+//         main_page = current_page;
+//         secondary_page = buddy_page;
+//     } else {
+//         main_page = buddy_page;
+//         secondary_page = current_page;
+//     }
+// 
+//     debug_pf("Merging page %u (order %d) with buddy %u\n",
+//             current_pfn, current_order, buddy_pfn);
+// 
+//     // 更新元数据
+//     main_page->order = current_order + 1;
+//     main_page->compound_head = main_page;
+//     secondary_page->compound_head = main_page;
+// 
+//     // 删除旧的链表条目
+//     remove_from_free_list(&free_lists[current_order], main_page);
+//     remove_from_free_list(&free_lists[current_order], secondary_page);
+// 
+//     // 添加到更高阶的链表
+//     add_buddy_to_freelist(main_page, current_order + 1);
+// 
+//     // 继续尝试合并更高阶的块
+//     merge_pages(main_page, current_order + 1);
+// }
 
-        // 检查伙伴是否空闲、同阶且未被使用
-        // 伙伴块是否是头
-        if (!buddy_page || buddy_page->used || buddy_page->order != order
-            || (buddy_page->compound_head != current_page)
-            || (current_page->compound_head != current_page)) break;
 
-        struct page *main = current_pfn < buddy_pfn ? 
-                                current_page : buddy_page;
-        struct page *secondary = current_pfn < buddy_pfn ? 
-                                buddy_page : current_page;
+static struct page *merge_pages(struct page *current_page, int current_order) {
+    if (current_page->order == (MAX_ORDER - 1)) return NULL;
+    debug_pf("enter order: %d\n", current_order);
+    
+    unsigned long current_pfn = page_to_pfn(current_page);
+    unsigned long buddy_pfn = 0;
+    struct page *buddy_page = find_buddy_page(current_page, current_pfn, 
+                                              current_order, &buddy_pfn);
+    debug_pf("buddy_page: 0x%x  current_page: 0x%x\n", buddy_page, current_page);
+    if (buddy_page == NULL) return current_page;
 
-        // 确定合并后的头块（取PFN较小的）
-        remove_from_free_list(&free_lists[order], main);
-        remove_from_free_list(&free_lists[order], secondary);
+    if (buddy_page->used == true) return current_page;
 
-        main->order = order + 1;
-        main->compound_head = main;
-        main->used = false;
-        secondary->compound_head = main;
+    if (buddy_page->order != current_page->order) return current_page;
 
-        // 将合并后的块作为新基准，继续尝试合并
-        current_page = main;
-        order++;
+    struct free_area *area = &free_lists[current_order];
+    remove_from_free_list(area, buddy_page);
+    
+    buddy_page->order   += 1;
+    current_page->order += 1;
+    debug_pf("after upadte, now order: %d\n", buddy_page->order);
+    print_free_lists_nr_free();
+
+    // choose main Block
+    if (current_page > buddy_page) {
+        current_page = buddy_page;
     }
-
-    debug_pf("now order: %d\n", order);
-    current_page->order = order;
-
-    // 将最终合并的块加入空闲链表
-    add_buddy_to_freelist(current_page, order);
+    
+    return merge_pages(current_page, current_page->order);
 }
 
+// 功能：释放由伙伴系统分配的内存
+// 先merge，再添加
 void buddy_free(void *ptr) {
-    panic_on(ptr == NULL, "should not free NULL ptr\n");
+    if (ptr == NULL) return;
 
     unsigned long pfn = ptr_to_pfn(ptr);
     debug_pf("freeing pfn: %d\n", pfn);
     debug_pf("Allocated: 0x%x  freeing pfn: %d\n", ptr, pfn);
     panic_on(pfn >= TOTAL_PAGES, "pfn should not exceed TOTAL_PAGES");
 
+    // 获取对应的 struct page
     struct page *page = pfn_to_page(pfn);
-    printf("page addr: 0x%x\n", page);
-    printf("buddy_list: 0x%x compound_head: 0x%x\n", page->buddy_list, page->compound_head);
-    printf("order: %d is_slab: %d use: %d\n", page->order, page->is_slab, page->used);
 
-    panic_on(page->used == false, "should not free unused memory.\n");
-    panic_on(page->is_slab == true, "slab should not be true");
-    panic_on(page->order >= MAX_ORDER, "InvalIid order when freeing");
-    if (page->order != get_order(PAGESIZE * (1 << page->order))) {
-        panic("Order mismatch detected during free!");
-    }
+    panic_on(page->used == false, "should not free unused memory.");
+    page->used = false;
 
-    struct page *current_page = (page->compound_head) ? 
-                                page->compound_head : page;
-    // 标记为未使用并获取原始阶数
+    // 找到复合头块
+    struct page *current_page = page;
+    //struct page *current_page = (page->compound_head) ? page->compound_head : page;
+    // 标记为未使用
     current_page->used = false;
 
     int order = current_page->order;
+    current_page = merge_pages(current_page, order);
 
-    // 尝试合并伙伴块
-    try_merge_buddies(current_page, order);
+    int new_order = current_page->order;
+
+    add_buddy_to_freelist(current_page, new_order);
 }
+
 

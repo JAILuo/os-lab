@@ -70,7 +70,7 @@ static void kfree(void *ptr) {
     debug_pf("test free: 0x%x...\n", ptr);
 
     spin_lock(&big_lock);  // 加锁
-    //buddy_free(ptr);
+    buddy_free(ptr);
     spin_unlock(&big_lock);  // 解锁
 
     debug_pf("==========end free=========\n");
