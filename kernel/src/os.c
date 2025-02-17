@@ -107,13 +107,14 @@ void test_kfree(char *array[], int array_size[]) {
     int size = array_size[selected];
 
     // 检查内存是否损坏
-    //spin_lock(&big_lock); // 确保检查期间内存不被修改
+    spin_lock(&big_lock); // 确保检查期间内存不被修改
     for (int i = 0; i < size; i++) {
         if (block[i] != (char)(MAGIC + selected)) { // 检查每个字节
             printf("Memory corruption in block %d at offset %d\n", selected, i);
             panic("Memory corruption in block  at offset");
         }
     }
+    spin_unlock(&big_lock);
 
     // 释放内存块
     pmm->free(block);
@@ -130,18 +131,18 @@ void test_pmm() {
 
     printf("==========test begin.....\n\n\n");
     while (1) {
-        int alloc_or_free = rand() % 2;
-        if (alloc_or_free == 1) { // Allocate test
-            test_kalloc(array, array_size);
-        } else { // Free test
+        int alloc_or_free = rand() % 3;
+        if (alloc_or_free >= 1) {
             test_kfree(array, array_size);
+        } else {
+            test_kalloc(array, array_size);
         }
     }
 }
 
 void test_kalloc_stress() {
     for (int i = 0; i < 10; i++) {
-        void *ptr = pmm->alloc((i + 1) * 512); // 分配 128 字节
+        void *ptr = pmm->alloc((i + 1) * 512);
         if (ptr == NULL) {
             printf("Allocation failed at iteration %d\n", i);
             break;
@@ -342,11 +343,11 @@ static void os_run() {
     // test_kalloc_other();
     // test_kalloc_simple();
     // test_kalloc_stress();
-    test_kalloc_pressure();
+    // test_kalloc_pressure();
     // test_buddy_alloc();
     // test_edge_cases();
 
-    // test_pmm();
+    test_pmm();
 
     while (1) ;
 }

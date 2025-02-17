@@ -19,16 +19,16 @@ void spin_lock(int *lock) {
     }
 }
 
-void spin_unlock(int *lock) {
-    // debug_pf("CPU #%d release Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
-    if (atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED) {
-        printf("Warning: Unlocking an already unlocked lock @ %s:%d\n", __FILE__, __LINE__);
-    }
-}
-
 // void spin_unlock(int *lock) {
-//     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
+//     // debug_pf("CPU #%d release Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
+//     if (atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED) {
+//         printf("Warning: Unlocking an already unlocked lock @ %s:%d\n", __FILE__, __LINE__);
+//     }
 // }
+
+void spin_unlock(int *lock) {
+    panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
+}
 
 // #include <common.h>
 // #include <spinlock.h>

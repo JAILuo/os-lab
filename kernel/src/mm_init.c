@@ -9,6 +9,7 @@
 //struct free_area free_lists[MAX_ORDER];
 struct free_area *free_lists = NULL;
 uintptr_t start_used = 0;
+unsigned long pfn_start = 0;
 
 // void debug_free_list(struct free_area *free_lists, int order) {
 //     struct page *page;
@@ -39,11 +40,12 @@ uintptr_t start_used = 0;
 //     }
 // }
 
-
-// 改进，free_lists[order].head 作哨兵结点，不存储数据
-//static void init_free_block(struct free_area *free_lists,
+// free_lists[order].head 作哨兵结点，不存储数据
 static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
     if (start_pfn > end_pfn) panic("Invalid PFN range");
+
+    panic_on(start_pfn < pfn_start, "pfn sssssss error.....");
+
     unsigned long remaining_pages = end_pfn - start_pfn + 1;
 
     for (int order = MAX_ORDER - 1; order >= 0; order--) {
@@ -62,22 +64,16 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
             head_page->order = order;
             head_page->compound_head = head_page;  // 头页指向自身
             
-            // debug_pf("head_page->compound_head: 0x%x\n", head_page->compound_head);
-
-            // 问题应该在这里，free_lists->head_page->buddy_list
-
             // 初始化尾页元数据
             for (unsigned long pfn = head_pfn + 1; pfn < head_pfn + block_size; pfn++) {
                 struct page *tail_page = pfn_to_page(pfn);
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
-                //tail_page->compound_head = head_page; // 尾页指向头页
+                tail_page->compound_head = head_page; // 尾页指向头页
                 //tail_page->compound_head = NULL; // 尾页指向头页
-                list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
+                //list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
                 //list_add(&tail_page->buddy_list, &head_page->buddy_list);
             }
-
-            // 将头页的buddy_list加入free_lists[order].head
 
             // debug_pf("now order is :%d  head_page: 0x%x\n",
             //          order, head_page);
@@ -101,7 +97,8 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
             //这里如果直接用head_page->buddy_list的话，连的是这个头页的写一个页，注意指针。
             //list_add((struct list_head *)head_page, (struct list_head *)(free_lists[order].head));
             //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
-            list_add(&head_page->buddy_list, &free_lists[order].head);
+            //list_add(&head_page->buddy_list, &free_lists[order].head);
+            list_add(&head_page->buddy_list, (struct list_head *)&free_lists[order]);
             free_lists[order].nr_free++;
 
             remaining_pages -= block_size;
@@ -144,6 +141,7 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
         page_meta[pfn].is_slab = false;               // 显式设置 is_slab
         page_meta[pfn].order = -1;                    // 初始化为无效值
         INIT_LIST_HEAD(&page_meta[pfn].buddy_list);
+        //page_meta[pfn].padding = MAGIC;
     }
 
     debug_pf("metadata_size: 0x%x  metadata_pages: 0x%x(%d)\n", pagedata_size, pagedata_pages, pagedata_pages);
@@ -193,6 +191,7 @@ static void init_free_lists(unsigned long *start_pfn,
     free_lists_page->used = true;
     free_lists_page->is_slab = false;
     free_lists_page->compound_head = NULL;
+    //panic_on(free_lists_page->padding != MAGIC, "MAGIC error");
 
     *start_pfn += free_lists_page_number;
     debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
@@ -210,7 +209,6 @@ void init_pages() {
     spin_lock(&big_lock);
     size_t pagedata_size = init_page_meta_data(&start_pfn, &end_pfn);
 
-    //struct free_area *free_list_addr = (struct free_area *)((uintptr_t)heap.start + pagedata_size);
     uintptr_t free_list_addr = ROUNDUP(((uintptr_t)heap.start + pagedata_size), PAGESIZE);
     free_lists = (struct free_area *)free_list_addr;
     debug_pf("free_lists: 0x%x\n", free_lists);
@@ -227,6 +225,8 @@ void init_pages() {
     debug_pf("start_used: 0x%x  start_pfn: 0x%x end_pfn: 0x%x\n", 
              start_used, start_pfn, end_pfn);
     debug_pf("==============\n");
+
+    pfn_start = start_pfn;
 
     //init_free_block(free_list, start_pfn, end_pfn);
     init_free_block(start_pfn, end_pfn);
