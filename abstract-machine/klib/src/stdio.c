@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <klib-macros.h>
 #include <stdarg.h>
-#include <limits.h>
 #include <stddef.h>
 
 
@@ -202,7 +201,7 @@ int sprintf(char *out, const char *fmt, ...) {
 int printf(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  char buf[100];
+  char buf[1];
   int result = vsnprintf_(putter_out_, buf, (size_t)-1, fmt, args);
   va_end(args);
   return result;
@@ -212,5 +211,6 @@ int putchar(int ch) {
   putch((char)ch);
   return ch;
 }
+
 
 #endif

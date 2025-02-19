@@ -7,11 +7,6 @@ void test_buddy_free();
 void test_edge_cases();
 
 
-    // 运行测试
-    // test_buddy_alloc();
-    // test_buddy_free();
-    // test_edge_cases();
-
 void test_buddy_alloc() {
     printf("\nTesting buddy_alloc...\n");
 

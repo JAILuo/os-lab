@@ -7,7 +7,7 @@
 #include <list.h>
 #include <buddy.h>
 
-lock_t big_lock;
+spinlock_t big_lock = spin_init("Big Kernel Lock");
 
 // void spin_unlock(int *lock) {
 //     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
@@ -82,8 +82,6 @@ void init_buddy() {
 }
 
 static void pmm_init() {
-    lockinit(&big_lock);
-
     uintptr_t pmsize = (
         (uintptr_t)heap.end - (uintptr_t)heap.start
     );

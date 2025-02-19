@@ -14,7 +14,7 @@ extern struct cpu cpus[];
 #define mycpu (&cpus[cpu_current()])
 
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define debug_pf(fmt, args...) printf(fmt, ##args)
 #else

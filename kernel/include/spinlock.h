@@ -7,12 +7,12 @@
 typedef struct {
     const char *name;
     int status;
-    //struct cpu *cpu;
+    struct cpu *cpu;
 } spinlock_t;
 
 typedef int lock_t;
 
-extern lock_t big_lock;
+extern spinlock_t big_lock;
 
 #define PMMLOCKED 1
 #define PMMUNLOCKED 0
@@ -24,11 +24,11 @@ extern lock_t big_lock;
         .status = UNLOCKED, \
         .cpu = NULL, \
     })
-// void spin_lock(spinlock_t *lk);
-// void spin_unlock(spinlock_t *lk);
+void spin_lock(spinlock_t *lk);
+void spin_unlock(spinlock_t *lk);
 
-void lockinit(int *lock);
-void spin_lock(int *lock);
-void spin_unlock(int *lock);
+// void lockinit(int *lock);
+// void spin_lock(int *lock);
+// void spin_unlock(int *lock);
 
 #endif
