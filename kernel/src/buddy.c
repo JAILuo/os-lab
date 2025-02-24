@@ -2,9 +2,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <common.h>
-#include <buddy.h>
-#include "list.h"
+#include <os/common.h>
+#include <os/buddy.h>
+#include <os/list.h>
 
 // TODO: should use is_slab after starting slab...
 void print_free_lists_nr_free() {
@@ -12,7 +12,7 @@ void print_free_lists_nr_free() {
         debug_pf("free_lists[%d].nr_free: %d\n",
                  i, free_lists[i].nr_free);
     }
-    debug_pf("=======================\n\n");
+    debug_pf("=======================\n");
 }
 
 static void remove_from_free_list(struct free_area *area, struct page *page) {

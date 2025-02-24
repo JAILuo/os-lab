@@ -2,12 +2,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <common.h>
-#include <spinlock.h>
-#include <list.h>
-#include <buddy.h>
+#include <os/common.h>
+#include <os/spinlock.h>
+#include <os/list.h>
+#include <os/buddy.h>
 
 spinlock_t big_lock = spin_init("Big Kernel Lock");
+spinlock_t stdio_lock = spin_init("stdio Lock");
 
 // void spin_unlock(int *lock) {
 //     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
@@ -48,18 +49,18 @@ static void *kalloc(size_t size) {
 }
 
 static void range_check(void *ptr) {
+    spin_lock(&big_lock);
     if (!IN_RANGE(ptr, heap)) {
         debug_pf("range_hea, ptr: 0x%x\n", ptr);
-        spin_unlock(&big_lock);
         panic("should not free memory beyond heap.\n");
         return;
     }
     if ((uintptr_t)ptr < start_used) {
         debug_pf("ptr: 0x%x\n", ptr);
-        spin_unlock(&big_lock);
         panic("should not free(cover) page meta_data and free_lists\n");
         return;
     }
+    spin_unlock(&big_lock);
 }
 
 static void kfree(void *ptr) {
@@ -77,7 +78,7 @@ static void kfree(void *ptr) {
 }
 
 void init_pages();
-void init_buddy() {
+static void init_buddy() {
     init_pages();
 }
 
@@ -90,6 +91,7 @@ static void pmm_init() {
         "Got %d MiB heap: [%p, %p)\n",
         pmsize >> 20, heap.start, heap.end
     );
+
 
     init_buddy();
 }

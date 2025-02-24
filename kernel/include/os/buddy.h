@@ -1,10 +1,11 @@
 #ifndef __BUDDY__H
 #define __BUDDY__H
 
-#include <list.h>
-#include <common.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <os/list.h>
+#include <os/common.h>
 
 #define MAX_ORDER ((10) + (1))
 #define PAGESIZE ((4) * (1024))

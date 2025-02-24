@@ -1,6 +1,8 @@
 NAME           := kernel
-SRCS           := framework/main.c $(shell find -L ./src/ -name "*.c")
-INC_PATH       := include/ framework/
+SRCS           := framework/main.c \
+				  $(shell find -L ./src/ -name "*.c") \
+				  $(shell find -L ./test/ -name "*.c")
+INC_PATH       := include/ framework/ 
 
 CFLAGS += -g
 

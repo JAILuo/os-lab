@@ -1,6 +1,7 @@
 #ifndef __SPINLOCK__H
 #define __SPINLOCK__H
 
+
 #define UNLOCKED  0
 #define LOCKED    1
 
@@ -13,9 +14,8 @@ typedef struct {
 typedef int lock_t;
 
 extern spinlock_t big_lock;
+extern spinlock_t stdio_lock;
 
-#define PMMLOCKED 1
-#define PMMUNLOCKED 0
 #define SPIN_LIMIT 100000000
 
 #define spin_init(name_) \
@@ -26,9 +26,6 @@ extern spinlock_t big_lock;
     })
 void spin_lock(spinlock_t *lk);
 void spin_unlock(spinlock_t *lk);
-
-// void lockinit(int *lock);
-// void spin_lock(int *lock);
-// void spin_unlock(int *lock);
+void safe_printf(const char *format, ...);
 
 #endif

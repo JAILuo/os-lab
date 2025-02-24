@@ -1,10 +1,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <buddy.h>
-#include <common.h>
-#include <list.h>
-#include <spinlock.h>
+#include <os/buddy.h>
+#include <os/common.h>
+#include <os/list.h>
+#include <os/spinlock.h>
 
 //struct free_area free_lists[MAX_ORDER];
 struct free_area *free_lists = NULL;
@@ -130,11 +130,6 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
     debug_pf("total_pages: 0x%x\n", TOTAL_PAGES);
     debug_pf("start_pfn: 0x%x  end_pfn: 0x%x(%d)\n", *start_pfn, *end_pfn, *end_pfn);
     debug_pf("sizeof(struct page): 0x%x\n", sizeof(struct page));
-    printf("offsetof(page, buddy_list) = %u\n", offsetof(struct page, buddy_list));
-    printf("offsetof(page, order) = %u\n", offsetof(struct page, order));
-    printf("offsetof(page, used) = %u\n", offsetof(struct page, used));
-    printf("offsetof(page, is_slab) = %u\n", offsetof(struct page, is_slab));
-    printf("offsetof(page, compound_head) = %u\n", offsetof(struct page, compound_head));
 
     // 计算元数据区大小及所占页数
     size_t pagedata_size = TOTAL_PAGES  * sizeof(struct page);
