@@ -19,7 +19,7 @@ static void os_init() {
     // // stress-test
     // test_pressure();
     // // stress-test-long-runing
-    test_long_running_stability();
+    // test_long_running_stability();
 }
 
 static void os_run() {
@@ -41,7 +41,7 @@ static void os_run() {
     // stress-test
     // test_pressure();
     // // stress-test-long-runing
-    // test_long_running_stability();
+    test_long_running_stability();
     
     // int i = 1;
     // T_sum(i);

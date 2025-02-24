@@ -7,13 +7,18 @@
 #include <os/list.h>
 
 // TODO: should use is_slab after starting slab...
+#ifdef  DEBUG
 void print_free_lists_nr_free() {
     for (int i = MAX_ORDER - 1; i >= 0; i--) {
-        debug_pf("free_lists[%d].nr_free: %d\n",
+        printf("free_lists[%d].nr_free: %d\n",
                  i, free_lists[i].nr_free);
     }
-    debug_pf("=======================\n");
+    printf("=======================\n");
 }
+#else 
+void print_free_lists_nr_free() {
+}
+#endif
 
 static void remove_from_free_list(struct free_area *area, struct page *page) {
     panic_on(area->nr_free == 0, "should not remove empty free_lists");
@@ -91,21 +96,14 @@ static void *allocate_block(int order) {
     debug_pf("block_ptr: 0x%x\n", ptr);
     panic_on(pfn < pfn_start, "pfn error");
 
-    //if (block_page == NULL || area->nr_free == 0) return NULL;
-    // if (list_empty(&area->head)) return NULL;
-    // || block_page->used == true || ptr < start_used) return NULL;
-    // 既然在free_lists中取出来的，那就不应该是used。
-    // 另外，该阶的 nr_free 也必须不为0
-
     panic_on(block_page->used == true, "block in free_area should not be used");
     panic_on(area->nr_free == 0, "free_area should have block");
     panic_on(ptr < start_used, "addr should not less than start_used");
     //panic_on(block_page->padding != MAGIC, "MAGIC error");
 
-    //if (block_page->is_slab == true) return NULL;
+    remove_from_free_list(area, block_page);
 
-    remove_from_free_list(area, block_page); // 传入要删除的块指针
-
+    // printf("current_alloc_block_page: %d\n", page_to_pfn(block_page));
     block_page->used = true;
     block_page->order = order;
 
@@ -120,31 +118,31 @@ static void add_buddy_to_freelist(struct page *buddy_page, int order) {
 }
 
 
-static inline unsigned long find_buddy_pfn(unsigned long page_pfn, unsigned int order) {
-    //debug_pf("page_pfn: 0x%x  order: %d\n", page_pfn, order);
-    return page_pfn ^ (1 << order);
-}
-static bool page_is_buddy(struct page *page1, struct page *page2, unsigned int order) {
-    unsigned long pfn1 = page_to_pfn(page1);
-    unsigned long pfn2 = page_to_pfn(page2);
-    return (pfn1 ^ pfn2) == (1 << order) && (pfn1 & ((1 << order) - 1)) == 0;
-}
-
-static inline
-struct page *find_buddy_page(struct page *page,
-                             unsigned long pfn, unsigned int order, unsigned long *buddy_pfn) {
-    unsigned long __buddy_pfn = find_buddy_pfn(pfn, order);
-    struct page *buddy = pfn_to_page(__buddy_pfn);  // 直接使用 pfn_to_page
-
-    if (buddy_pfn) {
-        *buddy_pfn = __buddy_pfn;
-    }
-
-    if (page_is_buddy(page, buddy, order)) {
-        return buddy;
-    }
-    return NULL;
-}
+// static inline unsigned long find_buddy_pfn(unsigned long page_pfn, unsigned int order) {
+//     //debug_pf("page_pfn: 0x%x  order: %d\n", page_pfn, order);
+//     return page_pfn ^ (1 << order);
+// }
+// static bool page_is_buddy(struct page *page1, struct page *page2, unsigned int order) {
+//     unsigned long pfn1 = page_to_pfn(page1);
+//     unsigned long pfn2 = page_to_pfn(page2);
+//     return (pfn1 ^ pfn2) == (1 << order) && (pfn1 & ((1 << order) - 1)) == 0;
+// }
+// 
+// static inline
+// struct page *find_buddy_page(struct page *page,
+//                              unsigned long pfn, unsigned int order, unsigned long *buddy_pfn) {
+//     unsigned long __buddy_pfn = find_buddy_pfn(pfn, order);
+//     struct page *buddy = pfn_to_page(__buddy_pfn);  // 直接使用 pfn_to_page
+// 
+//     if (buddy_pfn) {
+//         *buddy_pfn = __buddy_pfn;
+//     }
+// 
+//     if (page_is_buddy(page, buddy, order)) {
+//         return buddy;
+//     }
+//     return NULL;
+// }
 
 // static inline 
 // struct page *find_buddy_page(struct page *page, 
@@ -292,12 +290,12 @@ void *buddy_alloc(size_t size) {
 
         void *return_addr = (void *)((uintptr_t)heap.start + 
                                      PAGESIZE * page_to_pfn(block_page));
-        debug_pf("start_used: 0x%x  pfn: %d\n", 
-                 start_used, page_to_pfn(block_page));
         debug_pf("return block addr: 0x%x\n", return_addr);
         panic_on((uintptr_t)return_addr < start_used, 
                  "addr should not less than start_used");
 
+        // printf("return addr: 0x%x pfn: %d  now order: %d\n",
+        //        return_addr, ptr_to_pfn(return_addr), current_order);
         return return_addr;
     }
 
@@ -312,22 +310,33 @@ static struct page *merge_pages(struct page *current_page, int current_order) {
     debug_pf("enter order: %d\n", current_order);
     
     unsigned long current_pfn = page_to_pfn(current_page);
-    unsigned long buddy_pfn = 0;
-    struct page *buddy_page = find_buddy_page(current_page, current_pfn, 
-                                              current_order, &buddy_pfn);
-    debug_pf("buddy_page: 0x%x  current_page: 0x%x\n", buddy_page, current_page);
+    //unsigned long buddy_pfn = 0;
+
+    uintptr_t current_addr = (uintptr_t)pfn_to_ptr(current_pfn);
+    uintptr_t buddy_addr = current_addr ^ (1UL << (current_order + 12));
+    unsigned long buddy_pfn = ptr_to_pfn((void *)buddy_addr);
+    struct page *buddy_page = pfn_to_page(buddy_pfn);
+
+
+    // struct page *buddy_page = find_buddy_page(current_page, current_pfn, 
+    //                                          current_order, &buddy_pfn);
+    // printf("buddy_page: 0x%x  current_page: 0x%x\n", buddy_page, current_page);
+
     if (buddy_page == NULL) return current_page;
 
     if (buddy_page->used == true) return current_page;
 
     if (buddy_page->order != current_page->order) return current_page;
 
+    if(free_lists[current_order].nr_free <= 1) return current_page;
+
     struct free_area *area = &free_lists[current_order];
     remove_from_free_list(area, buddy_page);
     
     buddy_page->order   += 1;
     current_page->order += 1;
-    debug_pf("after upadte, now order: %d\n", buddy_page->order);
+    // printf("after upadte, now order: %d\n", buddy_page->order);
+    // printf("in merge print.................-.............\n");
     print_free_lists_nr_free();
 
     // choose main Block
@@ -344,21 +353,20 @@ void buddy_free(void *ptr) {
     if (ptr == NULL) return;
 
     unsigned long pfn = ptr_to_pfn(ptr);
-    debug_pf("freeing pfn: %d\n", pfn);
-    debug_pf("Allocated: 0x%x  freeing pfn: %d\n", ptr, pfn);
+    debug_pf("freeing ptr: 0x%x  freeing pfn: %d\n", ptr, pfn);
     panic_on(pfn >= TOTAL_PAGES, "pfn should not exceed TOTAL_PAGES");
 
     // 获取对应的 struct page
     struct page *page = pfn_to_page(pfn);
+    debug_pf("in freem get page: %d\n", page_to_pfn(page));
+    debug_pf("order: %d, used: %d\n", page->order, page->used);
 
     panic_on(page->used == false, "should not free unused memory.");
     page->used = false;
 
-    // 找到复合头块
     struct page *current_page = page;
     //struct page *current_page = (page->compound_head) ? page->compound_head : page;
-    // 标记为未使用
-    current_page->used = false;
+    //current_page->used = false;
 
     int order = current_page->order;
     current_page = merge_pages(current_page, order);

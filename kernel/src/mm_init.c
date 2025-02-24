@@ -75,34 +75,11 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
                 tail_page->compound_head = head_page; // 尾页指向头页
-                //tail_page->compound_head = NULL; // 尾页指向头页
-                //list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
-                //list_add(&tail_page->buddy_list, &head_page->buddy_list);
+                // tail_page->compound_head = NULL; // 尾页指向头页
+
+                list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
             }
 
-            // debug_pf("now order is :%d  head_page: 0x%x\n",
-            //          order, head_page);
-            // debug_pf("& bellow:buddy_list is: 0x%x\n", &head_page->buddy_list);
-            // debug_pf("add: compound_head: 0x%x  order: 0x%x  is_slab: 0x%x\n",
-            //          &head_page->compound_head, &head_page->order, &head_page->is_slab);
-            // debug_pf("add: used: 0x%x\n", &head_page->used);
-
-            // debug_pf("* bellow:buddy_list is: 0x%x\n", head_page->buddy_list);
-            // debug_pf("add: compound_head: 0x%x  order: 0x%x  is_slab: 0x%x\n",
-            //          head_page->compound_head, head_page->order, head_page->is_slab);
-            // debug_pf("add: used: 0x%x\n", head_page->used);
-
-            // debug_pf("and now free_lists[%d].head is ; 0x%x\n",
-            //          order, free_lists[order].head);
-            // debug_pf("and now free_lists[%d].head's addr is ; 0x%x\n",
-            //          order, &free_lists[order].head);
-
-            // 还真的是这个问题！！！是自己指针用的不到位。。。。
-            //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
-            //这里如果直接用head_page->buddy_list的话，连的是这个头页的写一个页，注意指针。
-            //list_add((struct list_head *)head_page, (struct list_head *)(free_lists[order].head));
-            //list_add(&head_page->buddy_list, (struct list_head *)(&free_lists[order].head));
-            //list_add(&head_page->buddy_list, &free_lists[order].head);
             list_add(&head_page->buddy_list, (struct list_head *)&free_lists[order]);
             free_lists[order].nr_free++;
 
