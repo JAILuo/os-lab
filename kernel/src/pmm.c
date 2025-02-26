@@ -8,11 +8,6 @@
 #include <os/buddy.h>
 
 spinlock_t big_lock = spin_init("Big Kernel Lock");
-spinlock_t stdio_lock = spin_init("stdio Lock");
-
-// void spin_unlock(int *lock) {
-//     panic_on(atomic_xchg(lock, PMMUNLOCKED) != PMMLOCKED, "lock is not acquired");
-// }
 
 /*----------------------------------------*/
 
@@ -22,13 +17,13 @@ void *slab_alloc(size_t size) {
 
 static void *kalloc(size_t size) {
     // TODO strange, deadlock will happen here, but not bellow...
-    //spin_lock(&big_lock);
 
-    //panic_on(size >= 16 * 1024 * 1024, "Allocations over 16MiB are not supported");
-    //panic_on(size == 0, "0 Byte are not supported");
+    spin_lock(&big_lock);
 
-    if (size >= 16 * 1024 * 1024 || size == 0) return NULL;
-
+    if (size >= 16 * 1024 * 1024 || size == 0) {
+        spin_unlock(&big_lock);
+        return NULL;
+    }   
     debug_pf("==========start alloc=========\n");
    
     size_t align_size = ROUNDUP(size, PAGESIZE);
@@ -39,42 +34,41 @@ static void *kalloc(size_t size) {
 
     // now for test, only >= 4KB
     // condititon should be > 4KB
-    spin_lock(&big_lock);
     void *res = align_size >= PAGESIZE ?
         buddy_alloc(align_size) : slab_alloc(align_size);
+
     spin_unlock(&big_lock);
 
+    //spin_unlock(&area->lock);
     debug_pf("==========finish alloc=========\n");
     return res;
 }
 
 static void range_check(void *ptr) {
-    spin_lock(&big_lock);
     if (!IN_RANGE(ptr, heap)) {
-        debug_pf("range_hea, ptr: 0x%x\n", ptr);
-        panic("should not free memory beyond heap.\n");
+        printf("range_hea, ptr: 0x%x\n", ptr);
+        panic("should not free memory not in heap.\n");
         return;
     }
     if ((uintptr_t)ptr < start_used) {
-        debug_pf("ptr: 0x%x\n", ptr);
+        printf("ptr: 0x%x\n", ptr);
         panic("should not free(cover) page meta_data and free_lists\n");
         return;
     }
-    spin_unlock(&big_lock);
 }
 
 static void kfree(void *ptr) {
+    spin_lock(&big_lock);
     panic_on(ptr == NULL, "should not free NULL ptr\n");
 
-    debug_pf("==========start free=========\n");
     range_check(ptr);
-    debug_pf("test free: 0x%x...\n", ptr);
 
-    spin_lock(&big_lock);  // 加锁
+    debug_pf("==========start free=========\n");
+
     buddy_free(ptr);
-    spin_unlock(&big_lock);  // 解锁
 
     debug_pf("==========end free=========\n");
+    spin_unlock(&big_lock);
 }
 
 void init_pages();

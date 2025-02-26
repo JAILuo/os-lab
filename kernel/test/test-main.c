@@ -3,30 +3,6 @@
 #include <os/buddy.h>
 #include <test/test.h>
 
-// long volatile sum = 0;
-// #define T        3
-// #define N  100000
-// 
-// 
-// void T_sum(int tid) {
-//     for (int i = 0; i < N; i++) {
-//         spin_lock(&big_lock);
-// 
-//         // This critical section is even longer; but
-//         // it should be safe--the world is stopped.
-//         // We also marked sum as volatile to make
-//         // sure it is loaded and stored in each
-//         // loop iteration.
-//         for (int _ = 0; _ < 10; _++) {
-//             sum++;
-//         }
-// 
-//         spin_unlock(&big_lock);
-//     }
-// 
-//     safe_printf("Thread %d: sum = %d\n", tid, sum);
-// }
-
 // // 多线程测试
 // static void *thread_alloc(void *arg) {
 //     int thread_id = *((int *)arg);
@@ -39,7 +15,7 @@
 //         // 休眠一段时间，模拟释放延迟
 //         usleep(rand() % 10000);
 //         pmm->free(p);
-//         vsafe_printf("Thread %d: Allocated and freed (size=%d)\n", thread_id, size);
+//         safe_printf("Thread %d: Allocated and freed (size=%d)\n", thread_id, size);
 //     }
 //     pthread_exit(NULL);
 // }
@@ -64,7 +40,6 @@
 
 
 static int choose_memory_block(void) {
-    spin_lock(&big_lock);
     int small_size = 256, medium_size = 4 * 1024, large_size = 1024 * 1024;
     int memory_size = 0;
     int probabilities = rand() % 100;
@@ -81,11 +56,9 @@ static int choose_memory_block(void) {
         memory_size = medium_size + (rand() % (large_size - medium_size));
         break;
     default: 
-        spin_unlock(&big_lock);
         panic("memory_size error");
         break;
     }
-    spin_unlock(&big_lock);
     return memory_size;
 }
 
@@ -113,7 +86,7 @@ static void test_kalloc(char *array[], int array_size[]) {
         }
     }
     if (!allocated) {
-        safe_printf("All slots full. Skipping allocation.\n");
+        //safe_printf("All slots full. Skipping allocation.\n");
     }
 }
 
@@ -129,7 +102,7 @@ static void test_kfree(char *array[], int array_size[]) {
     }
 
     if (count == 0) {
-        safe_printf("No blocks to free.\n");
+        //safe_printf("No blocks to free.\n");
         return;
     }
 
@@ -175,38 +148,41 @@ void test_simple() {
     void *add1 = pmm->alloc(1020);
     if (add1 == NULL) {
         halt(1);
-    } else
+    } else {
         safe_printf("add1: %x\n", add1);
+    }
 
-      int *add1_int=(int *)add1;
-      *add1_int=9876;
-      *(add1_int+(1020-4)/4)=114514;
-      safe_printf("add1_int: 0x%x  *add1_int: 0x%x\n"
-             "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
-             add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
+    int *add1_int=(int *)add1;
+    *add1_int=9876;
+    *(add1_int+(1020-4)/4)=114514;
+    safe_printf("add1_int: 0x%x  *add1_int: 0x%x\n", add1_int, *add1_int);
+    safe_printf("add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
+                add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
 
     void *add2 = pmm->alloc(20);
     if (add2 == NULL) {
         safe_printf("add2 is NULL");
         halt(1);
-    } else
+    } else {
         safe_printf("add2: %x\n", add2);
+    }
 
     void *add3 = pmm->alloc(512);
     if (add3 == NULL) {
         safe_printf("add3 is NULL");
         halt(1);
-    } else
+    } else {
         safe_printf("add3: %x\n", add3);
+    }
 
     int *add3_int=(int *)add3;
     *add3_int=543210;
     *(add3_int+(512-4)/4)=114514;
 
     pmm->free(add2);
-    safe_printf("add1_int: 0x%x  *add1_int: 0x%x\n"
-           "add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
-           add1_int, *add1_int, add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
+    safe_printf("add1_int: 0x%x  *add1_int: 0x%x\n", add1, *add1_int);
+    safe_printf("add1_int+(1020-4)/4: 0x%x, *(add1_int+(1020-4)/4): 0x%x\n",
+                add1_int+(1020-4)/4, *(add1_int+(1020-4)/4));
     safe_printf("add3_int: 0x%x  *add3_int: 0x%x\n", add3_int, *add3_int);
 
     assert(*add1_int==9876);
@@ -226,39 +202,8 @@ void test_simple() {
     safe_printf("=======================================\n");
 }
 
-// 多次分配和释放，测试Buddy系统的稳定性
-void test_pressure() {
-    int alloc_sizes[] = {1024, 4096, 8192, 32768};
-    int size_count = sizeof(alloc_sizes)/sizeof(int);
-
-    //int rounds = TEST_NUM;
-    int rounds = 50;
-
-    struct MemBlock {
-        void *ptr;
-        size_t size;
-    } blocks[rounds * size_count];
-
-    for (int i=0; i<rounds; i++) {
-        for (int j=0; j<size_count; j++) {
-            int rand_size = alloc_sizes[rand() % size_count];
-            blocks[i*size_count + j].ptr = pmm->alloc(rand_size);
-            blocks[i*size_count + j].size = rand_size;
-            assert(blocks[i*size_count + j].ptr != NULL);
-        }
-    }
-
-    for (int i=0; i<rounds*size_count; i++) {
-        pmm->free(blocks[i].ptr);
-    }
-
-    safe_printf("\n=======================================\n");
-    safe_printf("pressure test passed!\n");
-    safe_printf("=======================================\n");
-}
-
 void test_buddy_alloc() {
-    safe_printf("\nTesting buddy_alloc...\n");
+    //safe_printf("\nTesting buddy_alloc...\n");
 
     size_t allocations[] = {
         4096,      // 1 page (4KiB)
@@ -273,13 +218,13 @@ void test_buddy_alloc() {
     };
 
     for (size_t i = 0; i < sizeof(allocations)/sizeof(allocations[0]); i++) {
-        size_t size = allocations[i];
-        void *ptr = pmm->alloc(size);
+        //size_t size = allocations[i];
+        void *ptr = pmm->alloc(allocations[i]);
 
         if (ptr == NULL) {
-            safe_printf("Allocation of 0x%x bytes failed\n", size);
+            //safe_printf("Allocation of 0x%x bytes failed\n", size);
         } else {
-            safe_printf("Allocated 0x%x bytes at address %p\n", size, ptr);
+            //safe_printf("Allocated 0x%x bytes at address %p\n", size, ptr);
         }
     }
     safe_printf("\n=======================================\n");

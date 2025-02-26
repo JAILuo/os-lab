@@ -1,6 +1,7 @@
 #ifndef __BUDDY__H
 #define __BUDDY__H
 
+#include "os/spinlock.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -18,7 +19,7 @@
 
 struct page {
     struct list_head buddy_list;
-    struct page *compound_head;
+    //struct page *compound_head;
     unsigned int order;         // 块阶数（0~10）
     bool used;                  // 是否被使用
     bool is_slab;
@@ -33,6 +34,7 @@ struct free_area {
     //struct list_head *head;
     struct list_head head;
     unsigned long nr_free;
+    spinlock_t lock;
 };
 
 extern unsigned long pfn_start;

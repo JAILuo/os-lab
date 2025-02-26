@@ -47,7 +47,7 @@
 
   **实现多处理器安全的内存分配和回收**
 
-  > Slow path 和 fast path: 采用 buddy system 和 slab
+  > 采用 buddy system 和 slab
   > 
   > ing...
 

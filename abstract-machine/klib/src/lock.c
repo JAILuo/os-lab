@@ -1,43 +1,27 @@
-#include <os/common.h>
-#include <os/spinlock.h>
+#include <stdbool.h>
+
+#include <am.h>
+#include <klib.h>
+#include <klib-macros.h>
+#include <lock.h>
 
 // This is a ported version of spin-lock
 // from xv6-riscv to AbstractMachine:
 // https://github.com/mit-pdos/xv6-riscv
 
-static struct cpu cpus[16];
-#define mycpu (&cpus[cpu_current()])
+static void push_off();
+static void pop_off();
+static bool holding(lock_t *lk);
 
-void push_off();
-void pop_off();
-bool holding(spinlock_t *lk);
+static struct stdio_cpu cpus[16];
+lock_t stdio_lock = spin_init("stdio Lock");
 
-//#define new
-#ifdef new
-void safe_printf(const char *format, ...) {
-    //spin_lock(&big_lock);
-
-    va_list args;
-    va_start(args, format);
-    printf(format, args);
-    va_end(args);
-
-    //spin_unlock(&big_lock);
-}
-#else 
-void safe_printf(const char *format, ...) {}
-#endif
-
-void spin_lock(spinlock_t *lk) {
-    //printf("CPU #%d acquired Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
-    //printf("in lock, name: %s  status: %d\n", lk->name, lk->status);
-
+void lock(lock_t *lk) {
     // Disable interrupts to avoid deadlock.
     push_off();
 
     // This is a deadlock.
     if (holding(lk)) {
-        //printf("in lock, acquire %s\n", lk->name);
         panic("deadlock");
     }
 
@@ -45,11 +29,8 @@ void spin_lock(spinlock_t *lk) {
     int got;
     int spin_cnt = 0;
     do {
-        //printf("x spin_cnt: %d\n", spin_cnt);
         got = atomic_xchg(&lk->status, LOCKED);
         if (spin_cnt++ > SPIN_LIMIT) {
-            printf("Spin count exceeded for lock %s @ %s:%d\n",
-                        lk->name, __FILE__, __LINE__);
             panic("deadlock detected");
         }
     } while (got != UNLOCKED);
@@ -57,19 +38,13 @@ void spin_lock(spinlock_t *lk) {
     lk->cpu = mycpu;
 }
 
-void spin_unlock(spinlock_t *lk) {
-    //printf("CPU #%d release Lock @ %s:%d\n", cpu_current(), __FILE__, __LINE__);
-    //printf("in unlock, name: %s  status: %d\n", lk->name, lk->status);
-
+void unlock(lock_t *lk) {
     if (!holding(lk)) {
-        //printf("in unlock, acquire %s\n", lk->name);
         panic("deadlock");
     }
 
     lk->cpu = NULL;
     if (atomic_xchg(&lk->status, UNLOCKED) != LOCKED) {
-        printf("Trying to unlock an unlocked lock %s @ %s:%d\n", 
-                    lk->name, __FILE__, __LINE__);
         panic("invalid unlock of lock");
     }
 
@@ -78,7 +53,7 @@ void spin_unlock(spinlock_t *lk) {
 
 // Check whether this cpu is holding the lock.
 // Interrupts must be off.
-bool holding(spinlock_t *lk) {
+static bool holding(lock_t *lk) {
     return (
         lk->status == LOCKED &&
         lk->cpu == &cpus[cpu_current()]
@@ -90,9 +65,9 @@ bool holding(spinlock_t *lk) {
 // it takes two pop_off()s to undo two push_off()s.
 // Also, if interrupts are initially off, then
 // push_off, pop_off leaves them off.
-void push_off(void) {
+static void push_off(void) {
     int old = ienabled();
-    struct cpu *c = mycpu;
+    struct stdio_cpu *c = mycpu;
 
     iset(false);
     if (c->noff == 0) {
@@ -101,8 +76,8 @@ void push_off(void) {
     c->noff += 1;
 }
 
-void pop_off(void) {
-    struct cpu *c = mycpu;
+static void pop_off(void) {
+    struct stdio_cpu *c = mycpu;
 
     // Never enable interrupt when holding a lock.
     if (ienabled()) {
@@ -118,4 +93,5 @@ void pop_off(void) {
         iset(true);
     }
 }
+
 

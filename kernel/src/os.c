@@ -2,51 +2,49 @@
 #include <os/spinlock.h>
 #include <test/test.h>
 
-static void os_init() {
-    pmm->init();
-    // simple-test
-    // test_simple();
+void test_all() {
+    // //simple-test
+    test_simple();
 
     // // basic-alloc-test
-    // test_buddy_alloc();
+    test_buddy_alloc();
 
     // // edge-large-test
-    // test_edge_cases();
+    test_edge_cases();
 
     // // extreme-error-test
-    // // test_extreme();
+    // test_extreme();
 
-    // // stress-test
-    // test_pressure();
-    // // stress-test-long-runing
-    // test_long_running_stability();
+    // stress-test-long-runing
+    test_long_running_stability();
+
+}
+
+/**
+ * Simple concurrency test
+ */
+int test_var = 0;
+void test_mp() {
+    for (int i = 0; i < 10000000; i++) {
+        spin_lock(&big_lock);
+        test_var++;
+        spin_unlock(&big_lock);
+    }
+    printf("in CPU#%d, var: %d\n", cpu_current(), test_var);
+}
+
+static void os_init() {
+    pmm->init();
+    //test_all();
 }
 
 static void os_run() {
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    // simple-test ✅
-    // test_simple();
 
-    // basic-alloc-test ✅
-    // test_buddy_alloc();
-
-    // edge-large-test
-    // test_edge_cases();
-
-    // extreme-error-test
-    // test_extreme();
-
-    // stress-test
-    // test_pressure();
-    // // stress-test-long-runing
-    test_long_running_stability();
-    
-    // int i = 1;
-    // T_sum(i);
-    // safe_printf("sum  = %d\n", sum);
-    // safe_printf("%d*n = %d\n", T * 10, T * 10L * N);
+    test_all();
+    //test_mp();
 
     while (1) ;
 }

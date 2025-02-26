@@ -67,14 +67,14 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
             head_page->used = false;
             head_page->is_slab = false;
             head_page->order = order;
-            head_page->compound_head = head_page;  // 头页指向自身
+            //head_page->compound_head = head_page;  // 头页指向自身
             
             // 初始化尾页元数据
             for (unsigned long pfn = head_pfn + 1; pfn < head_pfn + block_size; pfn++) {
                 struct page *tail_page = pfn_to_page(pfn);
                 tail_page->used = false;
                 tail_page->order = -1;             // 标记为尾页
-                tail_page->compound_head = head_page; // 尾页指向头页
+                //tail_page->compound_head = head_page; // 尾页指向头页
                 // tail_page->compound_head = NULL; // 尾页指向头页
 
                 list_add_tail(&tail_page->buddy_list, &head_page->buddy_list);
@@ -98,10 +98,6 @@ static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
         }
     }
 }
-
-// static inline bool pfn_range(unsigned long pfn) {
-//     panic_on(pfn < )
-// }
 
 static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_pfn) {
     debug_pf("total_pages: 0x%x\n", TOTAL_PAGES);
@@ -129,6 +125,7 @@ static size_t init_page_meta_data(unsigned long *start_pfn, unsigned long *end_p
     return pagedata_size;
 }
 
+static char lock_name[MAX_ORDER][20];
 static void init_free_lists(unsigned long *start_pfn, 
                      unsigned long *end_pfn) {
     debug_pf("====sizoeof(free_lists) * MAX_ORDER: 0x%x, sizoeof(free_lists): 0x%x\n",
@@ -137,6 +134,9 @@ static void init_free_lists(unsigned long *start_pfn,
     for (int i = 0; i < MAX_ORDER; i++) {
         INIT_LIST_HEAD(&free_lists[i].head);
         free_lists[i].nr_free = 0;
+        
+        snprintf(lock_name[i], sizeof(lock_name), "area_lock-%d", i);
+        free_lists[i].lock = spin_init(lock_name[i]);
 
         debug_pf("now nr_free is: %d  and order is: %d\n",
                  free_lists[i].nr_free, i);
@@ -167,7 +167,7 @@ static void init_free_lists(unsigned long *start_pfn,
     free_lists_page->order = -1;
     free_lists_page->used = true;
     free_lists_page->is_slab = false;
-    free_lists_page->compound_head = NULL;
+    //free_lists_page->compound_head = NULL;
     //panic_on(free_lists_page->padding != MAGIC, "MAGIC error");
 
     *start_pfn += free_lists_page_number;
@@ -179,11 +179,17 @@ static void init_free_lists(unsigned long *start_pfn,
 // 
 // }
 
-// 初始化页元数据
+/**
+ *
+ * os->init() 完成操作系统所有部分的初始化。
+ * os->init() 运行在系统启动后的第一个处理器上，中断处于关闭状态；
+ * 此时系统中的其他处理器尚未被启动。
+ * 因此在 os->init 的实现中，不必考虑数据竞争等多处理器上的问题。
+ *
+ */
 void init_pages() {
     unsigned long start_pfn = 0, end_pfn = (HEAP_SIZE / PAGESIZE) - 1;
 
-    spin_lock(&big_lock);
     size_t pagedata_size = init_page_meta_data(&start_pfn, &end_pfn);
 
     uintptr_t free_list_addr = ROUNDUP(((uintptr_t)heap.start + pagedata_size), PAGESIZE);
@@ -205,9 +211,7 @@ void init_pages() {
 
     pfn_start = start_pfn;
 
-    //init_free_block(free_list, start_pfn, end_pfn);
     init_free_block(start_pfn, end_pfn);
-    spin_unlock(&big_lock);
 }
 
 

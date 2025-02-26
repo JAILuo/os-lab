@@ -1,11 +1,13 @@
-#include <klib.h>
 #include <stdbool.h>
-#include <klib-macros.h>
 #include <stdarg.h>
 #include <stddef.h>
 
+#include <klib.h>
+#include <klib-macros.h>
+#include <lock.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
+extern lock_t stdio_lock;
 
 typedef void (*putter_t)(char ch, void *buf, size_t idx, size_t maxlen);
 
@@ -98,6 +100,7 @@ static void utoa_(putter_t put,
 static int vsnprintf_(putter_t put, char *buf, const size_t maxlen, const char *fmt, va_list ap) {
   size_t idx = 0;
 
+  lock(&stdio_lock);
   while (*fmt != '\0') {
     if (*fmt != '%') {
       put(*fmt, buf, idx++, maxlen);
@@ -171,6 +174,7 @@ static int vsnprintf_(putter_t put, char *buf, const size_t maxlen, const char *
   }
 
   put(0, buf, idx < maxlen ? idx : maxlen - 1, maxlen);
+  unlock(&stdio_lock);
   return (int)idx;
 }
 

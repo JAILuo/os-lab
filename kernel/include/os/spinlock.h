@@ -1,7 +1,6 @@
 #ifndef __SPINLOCK__H
 #define __SPINLOCK__H
 
-
 #define UNLOCKED  0
 #define LOCKED    1
 
