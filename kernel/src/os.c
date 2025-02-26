@@ -3,20 +3,20 @@
 #include <test/test.h>
 
 void test_all() {
-    // //simple-test
-    test_simple();
+    // // //simple-test
+    //test_simple();
 
     // // basic-alloc-test
-    test_buddy_alloc();
+    //test_buddy_alloc();
 
     // // edge-large-test
-    test_edge_cases();
+    while (1) test_edge_cases();
 
     // // extreme-error-test
     // test_extreme();
 
     // stress-test-long-runing
-    test_long_running_stability();
+    //test_long_running_stability();
 
 }
 

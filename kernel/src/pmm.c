@@ -22,6 +22,7 @@ static void *kalloc(size_t size) {
 
     if (size >= 16 * 1024 * 1024 || size == 0) {
         spin_unlock(&big_lock);
+        //spin_unlock(&big_lock);
         return NULL;
     }   
     debug_pf("==========start alloc=========\n");
@@ -39,11 +40,23 @@ static void *kalloc(size_t size) {
 
     spin_unlock(&big_lock);
 
-    //spin_unlock(&area->lock);
     debug_pf("==========finish alloc=========\n");
     return res;
 }
 
+bool range_check_addr(void *ptr) {
+    if (!IN_RANGE(ptr, heap)) {
+        printf("range_hea, ptr: 0x%x\n", ptr);
+        //panic("should not free memory not in heap.\n");
+        return false;
+    }
+    // if ((uintptr_t)ptr < start_used) {
+    //     printf("ptr: 0x%x\n", ptr);
+    //     //panic("should not free(cover) page meta_data and free_lists\n");
+    //     return false;
+    // }
+    return true;
+}
 static void range_check(void *ptr) {
     if (!IN_RANGE(ptr, heap)) {
         printf("range_hea, ptr: 0x%x\n", ptr);
@@ -61,6 +74,8 @@ static void kfree(void *ptr) {
     spin_lock(&big_lock);
     panic_on(ptr == NULL, "should not free NULL ptr\n");
 
+    //if (!range_check_addr(ptr)) 
+    //    panic("error pfn");
     range_check(ptr);
 
     debug_pf("==========start free=========\n");

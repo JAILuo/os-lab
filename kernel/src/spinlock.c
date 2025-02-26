@@ -25,7 +25,8 @@ void safe_printf(const char *format, ...) {
     //spin_unlock(&big_lock);
 }
 #else 
-void safe_printf(const char *format, ...) {}
+void safe_printf(const char *format, ...) {
+}
 #endif
 
 void spin_lock(spinlock_t *lk) {
