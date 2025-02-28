@@ -43,7 +43,7 @@ static void os_run() {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
 
-    test_all();
+    //test_all();
     //test_mp();
 
     while (1) ;

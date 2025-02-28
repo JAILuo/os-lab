@@ -86,10 +86,8 @@ static void kfree(void *ptr) {
     spin_unlock(&big_lock);
 }
 
-void init_pages();
-static void init_buddy() {
-    init_pages();
-}
+void pages_init(void);
+void kmem_cache_init(void);
 
 static void pmm_init() {
     uintptr_t pmsize = (
@@ -101,8 +99,8 @@ static void pmm_init() {
         pmsize >> 20, heap.start, heap.end
     );
 
-
-    init_buddy();
+    pages_init();
+    kmem_cache_init();
 }
 
 MODULE_DEF(pmm) = {

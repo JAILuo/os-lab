@@ -1,44 +1,17 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include <os/buddy.h>
 #include <os/common.h>
 #include <os/list.h>
 #include <os/spinlock.h>
+#include <os/slab.h>
 
 //struct free_area free_lists[MAX_ORDER];
 struct free_area *free_lists = NULL;
 uintptr_t start_used = 0;
 unsigned long pfn_start = 0;
-
-// void debug_free_list(struct free_area *free_lists, int order) {
-//     struct page *page;
-//     struct list_head *head = free_lists[order].head; // 链表头指针
-//     struct list_head *current;                         // 当前节点指针
-// 
-//     debug_pf("free_lists[%d].nr_free = %d\n", order, free_lists[order].nr_free);
-// 
-//     // 获取链表头的下一个节点
-//     current = head->next;
-// 
-//     // 开始遍历链表
-//     while (1) {
-//         // 计算当前节点对应的 struct page 的地址
-//         page = (struct page *)((char *)current);
-// 
-//         // 打印当前页面的信息
-//         debug_pf("Page in order %d: 0x%x (compound_head: 0x%x)\n",
-//                  order, page, (uintptr_t)page->compound_head);
-// 
-//         // 获取下一个链表节点
-//         current = current->next;
-// 
-//         // 如果遍历到链表头节点，退出循环
-//         if (current == head) {
-//             break;
-//         }
-//     }
-// }
 
 // free_lists[order].head 作哨兵结点，不存储数据
 static void init_free_block(unsigned long start_pfn, unsigned long end_pfn) {
@@ -187,7 +160,7 @@ static void init_free_lists(unsigned long *start_pfn,
  * 因此在 os->init 的实现中，不必考虑数据竞争等多处理器上的问题。
  *
  */
-void init_pages() {
+void pages_init(void) {
     unsigned long start_pfn = 0, end_pfn = (HEAP_SIZE / PAGESIZE) - 1;
 
     size_t pagedata_size = init_page_meta_data(&start_pfn, &end_pfn);
@@ -213,5 +186,4 @@ void init_pages() {
 
     init_free_block(start_pfn, end_pfn);
 }
-
 

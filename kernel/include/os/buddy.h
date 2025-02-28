@@ -22,12 +22,10 @@ struct page {
     //struct page *compound_head;
     unsigned int order;         // 块阶数（0~10）
     bool used;                  // 是否被使用
+
     bool is_slab;
-    //bool padding;
-    //bool padding2;
-    // uint32_t padding;
-    //uint64_t padding2;
-    // strange bug, with these variables, then will not allocate 0x300000
+    
+
 }__attribute__((aligned(32)));
 
 struct free_area {
