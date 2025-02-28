@@ -100,6 +100,7 @@ static void pmm_init() {
     );
 
     pages_init();
+
     kmem_cache_init();
 }
 

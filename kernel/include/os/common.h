@@ -11,7 +11,7 @@ struct cpu {
     int intena;
 }__attribute__((aligned(64)));  // 对齐到缓存行
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define debug_pf(fmt, args...) \
     printf(fmt, ##args)

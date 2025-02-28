@@ -42,6 +42,7 @@ static struct kmem_cache *__kmem_cache_create(const char *name,
     // 启动阶段使用静态内存分配
     if (slab_state == DOWN) {
         cache = (struct kmem_cache *)boot_store;
+        printf("boot ok\n");
     } else {
         // 正常阶段通过已有缓存分配
         cache = kmem_cache_alloc(kmem_cache);
@@ -49,7 +50,8 @@ static struct kmem_cache *__kmem_cache_create(const char *name,
 
     cache->name = name;
     cache->align = align;
-    cache->obj_size = ALIGN(size, align);
+    cache->obj_size = size; // bug here, but why?
+    printf("cache, name: %s, size: %d\n", cache->name, cache->obj_size);
     
     INIT_LIST_HEAD(&cache->slabs_full);
     INIT_LIST_HEAD(&cache->slabs_partial);
@@ -80,6 +82,7 @@ static void slab_init(struct slab *slab, struct kmem_cache *cache) {
     slab->free_list = prev;
 }
 
+// 感觉有问题，cache的数据是初始化了，但是这个slab的数据放在哪里？
 static int init_cache_slab(struct kmem_cache *cache) {
     void *page = buddy_alloc(PAGESIZE);
     if (page == NULL) return -1;
@@ -111,7 +114,6 @@ struct kmem_cache *kmem_cache_create(const char *name,
                                      unsigned int align) {
     struct kmem_cache *cache = __kmem_cache_create(name, size, align, 0);
     panic_on(cache == NULL, "Failed to create boot cache");
-    printf("real addr: 0x%x\n", cache);
 
     if (init_cache_slab(cache) != 0) {
         if (slab_state != DOWN)
@@ -135,6 +137,8 @@ static int calc_index(size_t size) {
 }
 
 void kmem_cache_init(void) {
+    INIT_LIST_HEAD(&slab_caches);
+
     // 创建管理 kmem_cache 的专用缓存
     create_boot_cache(&kmem_cache, "kmem_cache",
                       sizeof(struct kmem_cache),
@@ -143,8 +147,9 @@ void kmem_cache_init(void) {
 
     // 分配常用的缓存
     // BUG here...
-    for (size_t size = MIN_OBJECT_SIZE; size <= MAX_OBJECT_SIZE; size <<= 1) {
+    for (unsigned int size = MIN_OBJECT_SIZE; size < MAX_OBJECT_SIZE; size <<= 1) {
         char name[32];
+        printf("size: %d\n", size);
         snprintf(name, sizeof(name), "size-%d", size);
         size_caches[calc_index(size)] = kmem_cache_create(name, size, 0);
     }
