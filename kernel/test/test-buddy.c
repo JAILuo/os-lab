@@ -1,7 +1,7 @@
 #include <os/common.h>
 #include <os/spinlock.h>
 #include <os/buddy.h>
-#include <test/test.h>
+#include <test/test-buddy.h>
 
 // // 多线程测试
 // static void *thread_alloc(void *arg) {

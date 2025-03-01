@@ -6,6 +6,13 @@
 #include <os/list.h>
 #include <os/spinlock.h>
 
+#define PAGE_MASK       (~(PAGESIZE - 1))
+#define ALIGN_UP(x, a)     (((x) + (a) - 1) & ~((a) - 1))
+#define DEFAULT_ALIGN (8)
+
+#define MIN_OBJECT_SIZE (8)
+#define MAX_OBJECT_SIZE (2048)
+
 struct kmem_cache {
     const char *name;               // 缓存名
     size_t obj_size;                // 对象大小
@@ -21,6 +28,7 @@ struct slab {
     struct kmem_cache *cache;       // 所属缓存
     struct list_head list;          // 同一缓存下的 Slab 列表
     void **free_list;               // 空闲object链表
+    unsigned int nr_total;
     unsigned int nr_used;           // 已分配对象数量
 };
 

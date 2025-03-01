@@ -1,6 +1,6 @@
 #include <os/common.h>
 #include <os/spinlock.h>
-#include <test/test.h>
+#include <test/test-buddy.h>
 
 void test_all() {
     // // //simple-test
@@ -33,8 +33,10 @@ void test_mp() {
     printf("in CPU#%d, var: %d\n", cpu_current(), test_var);
 }
 
+void slab_test_all();
 static void os_init() {
     pmm->init();
+    //slab_test_all();
     //test_all();
 }
 
@@ -45,6 +47,7 @@ static void os_run() {
 
     //test_all();
     //test_mp();
+    slab_test_all();
 
     while (1) ;
 }

@@ -1,5 +1,5 @@
-#ifndef __TEST_H
-#define __TEST_H
+#ifndef __TEST_BUDDY_H
+#define __TEST_BUDDY_H
 
 #define TEST_NUM 128
 #define TEST_MAGIC 0x55
@@ -20,7 +20,6 @@ void test_extreme();
 void test_pressure();
 // stress-test-long-runing
 void test_long_running_stability();
-
 
 
 // 多线程测试
