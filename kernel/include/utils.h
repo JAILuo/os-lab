@@ -21,6 +21,20 @@
 #define ANSI_BG_WHITE   "\33[1;47m"
 #define ANSI_NONE       "\33[0m"
 
+// ----------- time -----------
 
+/**
+ * maybe need to use C-method to support portability
+ */
+// 精确的 TSC 计时宏（x86_64）
+#define TIME() ({ \
+    unsigned int _lo, _hi; \
+    asm volatile ( \
+        "mfence\n\t"          /* 内存屏障保证指令顺序 */ \
+        "rdtsc\n\t" \
+        : "=a"(_lo), "=d"(_hi) \
+    ); \
+    ((unsigned long)_hi << 32) | _lo; \
+})
 
 #endif

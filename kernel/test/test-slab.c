@@ -160,33 +160,3 @@ void slab_test_all() {
            "[======================]" ANSI_NONE "\n");
 }
 
-// 主测试入口
-// void slab_test_all() {
-// 
-//     printf("\n" ANSI_FG_CYAN "[Unit Tests]" ANSI_NONE "\n");
-//     RUN_TEST(test_cache_create);
-//     RUN_TEST(test_alloc_free);
-//     RUN_TEST(test_boundary_sizes);
-//     printf("[Unit Tests] passed!\n");
-// 
-//     printf("\n" ANSI_FG_CYAN "[Integration Tests]" ANSI_FG_CYAN "\n");
-//     RUN_TEST(test_mass_allocation);
-//     printf("[Integration Tests] passed!\n");
-// 
-//     printf("\n====[Performance Tests]====\n");
-//     RUN_TEST(test_perf);
-//     printf("[Performance Tests] end!\n");
-// 
-//     printf("\n====[Stress Tests]====\n");
-//     RUN_TEST(test_stress);
-//     printf("[Stress Tests] passed!\n");
-// 
-//     printf("\n====[Random_ops Tests]====\n");
-//     RUN_TEST(test_random_ops);
-//     printf("[Random_ops Tests] passed!\n");
-//     
-//     //check_leaks();
-//     printf(ANSI_FG_GREEN "All tests passed!" ANSI_NONE "\n");
-// }
-
-
